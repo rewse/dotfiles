@@ -1,0 +1,31 @@
+[user]
+	name = Tats Shibata
+#	email = 
+[color]
+	ui = auto
+[alias]
+	br = branch
+	co = checkout
+	ci = commit
+	di = diff
+	me = merge
+	re = rebase
+	st = status
+	cp = cherry-pick
+	amend = commit --amend
+	check = diff --check
+	continue = rebase --continue
+	graph = log --oneline --graph --decorate --all
+	merged = branch --merged
+	nomerged = branch --no-merged
+	staged = diff --staged
+	unstage = reset HEAD
+	untrack = rm --cached
+	l = log --oneline --decorate
+	l10 = log --oneline -10 --decorate
+	l20 = log --oneline -20 --decorate
+	log1 = log -1 --decorate
+	log3 = log -3 --decorate
+	log5 = log -5 --decorate
+[core]
+	pager = less -x2
