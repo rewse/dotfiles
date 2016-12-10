@@ -108,7 +108,7 @@ set visualbell
 syntax on
 
 " Color scheme
-colorscheme base16-tomorrow
+colorscheme default
 highlight StatusLine term=reverse cterm=none gui=none ctermbg=DarkGray ctermfg=White guibg=#444444 guifg=#E5E5E5
 
 " }}}
