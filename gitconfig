@@ -29,3 +29,5 @@
 	log5 = log -5 --decorate
 [core]
 	pager = less -x2
+[push]
+	default = simple
