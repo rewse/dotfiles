@@ -23,9 +23,9 @@ set fileformat=unix
 set backspace=indent,eol,start
 
 " Width of tab
-set tabstop=2
-set shiftwidth=2
-set softtabstop=2
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
 
 " Expand tab to space
 set expandtab
