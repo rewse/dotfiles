@@ -2,6 +2,7 @@
 
 gui
 colorscheme base16-tomorrow
+highlight StatusLine term=reverse cterm=reverse gui=none guibg=#879196 guifg=#fafafa
 
 " }}}
 " {{{ Window
