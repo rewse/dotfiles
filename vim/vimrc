@@ -109,7 +109,7 @@ syntax on
 
 " Color scheme
 colorscheme default
-highlight StatusLine term=reverse cterm=none gui=none ctermbg=DarkGray ctermfg=White guibg=#444444 guifg=#E5E5E5
+highlight StatusLine term=reverse cterm=none gui=none ctermbg=DarkGray ctermfg=White guibg=#879196 guifg=#fafafa
 
 " }}}
 " {{{ About file handling
