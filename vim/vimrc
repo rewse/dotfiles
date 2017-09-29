@@ -157,6 +157,6 @@ inoremap <C-]> <ESC>
 nnoremap ; :
 
 " Shortcut of highlight is off
-nmap <ESC><ESC> :nohlsearch<CR><ESC>
+nnoremap <C-n> :nohlsearch
 
 " }}}
