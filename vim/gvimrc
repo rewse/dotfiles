@@ -1,34 +1,26 @@
-" {{{ Color
+" {{{ GUI
 
 gui
-colorscheme base16-tomorrow
-highlight StatusLine term=reverse cterm=reverse gui=none guibg=#879196 guifg=#fafafa
 
 " }}}
 " {{{ Window
 
+" Transparency
+set transparency=2
+
 " Window Size
-set columns=84
+set columns=150
 set lines=40
 
 " }}}
 " {{{ Font
 
-if has('gui_macvim')
-  set guifont:Ricty:h14
-elseif has('win32')
-  set guifont:MeiryoKe_Gothic:h10
-endif
-
-" }}}
-" {{{ Clipbard
-
-"set clipboard=unnamed
+set guifont:Ricty\ Regular\ for\ Powerline:h14
 
 " }}}
 " {{{ Key Mapping
 
-if has('gui_macvim')
+if has('mac')
   noremap <D-x> "+d
   noremap <D-c> "+y
   noremap <D-v> "+P
@@ -39,10 +31,6 @@ if has('gui_macvim')
   inoremap <D-S-v> <C-o>"+p
   cnoremap <D-v> <C-r>+
   noremap <D-a> ggVG
-  nnoremap <C-t> :tabedit<Return>
-  nnoremap <C-w> :tabclose<Return>
-  nnoremap <C-}> :tabnext<Return>
-  nnoremap <C-{> :tabprevious<Return>
 elseif has('win32')
   set winaltkeys=no
   noremap <A-x> "+d
@@ -53,10 +41,6 @@ elseif has('win32')
   inoremap <A-S-v> <C-o>"+p
   cnoremap <A-v> <C-r>+
   noremap <A-a> ggVG
-  nnoremap <C-t> :tabedit<Return>
-  nnoremap <C-w> :tabclose<Return>
-  nnoremap <C-Tab> :tabnext<Return>
-  nnoremap <C-S-Tab> :tabprevious<Return>
 endif
 
 " }}}

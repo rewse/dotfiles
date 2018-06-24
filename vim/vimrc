@@ -1,13 +1,72 @@
+" {{{ dein
+
+if &compatible
+    set nocompatible               " Be iMproved
+endif
+
+" Required:
+set runtimepath+=~/.vim/dein/repos/github.com/Shougo/dein.vim
+
+" Required:
+if dein#load_state('~/.vim/dein')
+    call dein#begin('~/.vim/dein')
+
+    " Let dein manage dein
+    " Required:
+    call dein#add('~/.vim/dein/repos/github.com/Shougo/dein.vim')
+
+    " Add or remove your plugins here:
+    call dein#add('airblade/vim-gitgutter')
+    call dein#add('chriskempson/base16-vim')
+    call dein#add('ervandew/supertab')
+    call dein#add('elzr/vim-json')
+    call dein#add('godlygeek/tabular')
+    call dein#add('junegunn/fzf')
+    call dein#add('junegunn/fzf.vim')
+    call dein#add('maksimr/vim-jsbeautify')
+    call dein#add('mattn/vim-sqlfmt')
+    if !has('nvim')
+        call dein#add('roxma/nvim-yarp')
+        call dein#add('roxma/vim-hug-neovim-rpc')
+    endif
+    if !has('nvim')
+        call dein#add('osyo-manga/vim-over')
+    endif
+    call dein#add('scrooloose/nerdtree')
+    call dein#add('Shougo/deoplete.nvim')
+    call dein#add('Shougo/neco-syntax')
+    call dein#add('tomtom/tcomment_vim')
+    call dein#add('tpope/vim-fugitive')
+    call dein#add('ujihisa/neco-look')
+    call dein#add('vim-airline/vim-airline')
+    call dein#add('vim-airline/vim-airline-themes')
+    call dein#add('zchee/deoplete-jedi')
+
+    " Required:
+    call dein#end()
+    call dein#save_state()
+endif
+
+" Required:
+filetype plugin indent on
+syntax enable
+
+" If you want to install not installed plugins on startup.
+if dein#check_install()
+    call dein#install()
+endif
+
+" }}}
 " {{{ Language
 
 if has('iconv')
-  set fileencodings=us-ascii,utf-8
+    set fileencodings=us-ascii,utf-8
 
-  if &encoding ==? 'euc-jp'
-    set fileencodings+=cp932,euc-jp
-  else
-    set fileencodings+=euc-jp,cp932
-  endif
+    if &encoding ==? "euc-jp"
+        set fileencodings+=cp932,euc-jp
+    else
+        set fileencodings+=euc-jp,cp932
+    endif
 endif
 
 set encoding=utf-8
@@ -30,14 +89,20 @@ set softtabstop=4
 " Expand tab to space
 set expandtab
 
+" Use smarttab
+set smarttab
+
+" Auto-indent
+set autoindent
+
+" Read automatically when a file has been changed outside of vim
+set autoread
+
 " Show matching of bracket
 set showmatch
 
-" Use matchit plugin
-source $VIMRUNTIME/macros/matchit.vim
-
 " Ignore formatoptions
-autocmd FileType * setlocal formatoptions=mM
+autocmd FileType * setlocal formatoptions=tcqjmM
 
 " Folding marker is {{{ }}}
 set foldmethod=marker
@@ -47,8 +112,14 @@ set nofoldenable
 set iminsert=0
 set imsearch=0
 
-" Ignore octal and hex
-set nrformats=""
+" Ignore octal
+set nrformats="alpha,bin,hex"
+
+" Command history
+set history=10000
+
+" Use wildmenu
+set wildmenu
 
 " }}}
 " {{{ about Find
@@ -65,6 +136,9 @@ set wrapscan
 " Incrimental search
 set incsearch
 
+" highlight all its matches
+set hlsearch
+
 " }}}
 " {{{ about Display
 
@@ -72,13 +146,10 @@ set incsearch
 set list
 
 " How show for tab and return
-set listchars=tab:>-,trail:_
+set listchars="tab:> ,trail:-,nbsp:+"
 
 " Show line number
 set number
-
-" Support Japanese for auto line wrapping
-set formatoptions+=mM
 
 " Show rular
 set ruler
@@ -92,9 +163,6 @@ set guioptions-=T
 " Hide startup message
 set shortmess+=I
 
-" Set status line
-set statusline=%<%f\ %m%r%h%w%{'['.(&fenc!=''?&fenc:&enc).']['.&ff.']'}%=%l,%c%V%8P
-
 " Show command at status line
 set showcmd
 
@@ -104,20 +172,31 @@ set laststatus=2
 " Beep by visual
 set visualbell
 
-" Use syntax highlight
-syntax on
+" True color for terminal
+set termguicolors
+let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+
+" Color setting for internal terminal
+" This is the same as base16-onedark
+let g:terminal_ansi_colors = [
+    \ "#282c34", "#e88388", "#a7cc8c", "#dbaa79",
+    \ "#72bef2", "#d291e4", "#d291e4", "#b9c0cb",
+    \ "#6f7783", "#e88388", "#a7cc8c", "#dbaa79#",
+    \ "#72bef2", "#d291e4", "#65c2cd", "#ffffff"
+\ ]
 
 " Color scheme
-colorscheme base16-tomorrow
-highlight StatusLine term=reverse cterm=reverse gui=none guibg=#879196 guifg=#fafafa
+colorscheme base16-onedark
 
 " }}}
-" {{{ About file handling
+" {{{ About File Handling
 
 " Do not backup
-
 set nobackup
-set backupext=.bak
+
+" Do not create swapfile
+set noswapfile
 
 " Do not create undofile
 set noundofile
@@ -133,7 +212,7 @@ set hidden
 " Set <leader>
 let mapleader = " "
 
-" Handling a wrapped line as same as 2 lines
+" Handling a wrapped line
 nnoremap j gj
 nnoremap k gk
 
@@ -149,6 +228,12 @@ nnoremap qq: <ESC>q:
 nnoremap qq/ <ESC>q/
 nnoremap qq? <ESC>q?
 
+" Shortcut of highlight is off
+nnoremap <ESC><ESC> :nohlsearch<Return><ESC>
+
+" Shortcut to open terminal
+noremap <leader>` :terminal<Return>
+
 " Use right-bracket for espace
 noremap <C-]> <ESC>
 inoremap <C-]> <ESC>
@@ -156,7 +241,58 @@ inoremap <C-]> <ESC>
 " Use semi-colon for commandline mode
 nnoremap ; :
 
-" Shortcut of highlight is off
-nnoremap <C-n> :nohlsearch<CR>
+" Remap tab controls
+nnoremap <leader>t :tabedit<Return>
+
+if has('mac')
+  nnoremap <D-S-[> :tabnext<Return>
+  nnoremap <D-S-]> :tabprevious<Return>
+elseif has('win32')
+  nnoremap <C-Tab> :tabnext<Return>
+  nnoremap <C-S-Tab> :tabprevious<Return>
+endif
+
+" Remap split
+noremap <C-w>f <C-w>w
+noremap <C-w><C-f> <C-w>w
+noremap <C-w>b <C-w>W
+noremap <C-w><C-b> <C-w>W
+
+" Remap <C-w> in insert mode
+inoremap <C-w> <ESC><C-w>
+
+" }}}
+" {{{ vim-airline
+
+let g:airline_theme="bubblegum"
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#tabline#enabled = 1
+
+" }}}
+" {{{ deoplete
+
+let g:deoplete#enable_at_startup=1
+let g:deoplete#auto_completion_start_length=1
+let g:deoplete#enable_smart_case=1
+let g:deoplete#enable_refresh_always=1
+let g:deoplete#text_mode_filetypes={"_": 1}
+
+" }}}
+" {{{ FZF
+
+nnoremap <leader>e :FZF<Return>
+
+" }}}
+" {{{ NERDTree
+
+noremap <C-e> :NERDTreeToggle<Return>
+
+" Show bookmark by default
+let g:NERDTreeShowBookmarks=1
+
+" }}}
+" {{{ vim-over
+
+nnoremap <leader>s :OverCommandLine<Return>
 
 " }}}
