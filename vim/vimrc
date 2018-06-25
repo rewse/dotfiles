@@ -1,6 +1,8 @@
 " {{{ dein
 
 if v:version >= 800
+    let g:python3_host_prog=expand('/usr/local/bin/python3')
+
     if &compatible
         set nocompatible               " Be iMproved
     endif
