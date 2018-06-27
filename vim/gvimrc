@@ -15,7 +15,7 @@ set lines=40
 " }}}
 " {{{ Font
 
-set guifont:Ricty\ Regular\ for\ Powerline:h14
+set guifont=Ricty:h14
 
 " }}}
 " {{{ Key Mapping
