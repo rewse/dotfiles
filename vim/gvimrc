@@ -8,6 +8,15 @@ gui
 " Transparency
 set transparency=2
 
+" Color
+" Set this in gvimrc again because MacVim Kaoriya doesn't work with only
+" vimrc for colorscheme
+if v:version >= 800
+    colorscheme base16-onedark
+elseif
+    colorscheme default
+endif
+
 " Window Size
 set columns=150
 set lines=40
