@@ -150,7 +150,7 @@ set hlsearch
 set list
 
 " How show for tab and return
-set listchars="tab:> ,trail:-,nbsp:+"
+set listchars=tab:>\ ,trail:-,nbsp:+
 
 " Show line number
 set number
