@@ -113,28 +113,8 @@ set laststatus=2
 " Beep by visual
 set visualbell
 
-" True color for terminal
-if v:version >= 800
-    set termguicolors
-    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-endif
-
-" Color setting for internal terminal
-" This is the same as base16-onedark
-let g:terminal_ansi_colors = [
-    \ "#282c34", "#e88388", "#a7cc8c", "#dbaa79",
-    \ "#72bef2", "#d291e4", "#d291e4", "#b9c0cb",
-    \ "#6f7783", "#e88388", "#a7cc8c", "#dbaa79#",
-    \ "#72bef2", "#d291e4", "#65c2cd", "#ffffff"
-\ ]
-
-" Color scheme
-if v:version >= 800
-    colorscheme base16-onedark
-else
-    colorscheme default
-endif
+" Color
+colorscheme default
 
 " }}}
 " {{{ About File Handling
