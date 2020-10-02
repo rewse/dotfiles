@@ -1,7 +1,7 @@
 EDITOR=vim
 PAGER=less
 FTP_PASSIVE=1
-PS1='[%n@%m %1~]%#'
+PS1='[%n@%m %1~]%# '
 PS2='> '
 LANG='en_US.UTF-8'
 LC_ALL=$LANG
