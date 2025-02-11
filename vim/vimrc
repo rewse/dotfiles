@@ -188,4 +188,9 @@ noremap <C-w><C-b> <C-w>W
 " Remap <C-w> in insert mode
 inoremap <C-w> <ESC><C-w>
 
+" Remap beginning/end of a line
+
+nnoremap H ^
+nnoremap L $
+
 " }}}
