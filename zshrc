@@ -16,20 +16,10 @@ if [ -x /usr/bin/src-hilite-lesspipe.sh ]; then
   export LESSOPEN='| /usr/bin/src-hilite-lesspipe.sh %s'
 fi
 
-uname=`uname`
-
-if [ $uname = "Darwin" ]; then
-  alias ls="ls -FG"
-  alias ll="ls -lFG"
-  alias la="ls -aFG"
-  alias lal="ls -alFG"
-elif [ $uname = "Linux" ]; then
-  alias ls="ls -F --color=always"
-  alias ll="ls -lF --color=always"
-  alias la="ls -aF --color=always"
-  alias lal="ls -alF --color=always"
-fi
-
+alias ls="ls -F --color=always"
+alias ll="ls -lF --color=always"
+alias la="ls -aF --color=always"
+alias lal="ls -alF --color=always"
 alias rm="rm -i"
 alias mv="mv -i"
 alias cp="cp -i"
