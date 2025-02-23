@@ -30,8 +30,6 @@ alias du="du -h"
 alias less="less -r"
 alias vi="vim"
 alias view="vim -R"
-alias tmux="tmux -2"
-alias tmuxa="tmux attach"
 
 [[ -f "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ]] && builtin source "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 
