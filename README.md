@@ -1,106 +1,106 @@
 # Dotfiles
 
-chezmoi を使用した個人用ドットファイル管理システムです。複数マシン（macOS と Linux）間でシェル設定、エディタ設定、Git 設定などを一元管理します。
+Personal dotfiles management system using chezmoi. Centrally manage shell configurations, editor settings, Git configurations, and more across multiple machines (macOS and Linux).
 
-## 特徴
+## Features
 
-- **クロスプラットフォーム対応**: macOS と Linux の両方に対応
-- **テンプレートベース**: マシン固有の設定を条件分岐で管理
-- **セキュアな秘密情報管理**: 1Password との統合により API キーやクレデンシャルを安全に管理
+- **Cross-platform support**: Compatible with both macOS and Linux
+- **Template-based**: Manage machine-specific configurations with conditional branching
+- **Secure secrets management**: Safely manage API keys and credentials through 1Password integration
 
-## セットアップ
+## Setup
 
-### 新しいマシンでのインストール
+### Installation on a New Machine
 
 #### macOS (Homebrew)
 
 ```bash
-# chezmoi をインストール
+# Install chezmoi
 brew install chezmoi
 
-# ドットファイルを初期化して適用
+# Initialize and apply dotfiles
 chezmoi init --apply <your-github-username>
 ```
 
 #### Linux
 
 ```bash
-# chezmoi をインストールしてドットファイルを初期化・適用
+# Install chezmoi and initialize/apply dotfiles
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply <your-github-username>
 ```
 
-または、chezmoi のみをインストール:
+Or, install chezmoi only:
 
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)"
 ```
 
-### 既存の chezmoi がある場合
+### If You Already Have chezmoi
 
 ```bash
 chezmoi init <your-github-username>
 chezmoi apply
 ```
 
-## 使い方
+## Usage
 
-### 日常的な操作
+### Daily Operations
 
 ```bash
-# ファイルを追加
+# Add a file
 chezmoi add ~/.zshrc
 
-# ファイルを編集
+# Edit a file
 chezmoi edit ~/.zshrc
 
-# 変更を確認
+# Check changes
 chezmoi diff | cat
 
-# 変更を適用
+# Apply changes
 chezmoi apply
 
-# ドライラン
+# Dry run
 chezmoi apply --dry-run --verbose | cat
 ```
 
-### リモートとの同期
+### Sync with Remote
 
 ```bash
-# 最新の変更を取得して適用
+# Fetch and apply latest changes
 chezmoi update
 ```
 
-## 構成
+## Structure
 
-### ディレクトリ構造
+### Directory Structure
 
 ```
 .
-├── .chezmoitemplates/          # 共有テンプレート（他のテンプレートから include 可能）
-├── .kiro/                      # Kiro 関連設定
-│   └── steering/               # AI アシスタント用ガイドライン
-├── dot_config/                 # XDG Base Directory 準拠の設定
-├── dot_kiro/                   # Kiro CLI 設定とステアリングルール
-├── dot_vim/                    # Vim 設定
-├── dot_*                       # その他のドットファイル（zshrc、gitconfig など）
-├── private_dot_ssh/            # SSH 鍵と設定（プライベート属性 0600）
-├── private_*                   # その他のプライベートファイル
-├── *.tmpl                      # テンプレートファイル（chezmoi が処理）
-└── *.example                   # 設定例ファイル
+├── .chezmoitemplates/          # Shared templates (can be included from other templates)
+├── .kiro/                      # Kiro-related configurations
+│   └── steering/               # Guidelines for AI assistant
+├── dot_config/                 # XDG Base Directory compliant configurations
+├── dot_kiro/                   # Kiro CLI settings and steering rules
+├── dot_vim/                    # Vim configurations
+├── dot_*                       # Other dotfiles (zshrc, gitconfig, etc.)
+├── private_dot_ssh/            # SSH keys and config (private attribute 0600)
+├── private_*                   # Other private files
+├── *.tmpl                      # Template files (processed by chezmoi)
+└── *.example                   # Example configuration files
 ```
 
-### テンプレート変数
+### Template Variables
 
-`chezmoi.toml` で設定:
+Configure in `chezmoi.toml`:
 
 ```toml
 [data]
     email = "email@example.com"
 ```
 
-## 必要な環境
+## Requirements
 
 - [chezmoi](https://www.chezmoi.io/)
-- [1Password CLI](https://developer.1password.com/docs/cli/) (秘密情報管理用)
+- [1Password CLI](https://developer.1password.com/docs/cli/) (for secrets management)
 - macOS: Homebrew
-- Linux: apt などのパッケージマネージャー
+- Linux: Package manager such as apt
