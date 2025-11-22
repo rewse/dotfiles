@@ -41,11 +41,14 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 if [[ -d "${HOME}/.lmstudio/bin" ]]; then
   export PATH="${PATH}:${HOME}/.lmstudio/bin"
 fi
+{{- end }}
 
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 # Toolbox
 if [[ -d "${HOME}/.toolbox/bin" ]]; then
   export PATH="${HOME}/.toolbox/bin:${PATH}"
 fi
+{{- end }}
 
 # >>>
 # <<< Post Block
