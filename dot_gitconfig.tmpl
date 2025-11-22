@@ -1,0 +1,40 @@
+[user]
+    name = Shibata, Tats
+    email = {{ .email }}
+[core]
+    editor = vim
+    pager = bat
+[color]
+    ui = auto
+[diff]
+    algorithm = histogram
+[init]
+    defaultBranch = main
+[pull]
+    rebase = false
+[alias]
+    br = branch
+    co = checkout
+    ci = commit
+    di = diff
+    me = merge
+    re = rebase
+    st = status
+    sw = switch
+    cp = cherry-pick
+    amend = commit --amend
+    check = diff --check
+    continue = rebase --continue
+    graph = log --oneline --graph --all
+    merged = branch --merged
+    nomerged = branch --no-merged
+    staged = diff --staged
+    unstage = reset HEAD
+    untrack = rm --cached
+    l = log --oneline
+    l10 = log --oneline -10
+    l20 = log --oneline -20
+    log = log
+    log10 = log -10
+    log20 = log -20
+    last = log -1 HEAD

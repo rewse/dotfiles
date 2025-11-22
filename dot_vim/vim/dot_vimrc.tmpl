@@ -1,0 +1,150 @@
+" <<< Encoding
+
+" Modern encoding settings
+set encoding=utf-8
+set fileencoding=utf-8
+set fileencodings=utf-8,cp932,euc-jp,sjis
+
+set fileformats=unix,dos,mac
+set fileformat=unix
+
+" >>>
+" <<< Editing
+
+" Backspace over anything
+set backspace=indent,eol,start
+
+" Width of tab
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+
+" Expand tab to space
+set expandtab
+
+" Use smarttab
+set smarttab
+
+" Auto-indent
+set autoindent
+
+" Read automatically when a file has been changed outside of vim
+set autoread
+
+" Show matching of bracket
+set showmatch
+
+" Fix formatoptions for all file types
+augroup MyFileTypeSettings
+    autocmd!
+    autocmd FileType * setlocal formatoptions=tcqjmM
+augroup END
+
+" Folding marker is <<< >>>
+set foldmethod=marker
+set foldmarker=<<<,>>>
+set nofoldenable
+
+" Input method is off by default
+set iminsert=0
+set imsearch=0
+
+" Number formats (exclude octal)
+set nrformats=alpha,bin,hex
+
+" Command history
+set history=10000
+
+" Use wildmenu
+set wildmenu
+
+" Enable mouse support
+set mouse=a
+
+" System clipboard integration
+if has('mac')
+    set clipboard=unnamed
+elseif has('unix')
+    set clipboard=unnamedplus
+endif
+
+" >>>
+" <<< Search
+
+" Ignore case
+set ignorecase
+
+" Case-sensitive when uppercase is included
+set smartcase
+
+" Wrap around to first line when searching
+set wrapscan
+
+" Incremental search
+set incsearch
+
+" highlight all its matches
+set hlsearch
+
+" >>>
+" <<< Display
+
+" Show tab and return
+set list
+
+" How to show tab and trailing spaces
+set listchars=tab:>\ ,trail:-,nbsp:+
+
+" Show line number
+set number
+
+" Show ruler
+set ruler
+
+" Show title
+set title
+
+" Hide toolbar
+set guioptions-=T
+
+" Hide startup message
+set shortmess+=I
+
+" Show command at status line
+set showcmd
+
+" Always show status line
+set laststatus=2
+
+" Visual bell instead of beeping
+set visualbell
+
+" Color
+colorscheme default
+
+" Highlight cursor line
+set cursorline
+
+" >>>
+" <<< File Handling
+
+" Do not backup
+set nobackup
+
+" Do not create swapfile
+set noswapfile
+
+" Do not create undofile
+set noundofile
+
+" >>>
+" <<< Buffer
+
+set hidden
+
+" >>>
+" <<< Key Mapping
+
+{{- include ".chezmoitemplates/vim-keymappings" -}}
+
+" >>>

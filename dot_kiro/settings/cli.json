@@ -1,0 +1,9 @@
+{
+  "autocomplete.alwaysSuggestCurrentToken": false,
+  "autocomplete.disable": true,
+  "autocomplete.immediatelyRunGitAliases": false,
+  "autocomplete.insertSpaceAutomatically": false,
+  "chat.defaultAgent": "default",
+  "inline.enabled": true,
+  "mcp.loadedBefore": true
+}

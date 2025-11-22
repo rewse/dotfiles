@@ -1,0 +1,17 @@
+# chezmoi
+chezmoi.toml
+
+# Editor
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.log

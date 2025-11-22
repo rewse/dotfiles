@@ -1,0 +1,63 @@
+" Set <leader>
+let mapleader = " "
+
+" Handling a wrapped line
+nnoremap j gj
+nnoremap k gk
+
+" Remap recording
+nnoremap q <NOP>
+nnoremap <leader>q q
+
+" Remap command and search history
+nnoremap q: <NOP>
+nnoremap q/ <NOP>
+nnoremap q? <NOP>
+nnoremap qq: <ESC>q:
+nnoremap qq/ <ESC>q/
+nnoremap qq? <ESC>q?
+
+" Shortcut of highlight is off
+nnoremap <ESC><ESC> :nohlsearch<Return><ESC>
+
+" Shortcut to open terminal
+noremap <leader>` :terminal<Return>
+
+" Use right-bracket for escape
+noremap <C-]> <ESC>
+inoremap <C-]> <ESC>
+
+" Terminal mode escape
+if has('terminal') || has('nvim')
+    tnoremap <C-]> <C-\><C-n>
+endif
+
+" Use semi-colon for commandline mode
+nnoremap ; :
+
+" Remap tab controls
+nnoremap <leader>t :tabedit<Return>
+nnoremap <leader>n :tabnext<Return>
+nnoremap <leader>p :tabprevious<Return>
+
+if has('mac')
+  nnoremap <D-S-[> :tabnext<Return>
+  nnoremap <D-S-]> :tabprevious<Return>
+elseif has('win32')
+  nnoremap <C-Tab> :tabnext<Return>
+  nnoremap <C-S-Tab> :tabprevious<Return>
+endif
+
+" Remap split
+noremap <C-w>f <C-w>w
+noremap <C-w><C-f> <C-w>w
+noremap <C-w>b <C-w>W
+noremap <C-w><C-b> <C-w>W
+
+" Remap <C-w> in insert mode
+inoremap <C-w> <ESC><C-w>
+
+" Remap beginning/end of a line
+
+nnoremap H ^
+nnoremap L $

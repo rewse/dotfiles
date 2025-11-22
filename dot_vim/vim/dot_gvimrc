@@ -1,0 +1,50 @@
+" <<< Window
+
+" Transparency (MacVim only)
+if has('mac')
+    set transparency=2
+endif
+
+" Color
+if v:version >= 800
+    colorscheme base16-onedark
+else
+    colorscheme default
+endif
+
+" Window Size
+set columns=150
+set lines=40
+
+" >>>
+" <<< Font
+
+set guifont=HackGen\ Console:h14
+
+" >>>
+" <<< Key Mapping
+
+if has('mac')
+  noremap <D-x> "+d
+  noremap <D-c> "+y
+  noremap <D-v> "+P
+  noremap <D-V> "+p
+  noremap <D-S-v> "+p
+  inoremap <D-v> <C-o>"+P
+  inoremap <D-V> <C-o>"+p
+  inoremap <D-S-v> <C-o>"+p
+  cnoremap <D-v> <C-r>+
+  noremap <D-a> ggVG
+elseif has('win32')
+  set winaltkeys=no
+  noremap <A-x> "+d
+  noremap <A-c> "+y
+  noremap <A-v> "+P
+  noremap <A-S-v> "+p
+  inoremap <A-v> <C-o>"+P
+  inoremap <A-S-v> <C-o>"+p
+  cnoremap <A-v> <C-r>+
+  noremap <A-a> ggVG
+endif
+
+" >>>

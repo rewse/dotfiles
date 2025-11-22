@@ -1,0 +1,138 @@
+# <<< Pre Block
+
+# Kiro CLI pre block. Keep at the top of this file.
+{{- if eq .chezmoi.os "darwin" }}
+if [[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh" ]]; then
+  builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.pre.zsh"
+fi
+{{- else if eq .chezmoi.os "linux" }}
+if [[ -f "${HOME}/.local/share/kiro-cli/shell/zshrc.pre.zsh" ]]; then
+  builtin source "${HOME}/.local/share/kiro-cli/shell/zshrc.pre.zsh"
+fi
+{{- end }}
+
+# >>>
+# <<< History Configuration
+
+HISTSIZE=10000
+SAVEHIST=10000
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt SHARE_HISTORY
+
+# >>>
+# <<< Shell Options
+
+setopt AUTO_CD               # Change directory by typing directory name
+setopt AUTO_PUSHD            # Push directory to stack on cd
+setopt PUSHD_IGNORE_DUPS     # Ignore duplicate directories in stack
+setopt CORRECT               # Correct command spelling
+
+# >>>
+# <<< Prompt Configuration
+
+PS1='%n@%m:%1~%# '
+
+# >>>
+# <<< Plugins
+
+# Brazil Completion
+if [[ -f "${HOME}/.brazil_completion/zsh_completion" ]]; then
+  builtin source "${HOME}/.brazil_completion/zsh_completion"
+fi
+
+# Zsh Vi Mode
+{{- if eq .chezmoi.os "darwin" }}
+if [[ -f "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ]]; then
+  builtin source "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
+fi
+{{- else if eq .chezmoi.os "linux" }}
+if [[ -f "/usr/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ]]; then
+  builtin source "/usr/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
+fi
+{{- end }}
+
+# >>>
+# <<< Key Bindings
+
+bindkey -M vicmd "H" beginning-of-line
+bindkey -M vicmd "L" end-of-line
+
+# >>>
+# <<< Aliases
+
+# bat aliases
+{{- if eq .chezmoi.os "darwin" }}
+if command -v bat &> /dev/null; then
+  alias less="bat"
+fi
+{{- else if eq .chezmoi.os "linux" }}
+if command -v batcat &> /dev/null; then
+  alias bat="batcat"
+  alias less="batcat"
+elif command -v bat &> /dev/null; then
+  alias less="bat"
+fi
+{{- end }}
+
+# ls aliases
+{{- if eq .chezmoi.os "darwin" }}
+alias ls="ls -FG"
+alias ll="ls -lFG"
+alias la="ls -aFG"
+alias lal="ls -alFG"
+{{- else if eq .chezmoi.os "linux" }}
+alias ls="ls -F --color=auto"
+alias ll="ls -lF --color=auto"
+alias la="ls -aF --color=auto"
+alias lal="ls -alF --color=auto"
+{{- end }}
+
+# Safe operations
+alias cp="cp -i"
+alias ln="ln -i"
+alias mv="mv -i"
+alias rm="rm -i"
+
+# Navigation
+alias ..="cd .."
+alias ...="cd ../.."
+alias d="dirs -v"
+
+# Disk usage
+alias df="df -h"
+alias du="du -h"
+
+# Grep with color
+alias grep="grep --color=auto"
+
+# History
+alias h="history"
+alias hg="history | grep"
+
+# Editor
+alias vi="vim"
+alias view="vim -R"
+alias zshrc="${EDITOR} ~/.zshrc"
+
+# Kiro CLI
+alias k="kiro-cli"
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+alias ksa="kiro-cli --agent sa"
+{{- end }}
+
+# >>>
+# <<< Post Block
+
+# Kiro CLI post block. Keep at the bottom of this file.
+{{- if eq .chezmoi.os "darwin" }}
+if [[ -f "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh" ]]; then
+  builtin source "${HOME}/Library/Application Support/kiro-cli/shell/zshrc.post.zsh"
+fi
+{{- else if eq .chezmoi.os "linux" }}
+if [[ -f "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh" ]]; then
+  builtin source "${HOME}/.local/share/kiro-cli/shell/zshrc.post.zsh"
+fi
+{{- end }}
+
+# >>>

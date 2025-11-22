@@ -1,0 +1,32 @@
+{
+  "name": "default",
+  "description": "",
+  "prompt": null,
+  "mcpServers": {},
+  "tools": ["*"],
+  "toolAliases": {},
+  "allowedTools": [
+    "@builtin/read",
+    "@Context7/get-library-docs",
+    "@Context7/resolve-library-id",
+    "@brave-search/brave_local_search",
+    "@brave-search/brave_web_search",
+    "@fetch/fetch",
+    "@git/git_branch",
+    "@git/git_diff",
+    "@git/git_diff_staged",
+    "@git/git_diff_unstaged",
+    "@git/git_log",
+    "@git/git_show",
+    "@git/git_status"
+  ],
+  "resources": [
+    "file://AGENTS.md",
+    "file://README.md",
+    "file://~/.kiro/steering/**/*.md"
+  ],
+  "hooks": {},
+  "toolsSettings": {},
+  "useLegacyMcpJson": true,
+  "model": "Auto"
+}
