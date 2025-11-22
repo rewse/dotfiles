@@ -1,1 +1,11 @@
-{{- template "mcp-servers.json.tmpl" . -}}
+{
+  "mcpServers": {
+{{ template "mcp-servers.json.tmpl" . }},
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}
