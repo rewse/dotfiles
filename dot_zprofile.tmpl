@@ -43,6 +43,13 @@ if [[ -d "${HOME}/.lmstudio/bin" ]]; then
 fi
 {{- end }}
 
+{{- else if eq .chezmoi.os "linux" }}
+# Local bin
+if [[ -d "${HOME}/bin" ]]; then
+  export PATH="${HOME}/bin:${PATH}"
+fi
+{{- end }}
+
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 # Toolbox
 if [[ -d "${HOME}/.toolbox/bin" ]]; then
