@@ -36,10 +36,12 @@ PS1='%n@%m:%1~%# '
 # >>>
 # <<< Plugins
 
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 # Brazil Completion
 if [[ -f "${HOME}/.brazil_completion/zsh_completion" ]]; then
   builtin source "${HOME}/.brazil_completion/zsh_completion"
 fi
+{{- end }}
 
 # Zsh Vi Mode
 {{- if eq .chezmoi.os "darwin" }}
