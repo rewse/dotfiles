@@ -41,8 +41,6 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 if [[ -d "${HOME}/.lmstudio/bin" ]]; then
   export PATH="${PATH}:${HOME}/.lmstudio/bin"
 fi
-{{- end }}
-
 {{- else if eq .chezmoi.os "linux" }}
 # Local bin
 if [[ -d "${HOME}/bin" ]]; then
