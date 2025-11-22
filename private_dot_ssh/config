@@ -1,11 +1,36 @@
-Host github.com
-    HostName github.com
-    User git
-    IdentityFile ~/.ssh/id_rsa
-    AddKeysToAgent yes
-    UseKeychain yes
-
 Host *
-    IdentityFile ~/.ssh/id_rsa
-    AddKeysToAgent yes
-    UseKeychain yes
+  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+Host alfa alfa.rewse.jp
+  HostName alfa.rewse.jp
+  User tats
+  LocalForward 5901 localhost:5901
+
+Host fox fox.rewse.jp
+  HostName fox.rewse.jp
+  User tats
+  Port 10022
+
+Host hotel hotel.rewse.jp
+  HostName hotel.rewse.jp
+  User tats
+  Port 20022
+
+Host guppy guppy.rewse.jp
+  HostName guppy.rewse.jp
+  User tats
+  Port 30022
+  SetEnv TERM=xterm-256color
+
+Host sierra sierra.rewse.jp
+  HostName sierra.rewse.jp
+  User root
+
+Host github.com
+  User git
+
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+Host git.amazon.com
+  User shibtats
+  ProxyCommand=/usr/local/bin/wssh proxy %h --port=%p
+{{- end }}
