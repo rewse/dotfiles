@@ -22,14 +22,17 @@ brew install chezmoi
 chezmoi init --apply <your-github-username>
 ```
 
-#### Linux (apt)
+#### Linux
 
 ```bash
-# chezmoi をインストール
-sudo apt install chezmoi
+# chezmoi をインストールしてドットファイルを初期化・適用
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply <your-github-username>
+```
 
-# ドットファイルを初期化して適用
-chezmoi init --apply <your-github-username>
+または、chezmoi のみをインストール:
+
+```bash
+sh -c "$(curl -fsLS get.chezmoi.io)"
 ```
 
 ### 既存の chezmoi がある場合
