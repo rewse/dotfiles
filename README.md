@@ -76,17 +76,18 @@ chezmoi update
 
 ```
 .
-├── .chezmoitemplates/          # Shared templates (can be included from other templates)
-├── .kiro/                      # Kiro-related configurations
-│   └── steering/               # Guidelines for AI assistant
-├── dot_config/                 # XDG Base Directory compliant configurations
-├── dot_kiro/                   # Kiro CLI settings and steering rules
-├── dot_vim/                    # Vim configurations
-├── dot_*                       # Other dotfiles (zshrc, gitconfig, etc.)
-├── private_dot_ssh/            # SSH keys and config (private attribute 0600)
-├── private_*                   # Other private files
-├── *.tmpl                      # Template files (processed by chezmoi)
-└── *.example                   # Example configuration files
+├── .chezmoitemplates/            # Shared templates (can be included from other templates)
+├── .kiro/                        # Kiro-related configurations
+│   └── steering/                 # Guidelines for AI assistant
+├── dot_config/                   # XDG Base Directory compliant configurations
+│   └── chezmoi/                  # chezmoi configuration and examples
+│       └── chezmoi.toml.example  # Example configuration file
+├── dot_kiro/                     # Kiro CLI settings and steering rules
+├── dot_vim/                      # Vim configurations
+├── dot_*                         # Other dotfiles (zshrc, gitconfig, etc.)
+├── private_dot_ssh/              # SSH keys and config (private attribute 0600)
+├── private_*                     # Other private files
+└── *.tmpl                        # Template files (processed by chezmoi)
 ```
 
 ### Template Variables

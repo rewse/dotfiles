@@ -7,17 +7,18 @@
 
 ```
 .
-├── .chezmoitemplates/          # 共有テンプレート（他のテンプレートから include 可能）
-├── .kiro/                      # Kiro 関連設定
-│   └── steering/               # AI アシスタント用ガイドライン
-├── dot_config/                 # XDG Base Directory 準拠の設定
-├── dot_kiro/                   # Kiro CLI 設定とステアリングルール
-├── dot_vim/                    # Vim 設定
-├── dot_*                       # その他のドットファイル（zshrc、gitconfig など）
-├── private_dot_ssh/            # SSH 鍵と設定（プライベート属性 0600）
-├── private_*                   # その他のプライベートファイル
-├── *.tmpl                      # テンプレートファイル（chezmoi が処理）
-└── *.example                   # 設定例ファイル
+├── .chezmoitemplates/            # 共有テンプレート（他のテンプレートから include 可能）
+├── .kiro/                        # Kiro 関連設定
+│   └── steering/                 # AI アシスタント用ガイドライン
+├── dot_config/                   # XDG Base Directory 準拠の設定
+│   └── chezmoi/                  # chezmoi 設定と設定例
+│       └── chezmoi.toml.example  # 設定例ファイル
+├── dot_kiro/                     # Kiro CLI 設定とステアリングルール
+├── dot_vim/                      # Vim 設定
+├── dot_*                         # その他のドットファイル（zshrc、gitconfig など）
+├── private_dot_ssh/              # SSH 鍵と設定（プライベート属性 0600）
+├── private_*                     # その他のプライベートファイル
+└── *.tmpl                        # テンプレートファイル（chezmoi が処理）
 ```
 
 ## ファイル命名規則
