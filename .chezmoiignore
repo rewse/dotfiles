@@ -1,6 +1,10 @@
 LICENSE
 README.md
 
-{{- if ne .chezmoi.os "darwin" }}
+{{- if eq .chezmoi.os "darwin" }}
+.ssh/id_rsa
+.ssh/id_rsa.pub
+{{- else }}
+.config/1Password/ssh/agent.toml
 .config/karabiner
 {{- end }}
