@@ -5,7 +5,7 @@
         "@modelcontextprotocol/server-brave-search"
       ],
       "env": {
-        "BRAVE_API_KEY": "{{ onepasswordRead "op://Private/Brave/credential" }}"
+        "BRAVE_API_KEY": "{{ onepasswordRead "op://chezmoi/Brave/credential" }}"
       },
       "disabled": false,
       "autoApprove": [
@@ -18,7 +18,7 @@
         "-y",
         "@upstash/context7-mcp",
         "--api-key",
-        "{{ onepasswordRead "op://Private/Context7/credential" }}"
+        "{{ onepasswordRead "op://chezmoi/Context7/credential" }}"
       ],
       "disabled": false,
       "autoApprove": [
