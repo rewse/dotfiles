@@ -1,2 +1,3 @@
 [onepassword]
     command = "op"
+    mode = "service-account"
