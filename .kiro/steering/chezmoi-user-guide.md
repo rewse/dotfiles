@@ -39,12 +39,12 @@ chezmoi は複数マシン間でドットファイルを管理するためのツ
 
 ### ページャーを使用するコマンドの注意点
 
-`chezmoi diff` などの一部のコマンドはデフォルトでページャー（`less` など）を使用します。自動化スクリプトや CI/CD 環境で実行する場合は、ページャーが起動してプロセスがブロックされることを避けるため、`cat` にパイプする必要があります (MUST)。
+`chezmoi diff` などの一部のコマンドはデフォルトでページャー（`less` など）を使用します。自動化スクリプトや CI/CD 環境で実行する場合は、ページャーが起動してプロセスがブロックされることを避けるため、`--no-pager` オプションを使用する必要があります (MUST)。
 
 ```bash
 # 自動化環境での使用例
-chezmoi diff | cat
-chezmoi apply --dry-run --verbose | cat
+chezmoi diff --no-pager
+chezmoi apply --dry-run --verbose --no-pager
 ```
 
 ### 複数マシン間での同期
