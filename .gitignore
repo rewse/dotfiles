@@ -1,6 +1,3 @@
-# chezmoi
-chezmoi.toml
-
 # Editor
 .idea/
 *.swp

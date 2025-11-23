@@ -1,6 +1,11 @@
 [user]
     name = Shibata, Tats
-    email = {{ .email }}
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+    email = {{ onepasswordRead "op://Private/Tats Shibata/business email" }}
+{{- else }}
+    email = {{ onepasswordRead "op://Private/Tats Shibata/email" }}
+{{- end }}
+
 [core]
     editor = vim
     pager = bat
