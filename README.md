@@ -35,6 +35,12 @@ Or, install chezmoi only:
 sh -c "$(curl -fsLS get.chezmoi.io)"
 ```
 
+Install to a specific directory (e.g., `/usr/local/bin`):
+
+```bash
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /usr/local/bin
+```
+
 ### If You Already Have chezmoi
 
 ```bash
