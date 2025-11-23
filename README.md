@@ -22,7 +22,7 @@ brew install chezmoi
 chezmoi init --apply <your-github-username>
 ```
 
-#### Linux
+#### macOS (without Homebrew) or Linux
 
 ```bash
 # Install chezmoi and initialize/apply dotfiles
@@ -92,7 +92,7 @@ chezmoi update
 
 ### Template Variables
 
-Configure in `chezmoi.toml`:
+Configure in `$HOME/.config/chezmoi/chezmoi.toml`:
 
 ```toml
 [data]
@@ -103,5 +103,3 @@ Configure in `chezmoi.toml`:
 
 - [chezmoi](https://www.chezmoi.io/)
 - [1Password CLI](https://developer.1password.com/docs/cli/) (for secrets management)
-- macOS: Homebrew
-- Linux: Package manager such as apt
