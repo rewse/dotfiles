@@ -7,11 +7,12 @@
   "toolAliases": {},
   "allowedTools": [
     "@builtin/read",
+    "@builtin/web_fetch",
+    "@builtin/web_search",
     "@Context7/get-library-docs",
     "@Context7/resolve-library-id",
     "@brave-search/brave_local_search",
     "@brave-search/brave_web_search",
-    "@fetch/fetch",
     "@git/git_branch",
     "@git/git_diff",
     "@git/git_diff_staged",
