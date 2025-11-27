@@ -4,6 +4,13 @@
   "autocomplete.immediatelyRunGitAliases": false,
   "autocomplete.insertSpaceAutomatically": false,
   "chat.defaultAgent": "default",
+  "chat.enableCheckpoint": true,
+  "chat.enableContextUsageIndicator": true,
+  "chat.enableDelegate": true,
+  "chat.enableKnowledge": true,
+  "chat.enableTangentMode": true,
+  "chat.enableThinking": true,
+  "chat.enableTodoList": true,
   "inline.enabled": true,
-  "mcp.loadedBefore": true
+  "mcp.loadedBefore": true,
 }
