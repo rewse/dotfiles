@@ -13,5 +13,5 @@
   "chat.enableThinking": true,
   "chat.enableTodoList": true,
   "inline.enabled": true,
-  "mcp.loadedBefore": true,
+  "mcp.loadedBefore": true
 }
