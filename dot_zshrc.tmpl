@@ -49,8 +49,15 @@ if [[ -f "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.
   builtin source "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 fi
 {{- else if eq .chezmoi.os "linux" }}
-if [[ -f "/usr/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ]]; then
-  builtin source "/usr/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
+# zinit
+if [[ -f "/usr/local/share/zinit/zinit.git/zinit.zsh" ]]; then
+  source "/usr/local/share/zinit/zinit.git/zinit.zsh"
+  autoload -Uz _zinit
+  (( ${+_comps} )) && _comps[zinit]=_zinit
+
+  # zsh-vi-mode
+  zinit ice depth=1
+  zinit light jeffreytse/zsh-vi-mode
 fi
 {{- end }}
 
