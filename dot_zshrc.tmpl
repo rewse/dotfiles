@@ -42,6 +42,11 @@ if [[ -f "${HOME}/.brazil_completion/zsh_completion" ]]; then
 fi
 {{- end }}
 
+# 1Password CLI Completion
+if [ -x "$(command -v op)" ]; then
+  eval "$(op completion zsh)"; compdef _op op
+fi
+
 # Zsh Vi Mode
 {{- if eq .chezmoi.os "darwin" }}
 if [[ -f "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ]]; then
