@@ -1,0 +1,8 @@
+[
+    {
+        "key": "ctrl+i",
+        "command": "type",
+        "args": { "text": "\t" },
+        "when": "editorTextFocus"
+    }
+]
