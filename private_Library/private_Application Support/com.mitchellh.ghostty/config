@@ -1,0 +1,36 @@
+font-family = HackGen Console
+font-feature = -dlig
+font-size = 14
+adjust-cell-height = 15%
+theme = One Half Dark
+palette = 8=#787C84
+cursor-style-blink = false
+background-opacity = 0.95
+background-blur-radius = 20
+unfocused-split-opacity = 0.6
+window-padding-x = 5
+window-padding-y = 5
+window-theme = ghostty
+window-height = 45
+window-width = 160
+
+keybind = cmd+c=copy_to_clipboard
+keybind = cmd+v=paste_from_clipboard
+
+keybind = cmd+shift+p=scroll_page_up
+keybind = cmd+shift+n=scroll_page_down
+
+keybind = cmd+s>k=goto_split:top
+keybind = cmd+s>j=goto_split:bottom
+keybind = cmd+s>h=goto_split:left
+keybind = cmd+s>l=goto_split:right
+keybind = cmd+s>z=toggle_split_zoom
+keybind = cmd+s>g=equalize_splits
+keybind = cmd+up=resize_split:up,20
+keybind = cmd+down=resize_split:down,20
+keybind = cmd+left=resize_split:left,20
+keybind = cmd+right=resize_split:right,20
+
+keybind = cmd+shift+l=reset
+keybind = ctrl+left_bracket=text:\x1b
+keybind = shift+enter=text:\n
