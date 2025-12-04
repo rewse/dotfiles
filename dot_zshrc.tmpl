@@ -145,6 +145,14 @@ alias ksar="kiro-cli chat --agent sa --resume"
 alias ncu='nocorrect ncu'
 
 # >>>
+# <<< Safe-chain Initialization
+
+# Safe-chain Zsh initialization script
+if [[ -f "${HOME}/.safe-chain/scripts/init-posix.sh" ]]; then
+  builtin source "${HOME}/.safe-chain/scripts/init-posix.sh"
+fi
+
+# >>>
 # <<< Post Block
 
 # Kiro CLI post block. Keep at the bottom of this file.
