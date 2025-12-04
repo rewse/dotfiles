@@ -1,6 +1,6 @@
 [default]
 region = ap-northeast-1
-output = json
+output = yaml
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 credential_process = isengardcli credentials --role Admin --awscli 070392599442
 {{- end }}
