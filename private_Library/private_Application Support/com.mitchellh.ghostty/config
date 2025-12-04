@@ -1,11 +1,20 @@
+# Clipboard
 clipboard-trim-trailing-spaces = true
+
+# Font
 font-family = HackGen Console
 font-feature = -dlig
 font-size = 14
 adjust-cell-height = 15%
+
+# Theme
 theme = One Half Dark
 palette = 8=#787C84
+
+# Cursor
 cursor-style-blink = false
+
+# Window
 background-opacity = 0.95
 background-blur-radius = 20
 unfocused-split-opacity = 0.6
@@ -15,23 +24,31 @@ window-theme = ghostty
 window-height = 45
 window-width = 160
 
+# Keybindings - Clipboard
 keybind = cmd+c=copy_to_clipboard
 keybind = cmd+v=paste_from_clipboard
 
+# Keybindings - Scrolling
 keybind = cmd+shift+p=scroll_page_up
 keybind = cmd+shift+n=scroll_page_down
 
+# Keybindings - Split Navigation (Vim-style)
 keybind = cmd+s>k=goto_split:top
 keybind = cmd+s>j=goto_split:bottom
 keybind = cmd+s>h=goto_split:left
 keybind = cmd+s>l=goto_split:right
+
+# Keybindings - Split Management
 keybind = cmd+s>z=toggle_split_zoom
 keybind = cmd+s>g=equalize_splits
+
+# Keybindings - Split Resizing
 keybind = cmd+up=resize_split:up,20
 keybind = cmd+down=resize_split:down,20
 keybind = cmd+left=resize_split:left,20
 keybind = cmd+right=resize_split:right,20
 
+# Keybindings - Misc
 keybind = cmd+shift+l=reset
 keybind = ctrl+left_bracket=text:\x1b
 keybind = shift+enter=text:\n
