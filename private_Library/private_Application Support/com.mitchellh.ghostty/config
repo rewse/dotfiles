@@ -1,3 +1,4 @@
+clipboard-trim-trailing-spaces = true
 font-family = HackGen Console
 font-feature = -dlig
 font-size = 14
