@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Commit Staged Files",
+  "description": "Commit staged changes with Conventional Commits format",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the staged changes and commit them with an appropriate commit message following #commit-message-standards.md. If the staging area is empty, let me know."
+  },
+  "shortName": "commit-staged-files"
+}
