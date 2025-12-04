@@ -8,3 +8,7 @@ README.md
 .config/1Password/ssh/agent.toml
 .config/karabiner
 {{- end }}
+
+{{- if ne .chezmoi.hostname "7cf34ded5d65" }}
+.aws/config
+{{- end }}
