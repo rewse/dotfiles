@@ -35,6 +35,13 @@ PS1='%n@%m:%1~%# '
 # >>>
 # <<< Plugins
 
+{{- if eq .chezmoi.os "darwin" }}
+# Add Homebrew's site-functions to fpath
+if [[ -d "/opt/homebrew/share/zsh/site-functions" ]]; then
+  fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+fi
+{{- end }}
+
 # Initialize completion system
 autoload -Uz compinit
 compinit
