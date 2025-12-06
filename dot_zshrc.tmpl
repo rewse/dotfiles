@@ -51,10 +51,12 @@ if [ -x "$(command -v op)" ]; then
   eval "$(op completion zsh)"; compdef _op op
 fi
 
+{{- if eq .chezmoi.os "darwin" }}
 # direnv
 if [ -x "$(command -v direnv)" ]; then
   eval "$(direnv hook zsh)"
 fi
+{{- end }}
 
 # Zsh Vi Mode
 {{- if eq .chezmoi.os "darwin" }}
