@@ -7,6 +7,7 @@ README.md
 {{- else }}
 .config/1Password/ssh/agent.toml
 .config/karabiner
+Library
 {{- end }}
 
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}
