@@ -45,7 +45,7 @@
 - 手順:
   1. 全てのプロジェクトで `git push` を実行して変更をプッシュ
   2. 1分待つ
-  3. https://github.com/rewse の全ての GitHub Actions が成功していることを確認
+  3. https://github.com/rewse にある上記プロジェクトの GitHub Actions が成功していることを確認
 
 ## 注意事項
 - 破壊的変更がある場合は適切に対応しなければなりません (MUST)
