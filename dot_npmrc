@@ -1,0 +1,3 @@
+# Disable lifecycle scripts by default for security
+# This prevents malicious packages from executing code during installation
+ignore-scripts=true
