@@ -147,8 +147,8 @@ alias view="vim -R"
 alias zprofile="${EDITOR} ~/.zprofile"
 alias zshrc="${EDITOR} ~/.zshrc"
 
-# 1Password CLI
 {{- if eq .chezmoi.os "linux" }}
+# 1Password CLI
 alias opsignin='eval $(op signin)'
 {{- end }}
 
