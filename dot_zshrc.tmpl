@@ -148,8 +148,8 @@ alias zprofile="${EDITOR} ~/.zprofile"
 alias zshrc="${EDITOR} ~/.zshrc"
 
 # 1Password CLI
-{{- else if eq .chezmoi.os "linux" }}
-alias opsignin="eval $(op signin)"
+{{- if eq .chezmoi.os "linux" }}
+alias opsignin='eval $(op signin)'
 {{- end }}
 
 # Kiro CLI
