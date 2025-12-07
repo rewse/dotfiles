@@ -64,7 +64,7 @@
       ],
       "env": {
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
-        "OBSIDIAN_API_KEY": "{{ onepasswordRead "op://chezmoi/Obsidian/businesss credential" }}",
+        "OBSIDIAN_API_KEY": "{{ onepasswordRead "op://chezmoi/Obsidian/business credential" }}",
 {{- else }}
         "OBSIDIAN_API_KEY": "{{ onepasswordRead "op://chezmoi/Obsidian/credential" }}",
 {{- end }}
