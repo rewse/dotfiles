@@ -19,7 +19,16 @@
     "@git/git_diff_unstaged",
     "@git/git_log",
     "@git/git_show",
-    "@git/git_status"
+    "@git/git_status",
+    "@mcp-obsidian/obsidian_batch_get_file_contents",
+    "@mcp-obsidian/obsidian_complex_search",
+    "@mcp-obsidian/obsidian_get_file_contents",
+    "@mcp-obsidian/obsidian_get_periodic_note",
+    "@mcp-obsidian/obsidian_get_recent_changes",
+    "@mcp-obsidian/obsidian_get_recent_periodic_notes",
+    "@mcp-obsidian/obsidian_list_files_in_dir",
+    "@mcp-obsidian/obsidian_list_files_in_vault",
+    "@mcp-obsidian/obsidian_simple_search"
   ],
   "resources": [
     "file://AGENTS.md",
