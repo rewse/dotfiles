@@ -13,4 +13,6 @@ Library
 
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}
 .aws/config
+{{- else }}
+.qwen
 {{- end }}
