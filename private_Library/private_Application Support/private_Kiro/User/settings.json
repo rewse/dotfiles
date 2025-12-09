@@ -156,5 +156,9 @@
         "workbench.editor.languageDetection": false
     },
     "viceroy.config.internal.lastUpdateTime": "2025-11-19T05:43:05.770Z",
-    "workbench.colorTheme": "One Dark Pro"
+    "workbench.colorTheme": "One Dark Pro",
+    "kiroAgent.mcpApprovedEnvVars": [
+        "HOMEASSISTANT_URL",
+        "HOMEASSISTANT_TOKEN"
+    ]
 }
