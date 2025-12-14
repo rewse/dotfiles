@@ -6,20 +6,10 @@ inclusion: always
 
 ## 概要
 
-Conventional Commits の仕様はコミットメッセージのための軽量の規約です。 明示的なコミット履歴を作成するための簡単なルールを提供します。この規則に従うことで自動化ツールの導入を簡単にします。 コミットメッセージで機能追加・修正・破壊的変更などを説明することで、この規約は [SemVer](http://semver.org/lang/ja/) と協調動作します。
+このプロジェクトでは [Conventional Commits 1.0.0](https://www.conventionalcommits.org/ja/v1.0.0/) に準拠したコミットメッセージを使用しなければなりません (MUST)。
 
-コミットメッセージは次のような形にする必要があります:
+## コミットメッセージの形式
 
-原文：
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-訳：
 ```
 <型>[任意 スコープ]: <タイトル>
 
@@ -28,115 +18,105 @@ Conventional Commits の仕様はコミットメッセージのための軽量�
 [任意 フッター]
 ```
 
-あなたのライブラリの利用者に意図を伝えるために、コミットは以下の構造化された要素を持ちます：
+## 型 (Type)
 
-1. **fix:** *型* `fix` を持つコミットはコードベースのバグにパッチを当てます (これは Semantic Versioning における [PATCH](http://semver.org/#summary) に相当します)。
-1. **feat:** *型* `feat` を持つコミットはコードベースに新しい機能を追加します (これは Semantic Versioning における [MINOR](http://semver.org/#summary) に相当します)。
-1. **BREAKING CHANGE:** フッター に `BREAKING CHANGE:` が書かれているか型/スコープの直後に `!` が追加されているコミットは API の破壊的変更を導入します (Semantic Versioning における [MAJOR](http://semver.org/#summary) に相当します)。 `BREAKING CHANGE` は任意の *型* のコミットに含めることができます。
-1. `fix:` や `feat:` 以外の *型* も許されています。たとえば [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional) (これは [Angular の規約](https://github.com/angular/angular/blob/22b96b9/CONTRIBUTING.md#-commit-message-guidelines) が基になっています) は `build:`, `chore:`, `ci:`,`docs:`, `style:`, `refactor:`, `perf:`, `test:`, などを推奨しています。
-1. [git trailer format](https://git-scm.com/docs/git-interpret-trailers) に似た規約に従って、`BREAKING CHANGE: <タイトル>` 以外の フッター が与えられるかもしれません。
+コミットは以下の型から始まらなければなりません (MUST):
 
-## 型の特徴
-- `feat`: 新機能の追加（SemVerのMINORに相当）
-- `fix`: バグ修正（SemVerのPATCHに相当）
-- `build`: ビルドシステムや外部依存関係に影響する変更
-- `chore`: ビルドプロセスや補助ツールの変更、依存関係の更新
-- `ci`: CI設定ファイルやスクリプトの変更
-- `docs`: ドキュメントの変更
-- `style`: コードの意味に影響しない変更（フォーマット、セミコロンの欠落など）
+- `feat`: 新しい機能を追加するとき (SemVer の MINOR に相当)
+- `fix`: バグ修正を行うとき (SemVer の PATCH に相当)
+- `docs`: ドキュメントのみの変更
+- `style`: コードの意味に影響しない変更（空白、フォーマット、セミコロンの欠落など）
 - `refactor`: バグ修正でも機能追加でもないコード変更
-- `perf`: パフォーマンス改善
-- `test`: テストの追加や更新
+- `perf`: パフォーマンスを向上させるコード変更
+- `test`: テストの追加・修正
+- `build`: ビルドシステムや外部依存関係に影響する変更
+- `ci`: CI 設定ファイルやスクリプトの変更
+- `chore`: その他の変更（ソースやテストファイルを変更しない）
+- `revert`: 以前のコミットを取り消す
 
-追加の型たちは Conventional Commits の仕様で義務付けられているものではなく、(BREAKING CHANGE を含まない限り) Semantic Versioning に対する暗黙的な効果を持ちません。
+## スコープ (Scope)
 
-コミットの型には追加の文脈の情報として スコープ を追加することができます。スコープは括弧で囲みます。たとえば `feat(parser): add ability to parse arrays` のようになります。
+型の後ろにスコープを記述してもよい (MAY)。スコープはコードベースのセクションを記述する括弧で囲まれた名詞にしなければなりません (MUST)。
 
-## Conventional Commits 1.0.0 仕様からの拡張
-- コミットタイトル (1行目) の型は小文字から始める（MUST）
+例: `feat(zsh):`, `fix(vim):`, `docs(readme):`
 
-## 例
+## タイトル (Description)
 
-### タイトルおよび破壊的変更のフッターを持つコミットメッセージ
+- 型/スコープの後ろのコロンとスペースの直後にタイトルが続かなければなりません (MUST)
+- タイトルはコード変更の短い要約にする必要があります (SHOULD)
+- 命令形、現在形を使用する必要があります (SHOULD)（例: "change" であり "changed" や "changes" ではない）
+- 最初の文字を小文字にしたほうがよい (SHOULD)
+- 末尾にピリオドを付けないほうがよい (SHOULD NOT)
+
+## 本文 (Body)
+
+- 短いタイトルの後ろにより長いコミットの本文を追加してもよい (MAY)
+- 本文はタイトルの下の1行の空行から始めなければなりません (MUST)
+- コミットの本文は自由な形式であり、改行で区切られた複数の段落で構成することができます (MAY)
+
+## フッター (Footer)
+
+- ひとつ以上のフッターを、本文の下の 1 行の空行に続けて書くことができます (MAY)
+- フッターのトークンは空白の代わりに `-` を使わなければなりません (MUST)（例: `Acked-by`, `Reviewed-by`）
+- 例外として `BREAKING CHANGE` はトークンとして使用することができます (MAY)
+
+## 破壊的変更 (Breaking Changes)
+
+破壊的変更は以下のいずれかの方法で明示しなければなりません (MUST):
+
+1. フッターに `BREAKING CHANGE:` を記述する
+2. 型/スコープの直後、コロンの直前に `!` を付ける
+
+例:
+```
+feat!: send an email to the customer when a product is shipped
+```
+
+```
+feat(api)!: send an email to the customer when a product is shipped
+```
+
 ```
 feat: allow provided config object to extend other configs
 
 BREAKING CHANGE: `extends` key in config file is now used for extending other config files
 ```
 
-### 破壊的変更を目立たせるために ! を持つコミットメッセージ
+## コミットメッセージの例
+
+### シンプルなコミット
 ```
-feat!: send an email to the customer when a product is shipped
+docs: correct spelling of CHANGELOG
 ```
 
-### スコープおよび破壊的変更を目立たせるための ! を持つコミットメッセージ
+### スコープ付きコミット
 ```
-feat(api)!: send an email to the customer when a product is shipped
+feat(zsh): add alias for chezmoi commands
 ```
 
-### ! と BREAKING CHANGE フッターの両方を持つコミットメッセージ
+### 本文付きコミット
+```
+fix: prevent racing of requests
+
+Introduce a request id and a reference to latest request. Dismiss
+incoming responses other than from latest request.
+```
+
+### 破壊的変更を含むコミット
 ```
 chore!: drop support for Node 6
 
 BREAKING CHANGE: use JavaScript features not available in Node 6.
 ```
 
-### 本文を持たないコミットメッセージ
-```
-docs: correct spelling of CHANGELOG
-```
-
-### スコープを持つコミットメッセージ
-```
-feat(lang): add polish language
-```
-
-### 複数段落からなる本文と複数のフッターを持ったコミットメッセージ
-```
-fix: prevent racing of requests
-
-Introduce a request id and a reference to latest request. Dismiss
-incoming responses other than from latest request.
-
-Remove timeouts which were used to mitigate the racing issue but are
-obsolete now.
-
-Reviewed-by: Z
-Refs: #123
-```
-
-## 仕様
-この文書におけるキーワード「しなければならない (MUST)」「してはならない (MUST NOT)」「要求されている (REQUIRED)」「することになる (SHALL)」「することはない(SHALL NOT)」「する必要がある (SHOULD)」「しないほうがよい (SHOULD NOT)」「推奨される (RECOMMENDED)」「してもよい (MAY)」「選択できる (OPTIONAL)」は [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) ([JPNIC 日本語訳](https://www.nic.ad.jp/ja/tech/ipa/RFC2119JA.html)) で述べられているように解釈されるべきものです。
-
-1. コミットは `feat` や `fix` などの型から始まり (MUST)、その後ろにはスコープ (OPTIONAL) と `!` (OPTIONAL) が続き、その後ろにコロンとスペース (REQUIRED) が続く。
-1. コミットがあなたのアプリケーションやライブラリに新しい機能を追加するとき、型 `feat` が使われなければならない (MUST)。
-1. コミットがあなたのアプリケーションのためのバグ修正を行うとき、型 `fix` が使われなければならない (MUST)。
-1. スコープを型の後ろに記述してもよい (MAY)。スコープは、コードベースのセクションを記述する括弧で囲まれた名詞にしなければならない (MUST)。例: `fix(parser):`。
-1. 型/スコープの後ろのコロンとスペースの直後にタイトルが続かなければならない (MUST)。 タイトルはコード変更の短かい要約である。例: `fix: array parsing issue when multiple spaces were contained in string`。
-1. 短いタイトルの後ろにより長いコミットの本文を追加してもよい (MAY)。これはコード変更に関する追加の情報を提供する。 本文はタイトルの下の 1 行の空行から始めなければならない (MUST)。
-1. コミットの本文は自由な形式であり、改行で区切られた複数の段落で構成することができる (MAY)。
-1. ひとつ以上のフッターを、本文の下の 1 行の空行に続けて書くことができる (MAY)。 それぞれのフッターは、ひとつの単語トークン、それに続く `:<space>` か `<space>#` によるセパレータ、そして文字列の値から構成されなければならない (MUST) (これは [git trailer convention](https://git-scm.com/docs/git-interpret-trailers) に触発されている)。
-1. フッターのトークンは空白の代わりに - を使わなければならない (MUST)。例えば `Acked-by` とする (これは複数段落からなる本文からフッターを区別するのに役立つ)。 例外として `BREAKING CHANGE` があり、これをトークンとして使用することができる (MAY)。
-1. フッターの値にはスペースと改行を含めることができる (MAY)。そして次のフッターのトークンとセパレータの組が見つかった時、以前のフッターのパースは終了しなければならない (MUST)。
-1. 破壊的変更は、コミットの型/スコープの接頭辞か、フッターによって明示されなければならない (MUST)。
-1. 破壊的変更がフッターとして含まれる場合は、大文字の BREAKING CHANGE の後ろにコロンとスペース、そしてタイトルを続けなければならない (MUST)。例: `BREAKING CHANGE: environment variables now take precedence over config files`。
-1. 破壊的変更が型/スコープの接頭辞として含まれる場合は、`:` の直前に `!` を用いて明示されねばならない (MUST)。! が使用された場合には、 フッターから `BREAKING CHANGE:` を省略してもよい (MAY)。その場合はコミットのタイトル部分で破壊的変更の内容を説明することになる (SHALL)。
-1. `feat` と `fix` 以外の型を使うことができる (MAY)。例: `docs: updated ref docs.`。
-1. Conventional Commits を構成する情報の単位は、大文字の `BREAKING CHANGE` を除いて、実装は大文字と小文字を区別してはならない (MUST NOT)。
-1. フッターのトークンにおいて `BREAKING-CHANGE` は `BREAKING CHANGE` と同じトークンとして解釈されなければならない (MUST)。
-
-## よくある質問
-
-### Conventional Commits はrevertコミットをどのように扱いますか？
-我々のおすすめの方法としては、ひとつは`revert`型と revertされるコミットの SHA を参照するフッターを使うようにすることです。
-
+### revert コミット
 ```
 revert: let us never again speak of the noodle incident
 
 Refs: 676104e, a215868
 ```
 
-## ライセンス
-この文書は [Conventional Commits 1.0.0](https://www.conventionalcommits.org/ja/v1.0.0/) 仕様を基に作成されており、元の仕様は [Creative Commons Attribution 3.0 License](https://creativecommons.org/licenses/by/3.0/) の下でライセンスされています。
+## 参考文献
 
-この文書は元の仕様を翻訳・改変したものです。
+- [Conventional Commits 1.0.0](https://www.conventionalcommits.org/ja/v1.0.0/)
+- [Angular Commit Message Guidelines](https://github.com/angular/angular/blob/22b96b9/CONTRIBUTING.md#-commit-message-guidelines)
