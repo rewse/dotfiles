@@ -8,7 +8,8 @@
   },
   "then": {
     "type": "askAgent",
-    "prompt": "Review the staged changes and commit them with an appropriate commit message following #commit-message-standards.md. If the staging area is empty, let me know."
+    "prompt": "Review the staged changes and commit them with an appropriate commit message following [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/). If the staging area is empty, let me know."
   },
-  "shortName": "commit-staged-files"
+  "shortName": "commit-staged-files",
+  "workspaceFolderName": "chezmoi"
 }

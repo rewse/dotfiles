@@ -1,110 +1,75 @@
 # 技術スタック
 
-## 要求レベルについて
-この文書における次の各キーワード「しなければならない (MUST)」、「してはならない (MUST NOT)」、「要求されている (REQUIRED)」、「することになる (SHALL)」、「することはない (SHALL NOT)」、「する必要がある (SHOULD)」、「しないほうがよい (SHOULD NOT)」、「推奨される (RECOMMENDED)」、「してもよい (MAY)」、「選択できる (OPTIONAL)」は、RFC 2119 で述べられているように解釈されるべきものです。
-
 ## コア技術
 
-### ドットファイル管理
-- **chezmoi**: ドットファイル管理ツール（テンプレート機能を活用）
-- **1Password CLI (op)**: 秘密情報の安全な管理
+- **chezmoi**: テンプレート機能付きのdotfiles管理ツール
+- **1Password CLI**: セキュアなシークレット管理
+- **Shell**: クロスプラットフォーム対応のZsh
+- **Git**: dotfilesのバージョン管理
 
-## プラットフォーム
+## テンプレートシステム
 
-- **macOS**: Homebrew を使用したパッケージ管理
-- **Linux**: apt などのネイティブパッケージマネージャー
+- chezmoiの変数を使ったGoテンプレート構文を使用
+- OS基準の条件分岐 (`{{ if eq .chezmoi.os "darwin" }}`)
+- ホスト名固有の設定 (`{{ if eq .chezmoi.hostname "..." }}`)
+- 1Password統合 (`{{ onepasswordRead "op://..." }}`)
 
-## 共通コマンド
+## 主要な依存関係
 
-### chezmoi 操作
+- **Kiro CLI**: AI アシスタント統合
+- **direnv**: 環境変数管理 (macOS)
+- **bat/batcat**: 拡張ファイル表示
+- **zsh-vi-mode**: シェル用Viキーバインド
+- **op**: 1Password CLIツール
 
+## よく使うコマンド
+
+### 初期セットアップ
 ```bash
-# ファイルを追加
-chezmoi add <file>
+# chezmoiをインストールしてdotfilesを適用
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply <username>
 
-# ファイルを編集
-chezmoi edit <file>
+# またはmacOSでHomebrewを使用
+brew install chezmoi
+chezmoi init --apply <username>
+```
 
-# 変更を確認
+### 日常的な操作
+```bash
+# 新しいファイルを管理対象に追加
+chezmoi add ~/.filename
+
+# 管理されているファイルを編集
+chezmoi edit ~/.filename
+
+# 何が変更されるかを確認
 chezmoi diff | cat
 
 # 変更を適用
 chezmoi apply
 
-# ドライラン（実際には適用しない）
+# 変更をプレビューするドライラン
 chezmoi apply --dry-run --verbose | cat
 
-# ソースディレクトリに移動
-chezmoi cd
-
-# 外部ファイルを強制更新
-chezmoi apply --refresh-externals
-
-# テンプレートデータを表示
-chezmoi data
-
-# テンプレートをテスト
-chezmoi execute-template
-
-# 状態をクリア（スクリプト再実行用）
-chezmoi state delete-bucket --bucket=entryState  # run_onchange_
-chezmoi state delete-bucket --bucket=scriptState # run_once_
+# リモートリポジトリと同期
+chezmoi update
 ```
 
-## 設定ファイルの場所
-
-- **chezmoi 設定**: `~/.config/chezmoi/chezmoi.toml`
-
-## テンプレート変数
-
-chezmoi テンプレート内で使用可能な変数:
-
-- `.chezmoi.os`: オペレーティングシステム（`darwin` または `linux`）
-- `.chezmoi.hostname`: ホスト名
-- `.email`: ユーザーのメールアドレス（`chezmoi.toml` で設定）
-
-## 秘密情報の管理
-
-### 1Password CLI の使用
-
-1Password CLI を使用して秘密情報を取得します:
-
-```
-{{ onepasswordRead "op://Private/ServiceName/credential" }}
-```
-
-### Service Account の設定
-
-CI/CD 環境や自動化スクリプトで 1Password を使用する場合、Service Account を使用できます。
-
-#### Service Account の作成
-
-1. [1Password の Web アプリ](https://my.1password.com/developer-tools/active/service-accounts)にログイン
-2. Settings > Developer > Service Accounts に移動
-3. "Create Service Account" をクリック
-4. Service Account に名前を付ける（例: "chezmoi-automation"）
-5. 必要な Vault へのアクセス権限を付与（注: Private vault は Service Account に使用できません）
-6. トークンをコピーして安全に保存（このトークンは一度しか表示されません）
-
-**重要**: Service Account は Private vault にアクセスできません (MUST NOT)。Service Account で使用する秘密情報は、共有 Vault に保存する必要があります (MUST)。
-
-#### chezmoi での設定
-
-`chezmoi.toml` に以下の設定を追加することで、`OP_SERVICE_ACCOUNT_TOKEN` 環境変数を使用した認証が有効になります:
-
-```toml
-[onepassword]
-    mode = "service-account"
-```
-
-この設定により、対話的なログインなしで 1Password の秘密情報にアクセスできます。Service Account トークンは環境変数 `OP_SERVICE_ACCOUNT_TOKEN` に設定する必要があります (MUST)。
-
-#### 使用例
-
+### 開発ワークフロー
 ```bash
-# 環境変数にトークンを設定
-export OP_SERVICE_ACCOUNT_TOKEN="ops_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# テンプレートを直接編集
+chezmoi edit --apply ~/.zshrc
 
-# chezmoi を実行
+# 変更後にテンプレートを再実行
 chezmoi apply
+
+# テンプレート構文をチェック
+chezmoi execute-template < template-file
 ```
+
+## ファイル命名規則
+
+- `dot_*`: ホームディレクトリで `.filename` になるファイル
+- `private_*`: 制限された権限 (0600) を持つファイル
+- `*.tmpl`: chezmoiによって処理されるテンプレートファイル
+- `executable_*`: 実行可能にすべきファイル

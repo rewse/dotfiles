@@ -1,66 +1,47 @@
 # プロジェクト構造
 
-## 要求レベルについて
-この文書における次の各キーワード「しなければならない (MUST)」、「してはならない (MUST NOT)」、「要求されている (REQUIRED)」、「することになる (SHALL)」、「することはない (SHALL NOT)」、「する必要がある (SHOULD)」、「しないほうがよい (SHOULD NOT)」、「推奨される (RECOMMENDED)」、「してもよい (MAY)」、「選択できる (OPTIONAL)」は、RFC 2119 で述べられているように解釈されるべきものです。
-
-## ディレクトリ構造
+## ディレクトリ構成
 
 ```
 .
-├── .chezmoitemplates/            # 共有テンプレート（他のテンプレートから include 可能）
-├── .kiro/                        # Kiro 関連設定
-│   └── steering/                 # AI アシスタント用ガイドライン
-├── dot_config/                   # XDG Base Directory 準拠の設定
-│   └── chezmoi/                  # chezmoi 設定と設定例
-│       └── chezmoi.toml.example  # 設定例ファイル
-├── dot_kiro/                     # Kiro CLI 設定とステアリングルール
-├── dot_vim/                      # Vim 設定
-├── dot_*                         # その他のドットファイル（zshrc、gitconfig など）
-├── private_dot_ssh/              # SSH 鍵と設定（プライベート属性 0600）
-├── private_*                     # その他のプライベートファイル
-└── *.tmpl                        # テンプレートファイル（chezmoi が処理）
-```
-
-## ファイル命名規則
-
-chezmoi の命名規則に従います:
-
-- `dot_`: `.` で始まるファイル（例: `dot_zshrc` → `~/.zshrc`）
-- `private_`: パーミッション 0600 のファイル
-- `.tmpl`: テンプレートとして処理されるファイル
-- `executable_`: 実行可能ファイル
-
-## テンプレートの使用
-
-### 共有テンプレート
-`.chezmoitemplates/` ディレクトリ内のファイルは他のテンプレートから include できます:
+├── README.md                           # プロジェクトドキュメントとセットアップ手順
+├── LICENSE                             # プロジェクトライセンスファイル
+├── .gitignore                          # Git無視パターン
+├── .chezmoiignore                      # chezmoi操作中に無視するファイル
+├── .chezmoitemplates/                  # 共有テンプレート
+├── dot_zshrc.tmpl                      # OS固有ロジック付きZshシェル設定
+├── dot_gitconfig.tmpl                  # テンプレート付きGit設定
+├── dot_vimrc.tmpl                      # Vimエディタ設定
+├── dot_npmrc                           # NPM設定
+├── private_dot_ssh/                    # SSHキーと設定（0600権限）
+├── private_Library/                    # macOS固有のアプリケーションサポートファイル
+├── dot_config/                         # XDG Base Directory準拠の設定
+└── dot_kiro/                           # Kiro CLIとAIアシスタント設定
 
 ```
-{{- include ".chezmoitemplates/vim-keymappings" -}}
-{{- template "mcp-servers.json.tmpl" . -}}
-```
 
-### プラットフォーム固有の設定
-テンプレート内で OS を判定して条件分岐します:
+### プラットフォーム固有ファイル
+- ファイルはOS固有の動作にchezmoiの条件テンプレートを使用
+- 共通パターン: macOS用の `{{ if eq .chezmoi.os "darwin" }}`
+- 異なるマシン用のホスト名固有設定
 
-```
-{{- if eq .chezmoi.os "darwin" }}
-# macOS 用の設定
-{{- else if eq .chezmoi.os "linux" }}
-# Linux 用の設定
-{{- end }}
-```
+## ファイル命名パターン
 
-## 設定の適用順序
+### chezmoi属性
+- `dot_`: `.filename` になる（隠しファイル）
+- `private_`: 0600権限を取得（セキュアファイル）
+- `executable_`: 実行権限を取得
+- `.tmpl`: chezmoiによって処理されるテンプレートファイル
 
-### Zsh の読み込み順序
-1. `.zprofile`: ログインシェル起動時（環境変数、PATH）
-2. `.zshrc`: 対話シェル起動時（エイリアス、プロンプト）
+### テンプレート変数
+- `.chezmoi.os`: オペレーティングシステム（darwin/linux）
+- `.chezmoi.hostname`: マシン固有設定用のマシンホスト名
+- `onepasswordRead`: シークレットを安全に取得する関数
 
-## ベストプラクティス
+## 主要なアーキテクチャ決定
 
-- テンプレート変数は `chezmoi.toml` の `[data]` セクションで定義する必要がある (SHOULD)
-- 秘密情報は 1Password CLI を使用して管理しなければならない (MUST)
-- プラットフォーム固有の設定は条件分岐で管理する必要がある (SHOULD)
-- 共通のテンプレート部品は `.chezmoitemplates/` に配置する必要がある (SHOULD)
-- SSH 鍵などの機密ファイルには `private_` プレフィックスを使用しなければならない (MUST)
+1. **クロスプラットフォームサポート**: すべての設定がmacOSとLinuxの両方に対応
+2. **セキュリティファースト**: 1Password統合による機密データ管理
+3. **モジュラーテンプレート**: `.chezmoitemplates/` の共有コンポーネント
+4. **XDG準拠**: モダンな設定ファイル構成
+5. **AI統合**: Kiro AIアシスタントワークフローの組み込みサポート
