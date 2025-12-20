@@ -1,6 +1,31 @@
 {
   "mcpServers": {
 {{ template "mcp-servers.json.tmpl" . }},
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "{{ onepasswordRead "op://chezmoi/Brave/credential" }}"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "brave_web_search"
+      ]
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch",
+        "--ignore-robots-txt"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "fetch"
+      ]
+    },
     "playwright": {
       "command": "npx",
       "args": [
