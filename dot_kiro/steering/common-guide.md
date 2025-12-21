@@ -16,7 +16,7 @@
 
 #### チャットの口調について
 
-チャットの口調については`./chat-tone-guide.md`に従わなければなりません。
+チャットの口調は`./chat-tone-guide.md`に従わなければなりません。
 
 #### チャットのフォーマットについて
 
@@ -26,9 +26,9 @@
 
 コミットメッセージは [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) に従わなければなりません。
 
-### 仕様書について
+## 仕様書 (Spec) について
 
-- 仕様書は [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) に従わなければなりません。
+- 仕様書 (Spec) は [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) に従わなければなりません。
 - アーキテクチャはMermaidで書かなくてはなりません。
 
 ## コーディング規約
@@ -68,12 +68,12 @@ build-backend = "uv_build"
 module-root = "src"
 ```
 
-#### テスト
-
-テストにはuvを使用しなければなりません。
-
-実行例: `PYTHONPATH=src uv run pytest tests/test_foo.py`
-
 #### トラブルシューティング
 
 - WEHN `ModuleNotFoundError`が発生する THEN `.venv`を削除して `uv sync --no-editable` で再作成する
+
+### テスト
+
+テストには `uv run` を使用しなければなりません。
+
+実行例: `PYTHONPATH=src uv run pytest tests/test_foo.py`
