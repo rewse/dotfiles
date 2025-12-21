@@ -122,3 +122,30 @@ Pagerが起動してしまう可能性があるコマンドは、`cat`にパイ�
 - `git diff` → `git diff | cat`
 - `git log` → `git log | cat`
 - `git show` → `git show | cat`
+
+## Pythonプロジェクト規約
+
+### ビルドシステム
+
+`src`レイアウトを使用するプロジェクトで `uv run <command>` でコンソールスクリプトを実行する場合、以下の設定を`pyrpoject.toml`に追加しなければなりません。
+
+```toml
+[project.scripts]
+my-command = "my_package.cli:main"
+
+[build-system]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = "src"
+```
+
+#### テスト
+
+テストにはuvを使用しなければなりません。
+
+実行例: `PYTHONPATH=src uv run pytest tests/test_foo.py`
+
+#### トラブルシューティング
+
+- WEHN `ModuleNotFoundError`が発生する THEN `.venv`を削除して `uv sync --no-editable` で再作成する
