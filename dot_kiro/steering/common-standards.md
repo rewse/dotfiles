@@ -105,13 +105,19 @@
 
 ## CLIコマンド規約
 
-Pagerが起動してしまう可能性があるコマンドは、`cat`にパイプしてPagerが起動しないようしなければなりません。
+Pagerが起動してしまう可能性があるコマンドは、`cat`にパイプするか、`--no-pager`などの適切なオプションを付けてPagerが起動しないようしなければなりません。
 
 ### 推奨される例
 
-- `git diff` → `git diff | cat`
-- `git log` → `git log | cat`
-- `git show` → `git show | cat`
+- `git -P diff`
+- `git -P log`
+- `git -P show`
+
+### 避けるべき例
+
+- `git diff`
+- `git log`
+- `git show`
 
 ## コーディング規約
 
