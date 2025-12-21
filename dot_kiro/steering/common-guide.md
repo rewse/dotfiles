@@ -100,7 +100,8 @@
 
 ### 仕様書について
 
-仕様書は [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) に従わなければなりません。
+- 仕様書は [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) に従わなければなりません。
+- アーキテクチャはMermaidで書かなくてはなりません。
 
 ## コーディング規約
 
