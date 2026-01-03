@@ -22,7 +22,7 @@ window-padding-x = 5
 window-padding-y = 5
 window-theme = ghostty
 window-height = 45
-window-width = 160
+window-width = 155
 
 # Keybindings - Clipboard
 keybind = cmd+c=copy_to_clipboard
