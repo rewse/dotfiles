@@ -1,8 +1,7 @@
-{{- $bin := "" -}}
-{{- if eq .chezmoi.os "darwin" -}}
-{{- $bin = "/opt/homebrew/bin/" -}}
-{{- end -}}
-    "Context7": {
+{{- $bin := "" }}
+{{- if eq .chezmoi.os "darwin" }}
+{{- $bin = "/opt/homebrew/bin/" }}
+{{- end }}    "Context7": {
       "command": "{{ $bin }}npx",
       "args": [
         "-y",
