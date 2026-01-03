@@ -30,13 +30,29 @@
         "fetch"
       ]
     },
-    "serena": {
-      "command": "{{ $bin }}uvx",
+    "playwright": {
+      "command": "{{ $bin }}npx",
       "args": [
-        "--from",
-        "git+https://github.com/oraios/serena",
-        "serena",
-        "start-mcp-server"
+        "@playwright/mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "browser_click",
+        "browser_close",
+        "browser_console_messages",
+        "browser_drag",
+        "browser_hover",
+        "browser_navigate",
+        "browser_navigate_back",
+        "browser_network_requests",
+        "browser_press_key",
+        "browser_resize",
+        "browser_select_option",
+        "browser_snapshot",
+        "browser_tabs",
+        "browser_take_screenshot",
+        "browser_type",
+        "browser_wait_for"
       ]
     }
   }
