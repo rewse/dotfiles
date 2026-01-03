@@ -1,10 +1,14 @@
+{{- $bin := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{- $bin = "/opt/homebrew/bin/" -}}
+{{- end -}}
 {
   "mcpServers": {
 {{ template "mcp-servers.json.tmpl" . }}  },
   "powers": {
     "mcpServers": {
       "power-homeassistant-Home Assistant": {
-        "command": "uvx",
+        "command": "{{ $bin }}uvx",
         "args": [
           "ha-mcp@latest"
         ],
@@ -13,13 +17,6 @@
           "HOMEASSISTANT_URL": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/url" }}",
           "HOMEASSISTANT_TOKEN": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/credential" }}"
         }
-      },
-      "power-homeassistant-fetch": {
-        "command": "uvx",
-        "args": [
-          "mcp-server-fetch",
-          "--ignore-robots-txt"
-        ]
       }
     }
   }

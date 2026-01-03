@@ -1,8 +1,12 @@
+{{- $bin := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{- $bin = "/opt/homebrew/bin/" -}}
+{{- end -}}
 {
   "mcpServers": {
 {{ template "mcp-servers.json.tmpl" . }},
     "brave-search": {
-      "command": "npx",
+      "command": "{{ $bin }}/npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-brave-search"
@@ -16,7 +20,7 @@
       ]
     },
     "fetch": {
-      "command": "uvx",
+      "command": "{{ $bin }}uvx",
       "args": [
         "mcp-server-fetch",
         "--ignore-robots-txt"
@@ -26,14 +30,8 @@
         "fetch"
       ]
     },
-    "playwright": {
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest"
-      ]
-    },
     "serena": {
-      "command": "uvx",
+      "command": "{{ $bin }}uvx",
       "args": [
         "--from",
         "git+https://github.com/oraios/serena",
