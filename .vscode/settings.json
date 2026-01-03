@@ -1,15 +1,13 @@
 {
     "kiroAgent.configureMCP": "Enabled",
     "files.associations": {
-        "chezmoi.toml": "properties",
-        "dot_aws/config": "properties",
+        "*.json.tmpl": "json",
+        "*.toml": "properties",
         "dot_gitconfig.tmpl": "properties",
         "dot_gvimrc": "Vimscript",
         "dot_vimrc": "Vimscript",
         "dot_zprofile.tmpl": "shellscript",
         "dot_zshrc.tmpl": "shellscript",
-        "mcp-servers.json.tmpl": "json",
-        "mcp.json.tmpl": "json",
         "vim-keymappings": "Vimscript"
     }
 }
