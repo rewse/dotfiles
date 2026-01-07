@@ -6,7 +6,7 @@
   "mcpServers": {
 {{ template "mcp-servers.json.tmpl" . }},
     "brave-search": {
-      "command": "{{ $bin }}/npx",
+      "command": "{{ $bin }}npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-brave-search"
@@ -17,6 +17,38 @@
       "disabled": false,
       "autoApprove": [
         "brave_web_search"
+      ]
+    },
+    "chrome-devtools": {
+      "command": "{{ $bin }}npx",
+      "args": [
+        "chrome-devtools-mcp@latest"
+      ],
+      "autoApprove": [
+        "click",
+        "close_page",
+        "drag",
+        "emulate",
+        "fill",
+        "fill_form",
+        "get_console_message",
+        "get_network_request",
+        "handle_dialog",
+        "hover",
+        "list_console_messages",
+        "list_network_requests",
+        "list_pages",
+        "navigate_page",
+        "new_page",
+        "performance_analyze_insight",
+        "performance_start_trace",
+        "performance_stop_trace",
+        "press_key",
+        "resize_page",
+        "select_page",
+        "take_screenshot",
+        "take_snapshot",
+        "wait_for"
       ]
     },
     "fetch": {
