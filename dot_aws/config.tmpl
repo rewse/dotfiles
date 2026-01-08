@@ -5,8 +5,7 @@ output = yaml
 credential_process = isengardcli credentials --role Admin --awscli 070392599442
 {{- end }}
 
-[hugo]
+[profile hugo]
 region = ap-northeast-1
 output = yaml
-aws_access_key_id = {{ onepasswordRead "op://chezmoi/Hugo - AWS IAM/username" }}
-aws_secret_access_key = {{ onepasswordRead "op://chezmoi/Hugo - AWS IAM/credential" }}
+
