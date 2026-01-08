@@ -11,8 +11,6 @@ README.md
 Library
 {{- end }}
 
-{{- if ne .chezmoi.hostname "7cf34ded5d65" }}
-.aws/config
-{{- else }}
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 .qwen
 {{- end }}
