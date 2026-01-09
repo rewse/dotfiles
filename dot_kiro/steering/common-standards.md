@@ -116,6 +116,7 @@ Pagerが起動してしまう可能性があるコマンドは、`cat`にパイ�
 - `git -P diff`
 - `git -P log`
 - `git -P show`
+- `aws | cat`
 
 ### 避けるべき例
 
