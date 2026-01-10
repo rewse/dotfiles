@@ -5,6 +5,23 @@
 {
   "mcpServers": {
 {{ template "mcp-servers.json.tmpl" . }},
+    "aws-mcp": {
+      "command": "{{ $bin }}uvx",
+      "args": [
+        "mcp-proxy-for-aws@latest",
+        "https://aws-mcp.us-east-1.api.aws/mcp",
+        "--metadata", "AWS_REGION=ap-northeast-1"
+      ],
+      "autoApprove": [
+        "aws___retrieve_agent_sop",
+        "aws___search_documentation",
+        "aws___read_documentation",
+        "aws___recommend",
+        "aws___list_regions",
+        "aws___get_regional_availability",
+        "aws___suggest_aws_commands"
+      ]
+    },
     "brave-search": {
       "command": "{{ $bin }}npx",
       "args": [
