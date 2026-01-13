@@ -161,3 +161,7 @@ module-root = "src"
 テストには `uv run` を使用しなければなりません。
 
 実行例: `PYTHONPATH=src uv run pytest tests/test_foo.py`
+
+## CSS規約
+
+CSSを書く順は[Concentric-CSS](https://github.com/brandon-rhodes/Concentric-CSS/blob/master/style3.css)に従わなければなりません。
