@@ -104,7 +104,7 @@
 
 ## 仕様書 (Spec) 規約
 
-- 仕様書 (Spec) は [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) に従わなければなりません。
+- 仕様書 (Spec) は [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119)（[日本語版](https://www.nic.ad.jp/ja/tech/ipa/RFC2119JA.html)）に従わなければなりません。
 - アーキテクチャはMermaidで書かなくてはなりません。
 
 ## CLIコマンド規約
