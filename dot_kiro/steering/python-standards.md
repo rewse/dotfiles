@@ -22,7 +22,7 @@ module-root = "src"
 
 ### トラブルシューティング
 
-- WEHN `ModuleNotFoundError`が発生する THEN `.venv`を削除して `uv sync --no-editable` で再作成する
+- WEHN `ModuleNotFoundError`が発生する THEN 再度実行してみる
 
 ## テスト
 
