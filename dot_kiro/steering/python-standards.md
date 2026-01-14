@@ -6,8 +6,8 @@ inclusion: manual
 
 ## ビルドシステム
 
-- Pythonプロジェクトのビルドシステムにはuvを使う必要があります。
-- `src`レイアウトを使用するプロジェクトで `uv run <command>` でコンソールスクリプトを実行する場合、以下の設定を`pyrpoject.toml`に追加しなければなりません。
+- Pythonプロジェクトのビルドシステムにはuvを使う必要がある
+- `src`レイアウトを使用するプロジェクトで `uv run <command>` でコンソールスクリプトを実行する場合、以下の設定を`pyrpoject.toml`に追加しなければならない
 
 ```toml
 [project.scripts]
@@ -26,6 +26,6 @@ module-root = "src"
 
 ## テスト
 
-テストには `uv run` を使用しなければなりません。
+テストには `uv run` を使用しなければならない
 
 実行例: `PYTHONPATH=src uv run pytest tests/test_foo.py`
