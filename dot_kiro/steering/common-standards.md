@@ -124,16 +124,6 @@ Pagerが起動してしまう可能性があるコマンドは、`cat`にパイ�
 - `git log`
 - `git show`
 
-## Browser Automation
-
-Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
-
-Core workflow:
-1. `agent-browser open <url>` - Navigate to page
-2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
-3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
-4. Re-snapshot after page changes
-
 ## コーディング規約
 
 ### コーディングスタイル
@@ -144,34 +134,12 @@ Core workflow:
 
 コメントはコードに記述できない背景や理由を説明する内容でなければなりません。または、直感的には分かりづらいコードを自然言語で説明する内容でなければなりません。コードを読めば誰でも分かる内容については、コメントを書かないほうが良いです。
 
-## Pythonプロジェクト規約
+## Browser Automation
 
-### ビルドシステム
+Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
 
-- Pythonプロジェクトのビルドシステムにはuvを使う必要があります。
-- `src`レイアウトを使用するプロジェクトで `uv run <command>` でコンソールスクリプトを実行する場合、以下の設定を`pyrpoject.toml`に追加しなければなりません。
-
-```toml
-[project.scripts]
-my-command = "my_package.cli:main"
-
-[build-system]
-build-backend = "uv_build"
-
-[tool.uv.build-backend]
-module-root = "src"
-```
-
-#### トラブルシューティング
-
-- WEHN `ModuleNotFoundError`が発生する THEN `.venv`を削除して `uv sync --no-editable` で再作成する
-
-### テスト
-
-テストには `uv run` を使用しなければなりません。
-
-実行例: `PYTHONPATH=src uv run pytest tests/test_foo.py`
-
-## CSS規約
-
-CSSを書く順は[Concentric-CSS](https://github.com/brandon-rhodes/Concentric-CSS/blob/master/style3.css)に従わなければなりません。
+Core workflow:
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
