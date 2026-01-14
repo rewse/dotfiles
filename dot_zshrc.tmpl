@@ -108,10 +108,10 @@ fi
 
 # ls aliases
 {{- if eq .chezmoi.os "darwin" }}
-alias ls="ls -FG"
-alias ll="ls -lFG"
-alias la="ls -aFG"
-alias lal="ls -alFG"
+alias ls="gls -F --color=auto"
+alias ll="gls -lF --color=auto"
+alias la="gls -aF --color=auto"
+alias lal="gls -alF --color=auto"
 {{- else if eq .chezmoi.os "linux" }}
 alias ls="ls -F --color=auto"
 alias ll="ls -lF --color=auto"
@@ -146,6 +146,15 @@ alias vi="vim"
 alias view="vim -R"
 alias zprofile="${EDITOR} ~/.zprofile"
 alias zshrc="${EDITOR} ~/.zshrc"
+
+{{- if eq .chezmoi.os "darwin" }}
+# GNU Coreutils
+alias date="gdate"
+alias readlink="greadlink"
+alias realpath="grealpath"
+alias sed="gsed"
+alias timeout="gtimeout"
+{{- end }}
 
 {{- if eq .chezmoi.os "linux" }}
 # 1Password CLI
