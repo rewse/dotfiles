@@ -3,6 +3,6 @@ inclusion: fileMatch
 fileMatchPattern: "*.css"
 ---
 
-# CSS規約
+# CSS Standards
 
-CSSを書く順は[Concentric-CSS](https://github.com/brandon-rhodes/Concentric-CSS/blob/master/style3.css)に従わなければならない。
+You MUST follow [Concentric-CSS](https://raw.githubusercontent.com/brandon-rhodes/Concentric-CSS/refs/heads/master/style3.css) for the order of writing CSS.

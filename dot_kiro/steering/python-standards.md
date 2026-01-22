@@ -2,12 +2,13 @@
 inclusion: manual
 ---
 
-# Python規約
+# Python Standards
 
-## ビルドシステム
+## Build System
 
-- Pythonプロジェクトのビルドシステムにはuvを使う必要がある
-- `src`レイアウトを使用するプロジェクトで `uv run <command>` でコンソールスクリプトを実行する場合、以下の設定を`pyrpoject.toml`に追加しなければならない
+You MUST use `uv` as the build system for Python projects.
+
+When running console scripts with `uv run <command>` in projects using the `src` layout, you MUST add the following configuration to `pyproject.toml`:
 
 ```toml
 [project.scripts]
@@ -20,12 +21,12 @@ build-backend = "uv_build"
 module-root = "src"
 ```
 
-### トラブルシューティング
+### Troubleshooting
 
-- WEHN `ModuleNotFoundError`が発生する THEN 再度実行してみる
+If `ModuleNotFoundError` occurs, you MUST retry the execution.
 
-## テスト
+## Testing
 
-テストには `uv run` を使用しなければならない
+You MUST execute tests using `uv run`.
 
-実行例: `PYTHONPATH=src uv run pytest tests/test_foo.py`
+Example: `PYTHONPATH=src uv run pytest tests/test_foo.py`
