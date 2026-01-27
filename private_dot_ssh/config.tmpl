@@ -32,7 +32,33 @@ Host github.com
   User git
 
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
-Host git.amazon.com
+### Start of WSSH Config Block ###
+##############################################################################################
+### ****                             IMPORTANT NOTICE                                 **** ###
+### **** PLEASE DO NOT PUT ANY CUSTOM CONFIGURATIONS IN BETWEEN THE WSSH CONFIG BLOCK **** ###
+### ****                WHEN WSSH UNINSTALLS THIS BLOCK WILL BE REMOVED              **** ###
+#############################################################################################
+## Start of CNAME and SSH alias configs - PLEASE DO NOT EDIT THIS LINE ##
+## End of CNAME and SSH alias configs ##
+# The following config is added by WSSH setup script to configure off-VPN dev-dsk access.
+Host dev-dsk-*.amazon.com
+  ProxyCommand=/usr/local/bin/wssh proxy %h
+  ServerAliveInterval 15
+  ServerAliveCountMax 44
   User shibtats
+# The following config is added by WSSH setup script to configure off-VPN SSH access.
+Host *.corp.amazon.com
+  ProxyCommand=/usr/local/bin/wssh proxy %h
+  ServerAliveInterval 15
+  ServerAliveCountMax 44
+  User shibtats
+# The following config is added by WSSH setup script to configure off-VPN Git access.
+Host git.amazon.com
   ProxyCommand=/usr/local/bin/wssh proxy %h --port=%p
+  User shibtats
+Host github.audible.com
+  ProxyCommand=/usr/local/bin/wssh proxy %h --port=%p
+  User git
+Match all
+### End of WSSH Config Block ###
 {{- end }}
