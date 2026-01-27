@@ -8,6 +8,7 @@ As a general principle, you SHOULD use English for publicly accessible documents
 - Spec file: Japanese
 - Code comments: English
 - Commit messages: English
+- Skill file: English
 - Variable names / Function names: English
 
 The language of `README.md` is undefined. You MUST ask the user what language to use before creating a `README.md`.
