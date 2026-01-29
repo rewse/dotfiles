@@ -22,6 +22,7 @@ When using Slack search through different interfaces, the syntax differs:
 - DMs: `in:<@UserID>` (User ID wrapped in `<@>`)
 
 ### User References (`from:`, `with:`)
+
 - **GUI (Slack app)**: Use `from:@username` or `from:@display_name`
 - **API/MCP**: Usually `from:@username` works, but if it doesn't, use `from:<@UserID>` (User ID wrapped in `<@>`)
 
