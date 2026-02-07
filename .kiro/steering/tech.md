@@ -73,3 +73,8 @@ chezmoi execute-template < template-file
 - `private_*`: 制限された権限 (0600) を持つファイル
 - `*.tmpl`: chezmoiによって処理されるテンプレートファイル
 - `executable_*`: 実行可能にすべきファイル
+
+## Commit Message
+
+- When you write a conventional commit messge, You SHOULD use `docs:` as a type for files in `.kiro` directories.
+- When you write a conventional commit messge, You SHOULD NOT use `docs:` as a type for files in `dot_*` or `private_dot_*` directories.
