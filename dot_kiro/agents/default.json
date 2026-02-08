@@ -6,10 +6,12 @@
   "tools": ["*"],
   "toolAliases": {},
   "allowedTools": [
+    "@builtin/delegate",
     "@builtin/read",
+    "@builtin/subagent",
     "@builtin/web_fetch",
     "@builtin/web_search",
-    "@Context7/get-library-docs",
+    "@Context7/query-docs",
     "@Context7/resolve-library-id",
     "@mcp-obsidian/obsidian_batch_get_file_contents",
     "@mcp-obsidian/obsidian_complex_search",
