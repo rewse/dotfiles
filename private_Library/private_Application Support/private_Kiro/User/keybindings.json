@@ -12,7 +12,7 @@
     },
     {
         "key": "shift+cmd+j",
-        "command": "workbench.action.togglePanel"
+        "command": "workbench.action.terminal.new"
     },
     {
         "key": "cmd+j",
@@ -20,7 +20,6 @@
     },
     {
         "key": "cmd+j",
-        "command": "workbench.action.terminal.new",
-        "when": "terminalProcessSupported || terminalWebExtensionContributedProfile"
+        "command": "workbench.action.terminal.focus"
     }
 ]
