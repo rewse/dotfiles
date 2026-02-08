@@ -1,47 +1,42 @@
-# プロジェクト構造
+# Project Structure
 
-## ディレクトリ構成
+## Directory Layout
 
 ```
 .
-├── README.md                           # プロジェクトドキュメントとセットアップ手順
-├── LICENSE                             # プロジェクトライセンスファイル
-├── .gitignore                          # Git無視パターン
-├── .chezmoiignore                      # chezmoi操作中に無視するファイル
-├── .chezmoitemplates/                  # 共有テンプレート
-├── dot_zshrc.tmpl                      # OS固有ロジック付きZshシェル設定
-├── dot_gitconfig.tmpl                  # テンプレート付きGit設定
-├── dot_vimrc.tmpl                      # Vimエディタ設定
-├── dot_npmrc                           # NPM設定
-├── private_dot_ssh/                    # SSHキーと設定（0600権限）
-├── private_Library/                    # macOS固有のアプリケーションサポートファイル
-├── dot_config/                         # XDG Base Directory準拠の設定
-└── dot_kiro/                           # Kiro CLIとAIアシスタント設定
+├── README.md                           # Project documentation and setup instructions
+├── LICENSE                             # Project license file
+├── .gitignore                          # Git ignore patterns
+├── .chezmoiignore                      # Files to ignore during chezmoi operations
+├── .chezmoitemplates/                  # Shared templates
+├── dot_zshrc.tmpl                      # Zsh shell configuration with OS-specific logic
+├── dot_gitconfig.tmpl                  # Git configuration with templating
+├── dot_vimrc.tmpl                      # Vim editor configuration
+├── dot_npmrc                           # NPM configuration
+├── private_dot_ssh/                    # SSH keys and configuration (0600 permissions)
+├── private_Library/                    # macOS-specific application support files
+├── dot_config/                         # XDG Base Directory compliant configurations
+└── dot_kiro/                           # Kiro CLI and AI assistant configuration
 
 ```
 
-### プラットフォーム固有ファイル
-- ファイルはOS固有の動作にchezmoiの条件テンプレートを使用
-- 共通パターン: macOS用の `{{ if eq .chezmoi.os "darwin" }}`
-- 異なるマシン用のホスト名固有設定
+### Platform-Specific Files
 
-## ファイル命名パターン
+- Files use chezmoi conditional templates for OS-specific behavior
+- Common pattern: `{{ if eq .chezmoi.os "darwin" }}` for macOS
+- Hostname-specific configurations for different machines
 
-### chezmoi属性
-- `dot_`: `.filename` になる（隠しファイル）
-- `private_`: 0600権限を取得（セキュアファイル）
-- `executable_`: 実行権限を取得
-- `.tmpl`: chezmoiによって処理されるテンプレートファイル
+## File Naming Patterns
 
-### テンプレート変数
-- `.chezmoi.os`: オペレーティングシステム（darwin/linux）
-- `.chezmoi.hostname`: マシン固有設定用のマシンホスト名
-- `onepasswordRead`: シークレットを安全に取得する関数
+### chezmoi Attributes
 
-## 主要なアーキテクチャ決定
+- `dot_`: Becomes `.filename` (hidden files)
+- `private_`: Gets 0600 permissions (secure files)
+- `executable_`: Gets execute permissions
+- `.tmpl`: Template files processed by chezmoi
 
-1. **クロスプラットフォームサポート**: すべての設定がmacOSとLinuxの両方に対応
-2. **セキュリティファースト**: 1Password統合による機密データ管理
-3. **モジュラーテンプレート**: `.chezmoitemplates/` の共有コンポーネント
-4. **XDG準拠**: モダンな設定ファイル構成
-5. **AI統合**: Kiro AIアシスタントワークフローの組み込みサポート
+### Template Variables
+
+- `.chezmoi.os`: Operating system (darwin/linux)
+- `.chezmoi.hostname`: Machine hostname for machine-specific configuration
+- `onepasswordRead`: Function to securely retrieve secrets

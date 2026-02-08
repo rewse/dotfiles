@@ -1,24 +1,12 @@
-# プロダクト概要
+# Product Overview
 
-## これは何か
+## What is this
 
-chezmoiを使用したクロスプラットフォーム設定管理のための個人dotfiles管理システム。
+A personal dotfiles management system for cross-platform configuration management using chezmoi.
 
-## 目的
+## Purpose
 
-- 複数のマシン間でシェル設定、エディタ設定、Git設定を一元管理
-- macOSとLinux環境の両方をサポート
-- 1Password統合によるセキュアなシークレット管理
-- マシン固有の条件分岐を持つテンプレートベース設定
-
-## 主要機能
-
-- **クロスプラットフォーム互換性**: macOSとLinuxで動作
-- **テンプレートシステム**: 異なる環境用の条件ロジック付きchezmoiテンプレートを使用
-- **シークレット管理**: セキュアな認証情報処理のための1Password CLI統合
-- **Kiro統合**: AIアシスタント設定とステアリングルールを含む
-- **バージョン管理**: リモート同期機能付きGitベースdotfiles管理
-
-## 対象ユーザー
-
-複数のマシンで作業し、一貫性のあるセキュアな設定管理を求める個人開発者。
+- Centrally manage shell configurations, editor settings, and Git configurations across multiple machines
+- Support both macOS and Linux environments
+- Secure secret management through 1Password integration
+- Template-based configuration with machine-specific conditional branching
