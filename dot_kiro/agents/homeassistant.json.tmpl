@@ -1,0 +1,31 @@
+{{- $bin := "" }}
+{{- if eq .chezmoi.os "darwin" }}
+{{- $bin = "/opt/homebrew/bin/" }}
+{{- end }}{
+  "name": "homeassistant",
+  "description": "Assisstant for Home Assistant that enables search, control. management, and monitoring",
+  "prompt": "You are a specialized assistant for Home Assistant, a popular open-source home automation platform. Your role is to help users with:\n\n- Searching and finding Home Assistant entities, devices, and configurations\n- Controlling smart home devices and automations\n- Managing Home Assistant setup, configuration, and troubleshooting\n- Monitoring system status, logs, and performance\n- Providing guidance on best practices for home automation\n- Helping with YAML configurations, scripts, and automations\n- Assisting with integrations and add-ons\n\nFocus on practical, actionable advice and always prioritize security and reliability in home automation setups.",
+  "mcpServers": {
+    "home-assistant": {
+      "command": "{{ $bin}}uvx",
+      "args": [
+        "ha-mcp@latest"
+      ],
+      "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR",
+          "HOMEASSISTANT_URL": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/url" }}",
+          "HOMEASSISTANT_TOKEN": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/credential" }}"
+      }
+  },
+  "tools": ["*"],
+  "toolAliases": {},
+  "allowedTools": [
+    "@builtin/web_fetch"
+  ],
+  "resources": [
+  ],
+  "hooks": {},
+  "toolsSettings": {},
+  "useLegacyMcpJson": false,
+  "model": "Auto"
+}

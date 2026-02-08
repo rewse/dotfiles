@@ -1,23 +1,7 @@
 {{- $bin := "" }}
 {{- if eq .chezmoi.os "darwin" }}
 {{- $bin = "/opt/homebrew/bin/" }}
-{{- end }}
-{
+{{- end }}{
   "mcpServers": {
-{{ template "mcp-servers.json.tmpl" . }}  },
-  "powers": {
-    "mcpServers": {
-      "power-homeassistant-Home Assistant": {
-        "command": "{{ $bin }}uvx",
-        "args": [
-          "ha-mcp@latest"
-        ],
-        "env": {
-          "FASTMCP_LOG_LEVEL": "ERROR",
-          "HOMEASSISTANT_URL": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/url" }}",
-          "HOMEASSISTANT_TOKEN": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/credential" }}"
-        }
-      }
-    }
-  }
+{{ template "mcp-servers.json.tmpl" . }}  }
 }
