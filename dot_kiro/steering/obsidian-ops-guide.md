@@ -12,13 +12,13 @@ You MUST run `obsidian help vault=vault` BEFORE the FIRST `obsidian` command. Th
 
 ### Read Existing Note (Unique Name)
 
-**Pre-check:**: Confirm `obsidian help vault=vault` has been executed in this session
+**Pre-check**: Confirm `obsidian help vault=vault` has been executed in this session
 
 1. `obsidian read file=<name> vault=vault`
 
 ### Read Existing Note (Search Required)
 
-**Pre-check:**: Confirm `obsidian help vault=vault` has been executed in this session
+**Pre-check**: Confirm `obsidian help vault=vault` has been executed in this session
 
 1. `obsidian search query=<text> vault=vault`
 2. `obsidian read path=<path> vault=vault`
@@ -27,7 +27,7 @@ You MUST run `obsidian help vault=vault` BEFORE the FIRST `obsidian` command. Th
 
 When creating new notes, you MUST follow this workflow:
 
-**Pre-check:**: Confirm `obsidian help vault=vault` has been executed in this session
+**Pre-check**: Confirm `obsidian help vault=vault` has been executed in this session
 
 1. `obsidian files folder="8 Templates" vault=vault` - List templates
 2. `obsidian read file=<template-name> vault=vault` - Read a template
