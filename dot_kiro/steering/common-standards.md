@@ -67,12 +67,17 @@ You MUST write comments to explain background information or reasons that cannot
 
 ## Browser Automation
 
-You MUST use `agent-browser` for web automation.
+- You SHOULD use `agent-browser` for web automation.
 
-Core workflow:
+## IMPORTANT: First Command Rule
 
-1. `agent-browser --help` - Learn available commands
-2. `agent-browser open <url>` - Navigate to page
-3. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
-4. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
-5. Re-snapshot after page changes
+You MUST run `agent-browser --help` BEFORE the FIRST `agent-browser` command. This ensures you have the latest command syntax and available operations.
+
+## Typical Workflow
+
+**Pre-check:**: Confirm `agent-browser --help` has been executed in this session
+
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
