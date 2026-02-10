@@ -55,12 +55,12 @@ You MUST NOT skip the template selection step.
 
 - You MUST not use Heading 1 (#) for the title. Instead, you MUST write the title as the filename.
 - You MUST follow these rules for filename to be safe across all file systems:
-  - Use alphabets, spaces, and some symbols (such as `-_.`)
+  - Use alphabets, numbers, spaces, and some symbols (such as `-_.`)
   - You MAY add titles with symbols or Japanese titles to the `aliases` property for search purposes
 
 ## Template
 
-When you create a new note, you MUST choose a template from `8 Templates/` directory.
+When creating a new note, you MUST choose a template from `8 Templates/` directory.
 
 ## Tag
 
