@@ -1,38 +1,38 @@
 # Obsidian Operation Guide
 
 - When accessing Obsidian, you SHOULD use `obsidian` command.
-- vault name is `vault`.
+- vault name is `vault`
 - vault path is `$HOME/Obsidian/vault`
 
 ## IMPORTANT: First Command Rule
 
-You MUST run `obsidian help vault=vault` BEFORE the FIRST `obsidian` command. This ensures you have the latest command syntax and available operations.
+You MUST run `obsidian vault=vault help` BEFORE the FIRST `obsidian` command. This ensures you have the latest command syntax and available operations.
 
 ## Typical Workflows
 
 ### Read Existing Note (Unique Name)
 
-**Pre-check**: Confirm `obsidian help vault=vault` has been executed in this session
+**Pre-check**: Confirm `obsidian vault=vault help` has been executed in this session
 
-1. `obsidian read file=<name> vault=vault`
+1. `obsidian vault=vault read file=<name>`
 
 ### Read Existing Note (Search Required)
 
-**Pre-check**: Confirm `obsidian help vault=vault` has been executed in this session
+**Pre-check**: Confirm `obsidian vault=vault help` has been executed in this session
 
-1. `obsidian search query=<text> vault=vault`
-2. `obsidian read path=<path> vault=vault`
+1. `obsidian vault=vault search query=<text>`
+2. `obsidian vault=vault read path=<path>`
 
 ### Create New Note
 
 When creating new notes, you MUST follow this workflow:
 
-**Pre-check**: Confirm `obsidian help vault=vault` has been executed in this session
+**Pre-check**: Confirm `obsidian vault=vault help` has been executed in this session
 
-1. `obsidian files folder="8 Templates" vault=vault` - List templates
-2. `obsidian read file=<template-name> vault=vault` - Read a template
-3. `obsidian tags all vault=vault` - List existing tags
-4. `obsidian create [name=<name>] [path=<path>] [content=<text>] vault=vault`
+1. `obsidian vault=vault files folder="8 Templates"` - List templates
+2. `obsidian vault=vault read file=<template-name>` - Read a template
+3. `obsidian vault=vault tags all` - List existing tags
+4. `obsidian vault=vault create [name=<name>] [path=<path>] [content=<text>]`
 
 You MUST NOT skip the template selection step.
 
