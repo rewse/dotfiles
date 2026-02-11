@@ -54,6 +54,11 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 if [[ -d "${HOME}/.lmstudio/bin" ]]; then
   export PATH="${PATH}:${HOME}/.lmstudio/bin"
 fi
+
+# Obsidian
+if [[ -d "/Applications/Obsidian.app/Contents/MacOS" ]]; then
+  export PATH="$PATH:/Applications/Obsidian.app/Contents/MacOS"
+fi
 {{- else if eq .chezmoi.os "linux" }}
 # Local bin
 if [[ -d "${HOME}/bin" ]]; then
