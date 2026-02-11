@@ -1,0 +1,27 @@
+#!/bin/bash
+
+KEY_FILE="$HOME/.ssh/id_ecdsa-cert.pub"
+
+if [ ! -f "$KEY_FILE" ]; then
+    echo "Key file not found. Running mwinit -s..."
+    mwinit -s
+    exit 0
+fi
+
+EXPIRY=$(ssh-keygen -L -f "$KEY_FILE" 2>/dev/null | grep "Valid:" | sed 's/.*to //')
+
+if [ -z "$EXPIRY" ]; then
+    echo "Cannot read expiry date. Running mwinit -s..."
+    mwinit -s
+    exit 0
+fi
+
+EXPIRY_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$(echo $EXPIRY | cut -d' ' -f1)" +%s 2>/dev/null)
+NOW_EPOCH=$(date +%s)
+
+if [ "$EXPIRY_EPOCH" -lt "$NOW_EPOCH" ]; then
+    echo "Key expired. Running mwinit -s..."
+    mwinit -s
+else
+    echo "Key is still valid until $EXPIRY"
+fi
