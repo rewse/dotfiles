@@ -46,6 +46,15 @@ export QUIP_API_TOKEN="{{ onepasswordRead "op://chezmoi/Quip/credential" }}"
 # >>>
 # <<< Path Configuration
 
+# Local bin
+if [[ -d "${HOME}/bin" ]]; then
+  export PATH="${HOME}/bin:${PATH}"
+fi
+
+if [[ -d "${HOME}/.local/bin" ]]; then
+  export PATH="${HOME}/.local/bin:${PATH}"
+fi
+
 {{- if eq .chezmoi.os "darwin" }}
 # Homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -58,15 +67,6 @@ fi
 # Obsidian
 if [[ -d "/Applications/Obsidian.app/Contents/MacOS" ]]; then
   export PATH="$PATH:/Applications/Obsidian.app/Contents/MacOS"
-fi
-{{- else if eq .chezmoi.os "linux" }}
-# Local bin
-if [[ -d "${HOME}/bin" ]]; then
-  export PATH="${HOME}/bin:${PATH}"
-fi
-
-if [[ -d "${HOME}/.local/bin" ]]; then
-  export PATH="${HOME}/.local/bin:${PATH}"
 fi
 {{- end }}
 
