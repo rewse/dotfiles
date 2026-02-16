@@ -4,10 +4,10 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Right Option to y + Enter",
+                        "description": "Right Command to y + Enter",
                         "manipulators": [
                             {
-                                "from": { "key_code": "right_option" },
+                                "from": { "key_code": "right_command" },
                                 "to": [
                                     { "key_code": "japanese_eisuu" },
                                     { "key_code": "y" },
