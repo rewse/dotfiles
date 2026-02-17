@@ -8,6 +8,7 @@ README.md
 .config/1Password/ssh/agent.toml
 .config/direnv/direnv.toml
 .config/karabiner
+.kiro/steering/obsidian-ops-guide.md
 Library
 {{- end }}
 
