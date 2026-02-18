@@ -11,8 +11,7 @@
     "@builtin/subagent",
     "@builtin/web_fetch",
     "@builtin/web_search",
-    "@Context7/query-docs",
-    "@Context7/resolve-library-id"
+    "@Context7"
   ],
   "resources": [
     "file://AGENTS.md",
