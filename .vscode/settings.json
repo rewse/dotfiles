@@ -6,8 +6,8 @@
         "dot_gitconfig.tmpl": "properties",
         "dot_gvimrc": "Vimscript",
         "dot_vimrc": "Vimscript",
+        "dot_zprofile.tmpl": "shellscript",
         "dot_zshrc.tmpl": "shellscript",
-        "private_dot_zprofile.tmpl": "shellscript",
         "vim-keymappings": "Vimscript"
     }
 }
