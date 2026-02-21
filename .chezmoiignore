@@ -12,6 +12,10 @@ README.md
 Library
 {{- end }}
 
+{{- if or (eq .chezmoi.hostname "7cf34ded5d65") (eq .chezmoi.hostname "atom") }}
+.claude/settings.json
+{{- end }}
+
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}
 .local/bin/check-midway-key
 {{- end }}
