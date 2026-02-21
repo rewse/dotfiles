@@ -16,7 +16,9 @@
   "resources": [
     "file://AGENTS.md",
     "file://README.md",
+    "file://.kiro/steering/**/*.md",
     "file://~/.kiro/steering/**/*.md",
+    "skill://.kiro/skills/**/SKILL.md",
     "skill://~/.kiro/skills/**/SKILL.md"
   ],
   "hooks": {},
