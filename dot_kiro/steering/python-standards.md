@@ -1,7 +1,3 @@
----
-inclusion: manual
----
-
 # Python Standards
 
 ## Build System
@@ -24,6 +20,34 @@ module-root = "src"
 ### Troubleshooting
 
 If `ModuleNotFoundError` occurs, you MUST retry the execution.
+
+## Dependency Management
+
+For Python scripts that need external dependencies, use inline script metadata with `uv run`.
+
+```python
+#!/usr/bin/env -S uv run
+# /// script
+# dependencies = [
+#   "pyyaml",
+#   "requests",
+# ]
+# ///
+
+import yaml
+import requests
+
+# Your script code here
+```
+
+**Usage:**
+
+```bash
+chmod +x script.py
+./script.py
+# or
+uv run script.py
+```
 
 ## Testing
 
