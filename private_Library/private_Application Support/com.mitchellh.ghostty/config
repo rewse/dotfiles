@@ -48,6 +48,10 @@ keybind = cmd+down=resize_split:down,20
 keybind = cmd+left=resize_split:left,20
 keybind = cmd+right=resize_split:right,20
 
+# Keybindings - Split Creation
+keybind = ctrl+n=new_split:right
+keybind = ctrl+h=new_split:down
+
 # Keybindings - Misc
 keybind = cmd+shift+l=reset
 keybind = ctrl+left_bracket=text:\x1b
