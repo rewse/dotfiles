@@ -1,63 +1,53 @@
-# 依存パッケージアップデートプロンプト
+# Project Dependency Update Prompt
 
-以下のプロジェクトの依存パッケージをアップデートしてください：
+Update the following projects in `~/Documents/git` according to the procedure:
 
-## 1. enecoq-data-fetcher (Python/uv)
-- パス: `/Users/tats/Documents/git/enecoq-data-fetcher`
-- パッケージマネージャ: uv
-- 手順:
-  1. `uv lock --upgrade --dry-run` を実行して更新するパッケージを表示
-  2. `uv lock --upgrade` を実行して依存関係を更新
-  3. 更新内容を確認
-  4. `./tests/run_tests.sh` を実行してテスト
-  5. 変更をコミット
+- enecoq-data-fetcher
+- stock-price-fetcher
+- textlint-config-rewse
+- textlint-rule-ja-space-around-phrase
+- zenn-content
 
-## 2. stock-price-fetcher (Python/uv)
-- パス: `/Users/tats/Documents/git/stock-price-fetcher`
-- パッケージマネージャ: uv
-- 手順:
-  1. `uv lock --upgrade --dry-run` を実行して更新するパッケージを表示
-  2. `uv lock --upgrade` を実行して依存関係を更新
-  3. 更新内容を確認
-  4. `PYTHONPATH=src uv run pytest tests/ -v` を実行してテスト
-  5. 変更をコミット
+## 1. git pull
 
-## 3. textlint-config-rewse (Node.js/npm)
-- パス: `/Users/tats/Documents/git/textlint-config-rewse`
-- パッケージマネージャ: npm
-- 手順:
-  1. `npm outdated` を実行して更新するパッケージを表示
-  2. `npm update` を実行して依存関係を更新
-  3. `npm outdated` を再度実行して更新内容を確認
-  4. `npm test` を実行してテスト
-  5. 変更をコミット
+1. Run `git pull --rebase`
 
-## 4. textlint-rule-ja-space-around-phrase (Node.js/npm)
-- パス: `/Users/tats/Documents/git/textlint-rule-ja-space-around-phrase`
-- パッケージマネージャ: npm
-- 手順:
-  1. `npm outdated` を実行して更新するパッケージを表示
-  2. `npm update` を実行して依存関係を更新
-  3. `npm outdated` を再度実行して更新内容を確認
-  4. `npm test` を実行してテスト
-  5. 変更をコミット
+## 2. Update OSV-Scanner
 
-## 5. zenn-content (Node.js/npm)
-- パス: `/Users/tats/Documents/git/zenn-content`
-- パッケージマネージャ: npm
-- 手順:
-  1. `npm outdated` を実行して更新するパッケージを表示
-  2. `npm update` を実行して依存関係を更新
-  3. `npm outdated` を再度実行して更新内容を確認
-  4. 変更をコミット
+1. Check the latest version number from https://github.com/google/osv-scanner-action/releases
+2. If `.github/security-scan.yml` exists in the project, update the OSV-Scanner version to the latest
+
+## 3. Determine if uv project or npm project
+
+1. If it's a uv project, proceed to step 4
+2. If it's an npm project, proceed to step 5
+
+## 4. uv Project
+
+1. Run `uv lock --upgrade --dry-run` to display packages to be updated
+2. Run `uv lock --upgrade` to update dependencies
+3. Review the updates
+4. Read `.kiro/steering/tech.md` in the project and run tests if available
+5. Commit the changes
+
+## 5. npm Project
+
+1. Run `npm outdated` to display packages to be updated
+2. Run `npm update` to update dependencies
+3. Run `npm outdated` again to verify the updates
+4. Read `.kiro/steering/tech.md` in the project and run tests if available
+5. Commit the changes
 
 ## 6. git push
-- 手順:
-  1. 全てのプロジェクトで `git push` を実行して変更をプッシュ
-  2. 1分待つ
-  3. 全てのプロジェクトで `gh run list` を実行して GitHub Actions が成功していることを確認
 
-## 注意事項
-- 破壊的変更がある場合は適切に対応しなければなりません (MUST)
-- コミットメッセージは Conventional Commits に従がわなけれなりません (MUST)（例: `chore: update dependencies`）
-- テストでエラーが発生した場合は、エラーの内容を説明し、エラーを無視して良いか尋ねなければなりません(MUST)
+Execute this step after completing step 3 or 4 for all projects:
+
+1. Run `git push` in all projects to push the changes
+2. Wait 1 minute
+3. Run `gh run list` in all projects to verify GitHub Actions succeeded
+
+## Notes
+
+- You MUST handle breaking changes appropriately
+- You MUST follow Conventional Commits (e.g., `chore: update dependencies`)
+- If tests fail, you MUST explain the error and ask whether it's acceptable to ignore the error
