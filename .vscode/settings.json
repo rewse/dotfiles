@@ -2,7 +2,7 @@
     "kiroAgent.configureMCP": "Enabled",
     "files.associations": {
         "*.json.tmpl": "json",
-        "*.toml": "properties",
+        "*.toml.tmpl": "properties",
         "dot_gitconfig.tmpl": "properties",
         "dot_gvimrc": "Vimscript",
         "dot_vimrc": "Vimscript",

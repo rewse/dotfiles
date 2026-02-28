@@ -1,0 +1,123 @@
+# Agent Skills External Sources
+
+{{- $anthropicSkills := list
+  "canvas-design"
+  "doc-coauthoring"
+  "docx"
+  "frontend-design"
+  "mcp-builder"
+  "pdf"
+  "pptx"
+  "skill-creator"
+  "webapp-testing"
+  "xlsx"
+-}}
+
+{{- $marketingSkills := list
+  "copy-editing"
+  "copywriting"
+  "marketing-ideas"
+  "marketing-psychology"
+  "programmatic-seo"
+  "social-content"
+-}}
+
+{{- $obsidianSkills := list
+  "json-canvas"
+  "obsidian-bases"
+  "obsidian-markdown"
+-}}
+
+# Anthropic Skills (https://github.com/anthropics/skills)
+{{- range $anthropicSkills }}
+skills/{{ . }}:
+  type: archive
+  url: https://github.com/anthropics/skills/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/{{ . }}/**"
+  exact: true
+  refreshPeriod: 168h
+{{ end }}
+
+# Corey Haines Marketing Skills (https://github.com/coreyhaines31/marketingskills)
+{{- range $marketingSkills }}
+skills/{{ . }}:
+  type: archive
+  url: https://github.com/coreyhaines31/marketingskills/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/{{ . }}/**"
+  exact: true
+  refreshPeriod: 168h
+{{ end }}
+
+# Kepano Obsidian Skills (https://github.com/kepano/obsidian-skills)
+{{- range $obsidianSkills }}
+skills/{{ . }}:
+  type: archive
+  url: https://github.com/kepano/obsidian-skills/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/{{ . }}/**"
+  exact: true
+  refreshPeriod: 168h
+{{ end }}
+
+# Microsoft Playwright CLI (https://github.com/microsoft/playwright-cli)
+skills/playwright-cli:
+  type: archive
+  url: https://github.com/microsoft/playwright-cli/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/playwright-cli/**"
+  exact: true
+  refreshPeriod: 168h
+
+# Obra Superpowers (https://github.com/obra/superpowers)
+skills/brainstorming:
+  type: archive
+  url: https://github.com/obra/superpowers/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/brainstorming/**"
+  exact: true
+  refreshPeriod: 168h
+
+# Vercel Labs - agent-browser (https://github.com/vercel-labs/agent-browser)
+skills/agent-browser:
+  type: archive
+  url: https://github.com/vercel-labs/agent-browser/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/agent-browser/**"
+  exact: true
+  refreshPeriod: 168h
+
+# Vercel Labs - agent-skills (https://github.com/vercel-labs/agent-skills)
+skills/web-design-guidelines:
+  type: archive
+  url: https://github.com/vercel-labs/agent-skills/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/web-design-guidelines/**"
+  exact: true
+  refreshPeriod: 168h
+
+# Vercel Labs - skills (https://github.com/vercel-labs/skills)
+skills/find-skills:
+  type: archive
+  url: https://github.com/vercel-labs/skills/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/find-skills/**"
+  exact: true
+  refreshPeriod: 168h
+
+# X Platform xurl (https://github.com/xdevplatform/xurl)
+skills/xurl:
+  type: archive-file
+  url: https://github.com/xdevplatform/xurl/archive/refs/heads/main.tar.gz
+  path: SKILL.md
+  stripComponents: 1
+  refreshPeriod: 168h
