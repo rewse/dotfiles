@@ -87,7 +87,7 @@ chezmoi update
 │   └── steering/                 # Guidelines for AI assistant
 ├── dot_config/                   # XDG Base Directory compliant configurations
 │   └── chezmoi/                  # chezmoi configuration and examples
-│       └── chezmoi.toml          # Configuration file
+│       └── chezmoi.yaml          # Configuration file
 ├── dot_kiro/                     # Kiro CLI settings and steering rules
 ├── dot_vim/                      # Vim configurations
 ├── dot_*                         # Other dotfiles (zshrc, gitconfig, etc.)

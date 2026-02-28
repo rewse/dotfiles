@@ -4,20 +4,18 @@
 
 ```
 .
-├── README.md                           # Project documentation and setup instructions
-├── LICENSE                             # Project license file
-├── .gitignore                          # Git ignore patterns
-├── .chezmoiignore                      # Files to ignore during chezmoi operations
-├── .chezmoitemplates/                  # Shared templates
-├── dot_zshrc.tmpl                      # Zsh shell configuration with OS-specific logic
-├── dot_gitconfig.tmpl                  # Git configuration with templating
-├── dot_vimrc.tmpl                      # Vim editor configuration
-├── dot_npmrc                           # NPM configuration
-├── private_dot_ssh/                    # SSH keys and configuration (0600 permissions)
-├── private_Library/                    # macOS-specific application support files
-├── dot_config/                         # XDG Base Directory compliant configurations
-└── dot_kiro/                           # Kiro CLI and AI assistant configuration
-
+├── .chezmoitemplates/            # Shared templates (can be included from other templates)
+├── .kiro/                        # Kiro-related configurations
+│   └── steering/                 # Guidelines for AI assistant
+├── dot_config/                   # XDG Base Directory compliant configurations
+│   └── chezmoi/                  # chezmoi configuration and examples
+│       └── chezmoi.yaml          # Configuration file
+├── dot_kiro/                     # Kiro CLI settings and steering rules
+├── dot_vim/                      # Vim configurations
+├── dot_*                         # Other dotfiles (zshrc, gitconfig, etc.)
+├── private_dot_ssh/              # SSH keys and config (private attribute 0600)
+├── private_*                     # Other private files
+└── *.tmpl                        # Template files (processed by chezmoi)
 ```
 
 ### Platform-Specific Files
