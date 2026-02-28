@@ -36,6 +36,7 @@
                     },
                     {
                         "description": "Ctrl + Left-Hand Keys -> Cmd + Left-Hand Keys",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
@@ -213,6 +214,7 @@
                     },
                     {
                         "description": "Ghostty: Ctrl + D/C -> Ctrl + N/M",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
