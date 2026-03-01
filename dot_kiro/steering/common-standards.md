@@ -78,7 +78,8 @@ You MUST follow [Google Style Guides](https://google.github.io/styleguide/) for 
 
 ### Comments
 
-You MUST write comments to explain background information or reasons that cannot be expressed in the code itself, or to explain code that is difficult to understand intuitively using natural language. You SHOULD NOT write comments for self-explanatory code.
+You MUST write comments to explain background information or reasons that cannot be expressed in the code itself, or to explain code that is difficult to understand intuitively using natural language. You SHOULD NOT write comments for self-explanatory code. DRY: Do not repeat between code and comments.
+
 
 ## Browser Automation
 
