@@ -49,7 +49,9 @@ chezmoi execute-template < template-file
 - `*.tmpl`: Template files processed by chezmoi
 - `executable_*`: Files that should be executable
 
-## Commit Message
+## Commit Message Standards
 
-- When you write a conventional commit message, You SHOULD use `docs:` as a type for files in `.kiro` directories.
-- When you write a conventional commit message, You SHOULD NOT use `docs:` as a type for files in `dot_*` or `private_dot_*` directories.
+### Type Selection Rules
+
+- `.kiro/` directory files: You MUST use `docs:` type
+- `dot_*` or `private_dot_*` files: You MUST NOT use `docs:` type (use `feat:`, `fix:`, `refactor:`, or `chore:` based on intent)
