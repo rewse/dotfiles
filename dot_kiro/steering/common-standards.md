@@ -80,6 +80,13 @@ You MUST follow [Google Style Guides](https://google.github.io/styleguide/) for 
 
 You MUST write comments to explain background information or reasons that cannot be expressed in the code itself, or to explain code that is difficult to understand intuitively using natural language. You SHOULD NOT write comments for self-explanatory code. DRY: Do not repeat between code and comments.
 
+## Agent Selection Standards
+
+When using `delegate` or `use_subagent` tools:
+
+- You MUST select an appropriate specialized agent based on the task requirements
+- If no specialized agent is suitable, you MUST use `default` as the agent name
+- You MUST NOT use `kiro_default` as an agent name
 
 ## Browser Automation
 
