@@ -4,6 +4,14 @@
 
 Entropy (bits) = log₂(possible_combinations)
 
+## Smart Password Entropy
+
+For Smart Password:
+- Character patterns: log₂(10,122) × 4 ≈ 53.6 bits
+- Uppercase position: log₂(4) = 2 bits
+- Separators: log₂(16) × 3 ≈ 12 bits
+- **Total: ~67-68 bits**
+
 ## Character Set Sizes
 
 - Lowercase letters (a-z): 26

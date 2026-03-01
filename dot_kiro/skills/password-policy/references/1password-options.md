@@ -1,9 +1,15 @@
 # 1Password Options Reference
 
 ## Smart Password
-- Automatically generates a strong, random password
-- Balances security and usability
+- Generates passwords using character patterns based on English phonetic rules
+- Balances security, usability, and compatibility
+- Entropy: ~67-68 bits
 - Recommended for most use cases
+- How it works:
+  - Selects 4 pseudo-syllables from 10,122 patterns
+  - One pattern is entirely uppercase
+  - Separates with digits (0-9) and symbols (@#$%^&_*)
+  - Uses uniform distribution for true randomness
 
 ## Random Password
 - Characters: 8 to 100

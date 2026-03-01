@@ -1,13 +1,35 @@
 ---
 name: password-policy
-description: Recommend appropriate password strength and 1Password settings based on NIST SP 800-63B authentication assurance levels. Use when the user asks about password requirements, password strength recommendations, what type of password to use for different scenarios, or how to configure 1Password for specific use cases.
+description: Recommend appropriate password strength and 1Password settings based on NIST SP 800-63B authentication assurance levels. Use when the user asks about password requirements, password strength recommendations, what type of password to use for different scenarios, or how to configure 1Password for specific use cases. Also trigger when the user mentions "how strong should my password be", "what password settings", "1Password configuration", "password generator settings", "secure password", "password for bank", "password for work", "PIN code length", or needs guidance on password security for any account type.
 ---
 
 # Password Policy
 
 ## Overview
 
-Provide password strength recommendations based on NIST SP 800-63B guidelines and suggest appropriate 1Password settings for different authentication scenarios.
+Password strength requirements vary based on risk level and authentication factors. A weak password on a high-value account can lead to account compromise, while an overly complex password on a low-risk account creates unnecessary friction. This skill helps you find the right balance by:
+
+- Applying NIST SP 800-63B guidelines (industry-standard authentication requirements)
+- Calculating entropy (randomness) to objectively measure password strength
+- Considering usability factors (memorability, typing ease, auto-fill availability)
+- Recommending appropriate 1Password settings for your specific scenario
+
+### What is Smart Password?
+
+1Password's Smart Password is designed to balance security with usability and compatibility:
+
+**How it works:**
+- Selects 4 character patterns from a list of 10,122 pseudo-syllables (character sequences based on English phonetic patterns)
+- One pattern is entirely uppercase
+- Separates patterns with digits (0-9) and basic symbols (@#$%^&_*)
+- Uses uniform distribution (any possible password is equally likely to be generated)
+
+**Entropy:** ~67-68 bits
+- Character patterns: log₂(10,122) × 4 ≈ 53.6 bits
+- Uppercase position: log₂(4) = 2 bits
+- Separators: log₂(16) × 3 ≈ 12 bits
+
+**Design philosophy:** Sacrifices a few bits of entropy compared to pure random passwords to gain significant advantages in convenience, compatibility with website requirements, and accessibility. The patterns look somewhat human-generated but are actually uniformly random.
 
 ## Workflow
 
@@ -48,7 +70,7 @@ When a user asks about password requirements:
 **1Password options comparison**:
 
 1. **Smart Password** (Recommended)
-   - Entropy: ~80-100 bits (estimated)
+   - Entropy: ~67-68 bits
    - NIST compliant: Yes
    - Usability: Excellent (auto-fill)
    - Best default choice for most scenarios
@@ -69,7 +91,7 @@ When a user asks about password requirements:
 
 **Recommendation**: Use Smart Password for convenience, or Memorable Password (5 words) if you need to type it occasionally.
 
-**Example**: "For your blog account, I recommend Smart Password (80-100 bits entropy) or a Memorable Password with 5 words (70.5 bits). Both exceed NIST's 15-character minimum and provide strong security."
+**Example**: "For your blog account, I recommend Smart Password (67-68 bits entropy) or a Memorable Password with 5 words (70.5 bits). Both exceed NIST's 15-character minimum and provide strong security."
 
 ### Multi-Factor Authentication (AAL2)
 **Use case**: Financial services, email, work accounts, accounts with personal information
@@ -79,7 +101,7 @@ When a user asks about password requirements:
 **1Password options comparison**:
 
 1. **Smart Password** (Recommended)
-   - Entropy: ~80-100 bits (estimated)
+   - Entropy: ~67-68 bits
    - NIST compliant: Yes
    - Usability: Excellent (auto-fill)
    - Best default choice
@@ -100,7 +122,7 @@ When a user asks about password requirements:
 
 **Recommendation**: Use Smart Password for best balance, or Memorable Password (4 words) if you need to type it on multiple devices.
 
-**Example**: "For your bank account with 2FA, I recommend Smart Password (80-100 bits) or a Memorable Password with 4 words (56.4 bits). With MFA enabled, even 4 words provides adequate security while being easier to type on your phone."
+**Example**: "For your bank account with 2FA, I recommend Smart Password (67-68 bits) or a Memorable Password with 4 words (56.4 bits). With MFA enabled, even 4 words provides adequate security while being easier to type on your phone."
 
 ### High-Security Authentication (AAL3)
 **Use case**: Government systems, high-value financial accounts, enterprise systems
@@ -110,7 +132,7 @@ When a user asks about password requirements:
 **1Password options comparison**:
 
 1. **Smart Password** (Recommended)
-   - Entropy: ~80-100 bits (estimated)
+   - Entropy: ~67-68 bits
    - NIST compliant: Yes
    - Usability: Excellent (auto-fill)
    - Best default choice
@@ -131,7 +153,7 @@ When a user asks about password requirements:
 
 **Recommendation**: Use Smart Password or Random Password (16+ chars) for maximum security. Use Memorable Password (6 words) only if you must type it frequently without auto-fill.
 
-**Example**: "For your enterprise VPN with hardware token, I recommend Smart Password (80-100 bits) or Random Password with 16 characters (104.8 bits). If you need to type it on secure terminals without auto-fill, use a Memorable Password with 6 words (84.6 bits + separators)."
+**Example**: "For your enterprise VPN with hardware token, I recommend Smart Password (67-68 bits) or Random Password with 16 characters (104.8 bits). If you need to type it on secure terminals without auto-fill, use a Memorable Password with 6 words (84.6 bits + separators)."
 
 ### Activation Secrets (PINs for multi-factor authenticators)
 **Use case**: Unlocking hardware tokens, activating authenticators
