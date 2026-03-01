@@ -90,17 +90,13 @@ When using `delegate` or `use_subagent` tools:
 
 ## Browser Automation
 
-- You SHOULD use `agent-browser` for web automation.
+### Preferred Option: playwright-cli
 
-## IMPORTANT: First Command Rule
+- You SHOULD use `playwright-cli` for web automation
+- You MUST activate the `playwright-cli` skill BEFORE the FIRST `playwright-cli` command
+- Snapshot files are saved to `.playwright-cli/page-xxx.yml`. Search with `grep` to find the target element's ref instead of reading the entire file
 
-You MUST run `agent-browser --help` BEFORE the FIRST `agent-browser` command. This ensures you have the latest command syntax and available operations.
+### Alternative Option: agent-browser
 
-## Typical Workflow
-
-**Pre-check:**: Confirm `agent-browser --help` has been executed in this session
-
-1. `agent-browser open <url>` - Navigate to page
-2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
-3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
-4. Re-snapshot after page changes
+- If you cannot do what you expect with `playwright-cli`, you MAY use `agent-browser`
+- You MUST activate the `agent-browser` skill BEFORE the FIRST `agent-browser` command
