@@ -3,6 +3,7 @@
     "files.associations": {
         "*.json.tmpl": "json",
         "*.toml.tmpl": "properties",
+        "*.yaml.tmpl": "yaml",
         "dot_gitconfig.tmpl": "properties",
         "dot_gvimrc": "Vimscript",
         "dot_vimrc": "Vimscript",
