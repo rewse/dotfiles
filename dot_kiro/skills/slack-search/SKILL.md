@@ -1,6 +1,6 @@
 ---
 name: slack-search
-description: Guide for searching in Slack using search modifiers and filters. Use when the user wants to find messages, files, or information in Slack, or asks about Slack search syntax, search modifiers (from:, in:, has:, before:, after:, etc.), or how to filter search results.
+description: Guide for searching in Slack using search modifiers and filters. Use when the user wants to find messages, files, or information in Slack, or asks about Slack search syntax, search modifiers (from:, in:, has:, before:, after:, etc.), or how to filter search results. Also trigger when the user mentions "can't find a message", "looking for something in Slack", "search Slack history", "find old conversations", "filter Slack messages", "search in a channel", or needs help with advanced Slack search queries.
 ---
 
 # Slack Search
@@ -9,7 +9,7 @@ Reference for Slack search features and modifiers.
 
 ## Important: GUI vs API Syntax Differences
 
-When using Slack search through different interfaces, the syntax differs:
+When using Slack search through different interfaces, the syntax differs. Understanding these differences is critical because API-based searches (like through MCP tools) will fail or return unexpected results if you use GUI syntax. The main differences are in how channels and users are referenced.
 
 ### Channel References (`in:`)
 
@@ -69,9 +69,11 @@ Use the `users.list` API method to retrieve all users in the workspace, then sea
 | `creator:` | Search for canvases created by a specific user | `creator:@username` |
 | `-in:` | Exclude a specific channel | GUI: `-in:#random` / API: `-in:random` |
 | `-from:` | Exclude a specific member | `-from:@bot` |
-| `word*` | Wildcard - See results that begin with a partial word. Add an asterisk to a partial word with at least three characters to see results that begin with those specific letters. | `rep*` → reply, report |
+| `word*` | Wildcard search - matches words starting with the prefix (minimum 3 characters) | `rep*` matches reply, report |
 
 ## Combination Examples
+
+These examples show how to combine multiple modifiers to narrow down search results effectively. Use combinations when a single modifier returns too many results or when you need to search within a specific context.
 
 ### GUI Examples
 ```
@@ -101,6 +103,35 @@ is:saved hasmy::star:
 
 # Search excluding specific channels
 API specification -in:general -in:random
+```
+
+## Common Search Scenarios
+
+Use these patterns for frequently encountered search tasks:
+
+**Find project discussions in a specific timeframe:**
+```
+project-name in:#channel-name after:2024-01-01 before:2024-03-31
+```
+
+**Find messages you bookmarked:**
+```
+is:saved keyword
+```
+
+**Find unread messages from a specific person:**
+```
+from:@username is:unread
+```
+
+**Find threads you participated in:**
+```
+is:thread with:@your-username keyword
+```
+
+**Find messages with attachments from last month:**
+```
+has:link during:January
 ```
 
 ## References
