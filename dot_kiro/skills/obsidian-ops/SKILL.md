@@ -99,3 +99,11 @@ Directories have specific purposes and access rules. Writing to read-only direct
 ## Tag
 
 Prefer tags that are already in use on existing notes - this maintains consistency and makes filtering more effective. Avoid adding new tags unless necessary - tag proliferation makes organization harder. Always include the `generated` tag when creating notes - this helps distinguish AI-generated content from user-created notes.
+
+## Related Skills
+
+When working with Obsidian notes, refer to these skills as needed:
+
+- **obsidian-markdown**: For creating and editing Obsidian Flavored Markdown with wikilinks, embeds, callouts, properties, and other Obsidian-specific syntax
+- **obsidian-bases**: For creating and editing Obsidian Bases (.base files) with views, filters, formulas, and summaries
+- **json-canvas**: For creating and editing JSON Canvas files (.canvas) with nodes, edges, groups, and connections
