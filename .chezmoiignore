@@ -6,9 +6,8 @@ README.md
 .ssh/id_rsa.pub
 {{- else }}
 .config/1Password/ssh/agent.toml
-.config/direnv/direnv.toml
 .config/karabiner
-.kiro/steering/obsidian-ops-guide.md
+.kiro/skill/obsidian-ops/SKILL.md
 Library
 {{- end }}
 
