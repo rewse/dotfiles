@@ -32,6 +32,21 @@ If you notice that the code or text you wrote has been unexpectedly changed, you
 
 You MUST follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
 
+### File Deletion
+
+When deleting files, you MUST choose the commit type based on the intent:
+
+- `refactor:`: Deletion as part of a structural change to working code (e.g., merging, splitting, or relocating files)
+- `fix:`:  Deletion to correct a bug or mistake (e.g., removing an erroneously added file or a file causing issues)
+- `chore:`: Deletion for general maintenance that does not fall into the above categories (e.g., removing obsolete or unused files)
+
+### Dependency Updates
+
+When updating dependencies, you MUST choose the commit type based on the intent:
+
+- `fix:`: Updating to address a vulnerability or bug in a dependency
+- `chore:`: Routine version bumps or general maintenance updates
+
 ## Spec File Standards
 
 - You MUST use plain form (常体) for spec files
