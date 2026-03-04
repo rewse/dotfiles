@@ -29,6 +29,11 @@
         "playwright-cli"
       ],
       "autoAllowReadonly": true
+    },
+    "subagent": {
+      "trustedAgents": [
+        "homeassistant"
+      ]
     }
   },
   "useLegacyMcpJson": true,
