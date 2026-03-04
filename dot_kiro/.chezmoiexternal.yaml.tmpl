@@ -28,6 +28,12 @@
   "obsidian-markdown"
 -}}
 
+{{- $agentBrowserSkills := list
+  "agent-browser"
+  "electron"
+  "slack"
+-}}
+
 # Anthropic Skills (https://github.com/anthropics/skills)
 {{- range $anthropicSkills }}
 skills/{{ . }}:
@@ -85,14 +91,16 @@ skills/brainstorming:
   refreshPeriod: 168h
 
 # Vercel Labs - agent-browser (https://github.com/vercel-labs/agent-browser)
-skills/agent-browser:
+{{- range $agentBrowserSkills }}
+skills/{{ . }}:
   type: archive
   url: https://github.com/vercel-labs/agent-browser/archive/refs/heads/main.tar.gz
   stripComponents: 3
   include:
-    - "*/skills/agent-browser/**"
+    - "*/skills/{{ . }}/**"
   exact: true
   refreshPeriod: 168h
+{{ end }}
 
 # Vercel Labs - agent-skills (https://github.com/vercel-labs/agent-skills)
 skills/web-design-guidelines:
