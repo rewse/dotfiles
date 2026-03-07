@@ -1,75 +1,75 @@
 ---
 name: obsidian-ops
-description: Guide for operating Obsidian vault using the `obsidian` CLI command. Use when the user wants to read, search, create, or manage notes in Obsidian. Trigger when the user mentions "obsidian", "vault", "note", "handover", "ノート", "メモ", "引継書", "Obsidian に書いて", "ノートを作って", "メモを残して", "ノートを探して", "ノートを読んで", or any task involving reading, writing, searching, or organizing notes. Even if the user doesn't explicitly say "Obsidian", trigger this skill when they ask to "write a memo", "save this as a note", "look up my notes", "記録しておいて", "あとで見返せるようにして", "ナレッジベースに追加", "これメモして", "保存しておいて", "引き継ぎ資料作って", or similar note-taking requests. Also trigger when the user wants to preserve information for later reference, document something important, organize their thoughts in a structured way, or search through their personal knowledge base.
+description: Guide for operating Obsidian vault using the `obsidian-cli` command. Use when the user wants to read, search, create, or manage notes in Obsidian. Trigger when the user mentions "obsidian", "vault", "note", "handover", "ノート", "メモ", "引継書", "Obsidian に書いて", "ノートを作って", "メモを残して", "ノートを探して", "ノートを読んで", or any task involving reading, writing, searching, or organizing notes. Even if the user doesn't explicitly say "Obsidian", trigger this skill when they ask to "write a memo", "save this as a note", "look up my notes", "記録しておいて", "あとで見返せるようにして", "ナレッジベースに追加", "これメモして", "保存しておいて", "引き継ぎ資料作って", or similar note-taking requests. Also trigger when the user wants to preserve information for later reference, document something important, organize their thoughts in a structured way, or search through their personal knowledge base.
 ---
 
 # Obsidian Operation Guide
 
-This skill provides the workflow and rules for interacting with an Obsidian vault via the `obsidian` CLI. Following these workflows ensures notes are created consistently with proper templates, tags, and directory placement.
+This skill provides the workflow and rules for interacting with an Obsidian vault via the `obsidian-cli` . Following these workflows ensures notes are created consistently with proper templates, tags, and directory placement.
 
 ## Basic Knowledge
 
-- CLI command: `obsidian`
+- CLI command: `obsidian-cli`
 - Default vault name: `vault`
 - Default vault path: `$HOME/Obsidian/vault`
-  - The vault is outside the workspace, so file tools (fsWrite, etc.) cannot access it. Always use `obsidian` commands.
+  - The vault is outside the workspace, so file tools (fsWrite, etc.) cannot access it. Always use `obsidian-cli` commands.
 
 ## IMPORTANT: First Command Rule
 
-Run `obsidian help` before the first `obsidian` command in every session. This ensures you have the latest command syntax and available operations - the CLI may have been updated since the skill was written, and this prevents using outdated or incorrect commands.
+Run `obsidian-cli help` before the first `obsidian-cli` command in every session. This ensures you have the latest command syntax and available operations - the CLI may have been updated since the skill was written, and this prevents using outdated or incorrect commands.
 
 ## Typical Workflows
 
 ### Read Existing Note (Unique Name)
 
-**Pre-check**: Confirm `obsidian help` has been executed in this session
+**Pre-check**: Confirm `obsidian-cli help` has been executed in this session
 
-1. `obsidian read file=<name>`
+1. `obsidian-cli read file=<name>`
 
 ### Read Existing Note (Search Required)
 
-**Pre-check**: Confirm `obsidian help` has been executed in this session
+**Pre-check**: Confirm `obsidian-cli help` has been executed in this session
 
-1. `obsidian search query=<text>` - Full-text search
+1. `obsidian-cli search query=<text>` - Full-text search
 2. If no results or too many results, try narrowing:
-    - Limit to folder: `obsidian search query=<text> path=<folder>`
-    - Search with context: `obsidian search:context query=<text>`
-    - Browse by tag: `obsidian tags all counts sort=count` then `obsidian tag name=<tag> verbose`
-3. `obsidian read path=<path>` - Read the found note
+    - Limit to folder: `obsidian-cli search query=<text> path=<folder>`
+    - Search with context: `obsidian-cli search:context query=<text>`
+    - Browse by tag: `obsidian-cli tags all counts sort=count` then `obsidian-cli tag name=<tag> verbose`
+3. `obsidian-cli read path=<path>` - Read the found note
 
 **Example:**
 Input: "前に書いたAWSの設定に関するノートを探して"
-1. `obsidian search query="AWS 設定"`
+1. `obsidian-cli search query="AWS 設定"`
 2. Review results, find "AWS Site-to-Site VPN Troubleshooting 2026-02-27"
-3. `obsidian read path="3 Notes/AWS Site-to-Site VPN Troubleshooting 2026-02-27.md"`
+3. `obsidian-cli read path="3 Notes/AWS Site-to-Site VPN Troubleshooting 2026-02-27.md"`
 
 ### Create New Note
 
-**Pre-check**: Confirm `obsidian help` has been executed in this session
+**Pre-check**: Confirm `obsidian-cli help` has been executed in this session
 
-1. `obsidian files folder="8 Templates"` - List templates
-2. `obsidian read file=<template-name>` - Choose the best suitable template
+1. `obsidian-cli files folder="8 Templates"` - List templates
+2. `obsidian-cli read file=<template-name>` - Choose the best suitable template
     - Do not use `Default Template` - it's a fallback with minimal structure; specific templates provide better organization and metadata
     - `Report Template` or `Memo Template` are good for general purpose
-3. `obsidian tags all` - List existing tags and choose suitable tags
+3. `obsidian-cli tags all` - List existing tags and choose suitable tags
     - Always include the `generated` tag - this distinguishes AI-generated notes from user-created ones, making it easier to filter and manage automated content
     - Reuse existing tags to maintain consistency and avoid tag proliferation
-4. `obsidian create name=<name> path=<folder/name.md> content=<text>`
+4. `obsidian-cli create name=<name> path=<folder/name.md> content=<text>`
 
 **Example:**
 Input: "引継書を作りたいんだけど、プロジェクトXの設定とか手順をまとめたい"
-1. `obsidian files folder="8 Templates"` → Find "Report Template"
-2. `obsidian read file="Report Template"` → Review structure
-3. `obsidian tags all` → Choose tags: project, memo, handover, generated
-4. `obsidian create name="Project X Handover" path="3 Notes/Project X Handover.md" content="---\naliases:\n  - プロジェクトX 引継書\ncreated_at: 2026-03-01T19:00:00+09:00\ncategories: \"[[Projects]]\"\ntags:\n  - project\n  - memo\n  - handover\n  - generated\n---\n\n## Overview\n\n[Project description]\n\n## Setup\n\n[Configuration steps]\n..."`
+1. `obsidian-cli files folder="8 Templates"` → Find "Report Template"
+2. `obsidian-cli read file="Report Template"` → Review structure
+3. `obsidian-cli tags all` → Choose tags: project, memo, handover, generated
+4. `obsidian-cli create name="Project X Handover" path="3 Notes/Project X Handover.md" content="---\naliases:\n  - プロジェクトX 引継書\ncreated_at: 2026-03-01T19:00:00+09:00\ncategories: \"[[Projects]]\"\ntags:\n  - project\n  - memo\n  - handover\n  - generated\n---\n\n## Overview\n\n[Project description]\n\n## Setup\n\n[Configuration steps]\n..."`
 
-#### Shell Escaping for `obsidian create`
+#### Shell Escaping for `obsidian-cli create`
 
-The `content` value is passed as a shell argument. Use `\n` for newlines and `\t` for tabs (the CLI interprets these). Wrap the value in double quotes and escape inner double quotes with `\"`.
+The `content-cli` value is passed as a shell argument. Use `\n` for newlines and `\t` for tabs (the CLI interprets these). Wrap the value in double quotes and escape inner double quotes with `\"`.
 
 Example:
 ```
-obsidian create name="My Note" path="3 Notes/My Note.md" content="---\naliases:\n  - マイノート\ncreated_at: 2026-03-01T12:00:00+09:00\ncategories: \"[[Memos]]\"\ntags:\n  - yyyy-2026\n  - yyyymm-202603\n  - memo\n  - generated\n---\n\nNote body here."
+obsidian-cli create name="My Note" path="3 Notes/My Note.md" content="---\naliases:\n  - マイノート\ncreated_at: 2026-03-01T12:00:00+09:00\ncategories: \"[[Memos]]\"\ntags:\n  - yyyy-2026\n  - yyyymm-202603\n  - memo\n  - generated\n---\n\nNote body here."
 ```
 
 ## Directory Structure
