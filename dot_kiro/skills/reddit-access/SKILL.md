@@ -45,12 +45,19 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts python 10 hot
 
 ### Get post details with comments
 
+**With post ID:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details <post_id_or_url> [subreddit]
+python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details <post_id> [subreddit]
 ```
 
-- `post_id_or_url`: Reddit post ID or full URL (new or old Reddit)
-- `subreddit`: Optional subreddit name for faster lookup (ignored if URL provided)
+**With URL:**
+```bash
+python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details <url>
+```
+
+- `post_id`: Reddit post ID
+- `subreddit`: Optional subreddit name for faster lookup (when using post ID)
+- `url`: Full Reddit URL (new or old Reddit format)
 
 **Example with post ID:**
 ```bash
