@@ -119,6 +119,13 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py user rewselab 10
 python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details "https://www.reddit.com/r/python/comments/abc123/post_title/"
 ```
 
+### Read discussion
+
+```bash
+# Get post and read comments
+python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details abc123 python
+```
+
 ### Monitor trending topics
 
 ```bash
@@ -134,13 +141,6 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts MachineLearning 15 
 # Search across relevant subreddits
 python3 ~/.kiro/skills/reddit-access/scripts/reddit.py search python "type hints" 20
 python3 ~/.kiro/skills/reddit-access/scripts/reddit.py search learnpython "type hints" 20
-```
-
-### Read discussion
-
-```bash
-# Get post and read comments
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details abc123 python
 ```
 
 ### Track user activity
