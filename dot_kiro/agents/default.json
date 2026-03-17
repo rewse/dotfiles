@@ -11,7 +11,7 @@
     "@builtin/subagent",
     "@builtin/web_fetch",
     "@builtin/web_search",
-    "@Context7"
+    "@ticktick"
   ],
   "resources": [
     "file://AGENTS.md",
