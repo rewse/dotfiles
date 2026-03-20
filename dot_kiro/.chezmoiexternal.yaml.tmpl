@@ -46,6 +46,12 @@ skills/{{ . }}:
   refreshPeriod: 168h
 {{ end }}
 
+# Blader Humanizer (https://github.com/blader/humanizer)
+skills/humanizer/SKILL.md:
+  type: file
+  url: https://raw.githubusercontent.com/blader/humanizer/main/SKILL.md
+  refreshPeriod: 168h
+
 # Corey Haines Marketing Skills (https://github.com/coreyhaines31/marketingskills)
 {{- range $marketingSkills }}
 skills/{{ . }}:
