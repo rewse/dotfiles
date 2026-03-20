@@ -1,6 +1,18 @@
-# Python Standards
+---
+inclusion: always
+---
 
-## Dependency Management
+# Python Dependency Management
+
+### Do
+
+- Use inline script metadata with `uv run` for standalone scripts
+- Use `pyproject.toml` with `uv` for multi-file projects
+
+### Don't
+
+- Use `pip install` or `requirements.txt`
+- Use `venv` or `virtualenv` directly
 
 ### Inline Script Dependencies (Recommended)
 
@@ -24,18 +36,10 @@ import requests
 #### Usage
 
 ```bash
-chmod +x script.py
-./script.py
-# or
 uv run script.py
+# or with shebang
+./script.py
 ```
-
-#### Benefits
-
-- Self-contained: Dependencies are declared in the script itself
-- Automatic installation: `uv` handles dependency installation automatically
-- No virtual environment setup needed
-- Portable across different environments
 
 ### Project-based Dependencies
 
@@ -59,7 +63,7 @@ build-backend = "uv_build"
 module-root = "src"
 ```
 
-#### Benefits
+#### When to Use
 
 - Projects with multiple Python files
 - Shared dependencies across multiple scripts
@@ -67,10 +71,7 @@ module-root = "src"
 
 #### Testing
 
-You MUST execute tests using `uv run` with `PYTHONPATH=src`.
+Execute tests using `uv run` with `PYTHONPATH=src`. The `src` layout requires this so Python can resolve modules under `src/` during test execution.
 
 Example: `PYTHONPATH=src uv run pytest tests/test_foo.py`
 
-#### Troubleshooting
-
-If `ModuleNotFoundError` occurs, you MUST retry the execution.
