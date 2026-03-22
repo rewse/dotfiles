@@ -43,7 +43,7 @@ if [[ -d "${HOME}/.local/bin" ]]; then
   export PATH="${HOME}/.local/bin:${PATH}"
 fi
 
-{{- if eq .chezmoi.os "darwin" }}
+{{ if eq .chezmoi.os "darwin" }}
 # Homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -58,21 +58,21 @@ if [[ -d "/Applications/Obsidian.app/Contents/MacOS" ]]; then
 fi
 {{- end }}
 
-{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 # AIM
 if [[ -d "${HOME}/.aim/mcp-servers" ]]; then
   export PATH="${HOME}/.aim/mcp-servers:$PATH"
 fi
 {{- end }}
 
-{{- if eq .chezmoi.os "darwin" }}
+{{ if eq .chezmoi.os "darwin" }}
 # Node
 if [[ -d "/opt/homebrew/lib/node_modules" ]]; then
   export NODE_PATH="/opt/homebrew/lib/node_modules"
 fi
 {{- end }}
 
-{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 # Toolbox
 if [[ -d "${HOME}/.toolbox/bin" ]]; then
   export PATH="${HOME}/.toolbox/bin:${PATH}"

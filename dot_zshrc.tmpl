@@ -35,7 +35,7 @@ PS1='%n@%m:%1~%# '
 # >>>
 # <<< Plugins
 
-{{- if eq .chezmoi.os "darwin" }}
+{{ if eq .chezmoi.os "darwin" }}
 # Add Homebrew's site-functions to fpath
 if [[ -d "/opt/homebrew/share/zsh/site-functions" ]]; then
   fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
@@ -46,7 +46,7 @@ fi
 autoload -Uz compinit
 compinit
 
-{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 # Brazil Completion
 if [[ -f "${HOME}/.brazil_completion/zsh_completion" ]]; then
   builtin source "${HOME}/.brazil_completion/zsh_completion"
@@ -145,7 +145,7 @@ alias view="vim -R"
 alias zprofile="${EDITOR} ~/.zprofile"
 alias zshrc="${EDITOR} ~/.zshrc"
 
-{{- if eq .chezmoi.os "darwin" }}
+{{ if eq .chezmoi.os "darwin" }}
 # GNU Coreutils
 alias date="gdate"
 alias readlink="greadlink"
@@ -154,12 +154,12 @@ alias sed="gsed"
 alias timeout="gtimeout"
 {{- end }}
 
-{{- if eq .chezmoi.os "linux" }}
+{{ if eq .chezmoi.os "linux" }}
 # 1Password CLI
 alias opsignin='eval $(op signin)'
 {{- end }}
 
-{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 alias chezmoiaddinternal="chezmoi add --source=$HOME/Documents/git/dotfiles-internal"
 alias chezmoiapplyinternal="chezmoi apply --source=$HOME/Documents/git/dotfiles-internal"
 {{- end }}
