@@ -12,7 +12,7 @@ This skill provides the workflow and rules for interacting with an Obsidian vaul
 - CLI command: `obsidian`
 - Default vault name: `vault`
 - Default vault path: `$HOME/Obsidian/vault`
-  - The vault is outside the workspace, so file tools (fsWrite, etc.) cannot access it. Always use `obsidian` commands.
+  - The vault might be outside the workspace. Prefer the `obsidian` command to file tools (`read`, `write`, etc.) that might not have access it.
 
 ## IMPORTANT: First Command Rule
 
