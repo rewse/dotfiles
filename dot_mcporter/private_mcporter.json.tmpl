@@ -15,6 +15,33 @@
       "type": "http",
       "url": "https://mcp.ticktick.com",
       "oauthScopes": []
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+    },
+    "amazon-sharepoint-mcp": {
+      "command": "~/.aim/mcp-servers/amazon-sharepoint-mcp"
+    },
+    "aws-outlook-mcp": {
+      "command": "aws-outlook-mcp"
+    },
+    "aws-sentral-mcp": {
+      "command": "aws-sentral-mcp"
+    },
+    "aws-mcp": {
+      "command": "uvx",
+      "args": [ 
+        "mcp-proxy-for-aws@latest",
+        "https://aws-mcp.us-east-1.api.aws/mcp",
+        "--metadata",
+        "AWS_REGION=ap-northeast-1"
+      ]
+    },
+    "iam-policy-autopilot": {
+      "command": "uvx",
+      "args": ["iam-policy-autopilot", "mcp-server"]
+    },
+    "slack-mcp": {
+      "command": "slack-mcp"
+{{- end }}
     }
   }
 }
