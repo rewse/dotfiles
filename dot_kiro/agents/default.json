@@ -7,6 +7,9 @@
   "toolAliases": {},
   "allowedTools": [
     "@builtin/delegate",
+    "@builtin/glob",
+    "@builtin/grep",
+    "@builtin/knowledge",
     "@builtin/read",
     "@builtin/subagent",
     "@builtin/web_fetch",
@@ -26,6 +29,7 @@
     "shell": {
       "allowedCommands": [
         "agent-browser",
+        "mcporter",
         "playwright-cli"
       ],
       "autoAllowReadonly": true
@@ -33,6 +37,12 @@
     "subagent": {
       "trustedAgents": [
         "homeassistant"
+      ]
+    },
+    "write": {
+      "allowedPaths": [
+        "./**",
+        "/tmp/**"
       ]
     }
   },
