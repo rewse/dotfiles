@@ -13,8 +13,7 @@
     "@builtin/read",
     "@builtin/subagent",
     "@builtin/web_fetch",
-    "@builtin/web_search",
-    "@ticktick"
+    "@builtin/web_search"
   ],
   "resources": [
     "file://AGENTS.md",
@@ -34,11 +33,6 @@
       ],
       "autoAllowReadonly": true
     },
-    "subagent": {
-      "trustedAgents": [
-        "homeassistant"
-      ]
-    },
     "write": {
       "allowedPaths": [
         "./**",
@@ -47,5 +41,5 @@
     }
   },
   "useLegacyMcpJson": true,
-  "model": "Auto"
+  "model": "claude-sonnet-4.6-1m"
 }
