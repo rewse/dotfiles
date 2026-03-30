@@ -13,7 +13,8 @@
     "@builtin/read",
     "@builtin/subagent",
     "@builtin/web_fetch",
-    "@builtin/web_search"
+    "@builtin/web_search",
+    "@builtin/write"
   ],
   "resources": [
     "file://AGENTS.md",
@@ -36,6 +37,7 @@
     "write": {
       "allowedPaths": [
         "./**",
+        "{{ .chezmoi.homeDir }}/Downloads/**",
         "/tmp/**"
       ]
     }
