@@ -1,5 +1,34 @@
 {
   "mcpServers": {
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "{{ onepasswordRead "op://chezmoi/Brave/credential" }}"
+      }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest"
+      ]
+    },
+    "drawio": {
+      "command": "npx",
+      "args": [
+        "@drawio/mcp"
+      ]
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch",
+        "--ignore-robots-txt"
+      ]
+    },
     "home-assistant": {
       "command": "uvx",
       "args": [
@@ -18,7 +47,7 @@
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
     },
     "amazon-sharepoint-mcp": {
-      "command": "~/.aim/mcp-servers/amazon-sharepoint-mcp"
+      "command": "{{ .chezmoi.homeDir }}/.aim/mcp-servers/amazon-sharepoint-mcp"
     },
     "aws-outlook-mcp": {
       "command": "aws-outlook-mcp"
@@ -35,9 +64,11 @@
         "AWS_REGION=ap-northeast-1"
       ]
     },
-    "iam-policy-autopilot": {
-      "command": "uvx",
-      "args": ["iam-policy-autopilot", "mcp-server"]
+    "builder-mcp": {
+      "command": "builder-mcp"
+    },
+    "pippin-mcp" : {
+      "command" : "pippin-mcp-server"
     },
     "slack-mcp": {
       "command": "slack-mcp"

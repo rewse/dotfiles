@@ -1,0 +1,50 @@
+---
+name: mcporter
+description: Interact with external services using mcporter CLI, which connects to MCP servers for web search, browser automation, diagram editing, URL fetching, smart home control, and task management. Use when the user wants to search the web via Brave, automate browser interactions via Chrome DevTools, create or view draw.io diagrams, fetch web page content, control Home Assistant devices and automations, or manage TickTick tasks and projects — even if they don't mention "mcporter" explicitly.
+---
+
+# mcporter
+
+mcporter is a CLI tool for calling MCP servers to interact with external services.
+
+## Available Servers
+
+Check available servers before use:
+
+```bash
+mcporter list 2>&1 | cat
+```
+
+The following is for reference only. Trust the output of `mcporter list` for the actual server status.
+
+- `brave-search` — Web search (general queries, news, articles) and local search (businesses, places, ratings) via Brave Search API
+- `chrome-devtools` — Browser automation via Chrome DevTools Protocol: click, navigate, fill forms, take screenshots/snapshots, evaluate JS, Lighthouse audits, performance traces, network/console inspection, and more
+- `drawio` — Open draw.io editor with diagrams from XML, CSV, or Mermaid syntax
+- `fetch` — Fetch a URL and extract its contents as markdown
+- `home-assistant` — Home Assistant smart home control: entities, devices, areas, automations, scripts, services, HACS, dashboards, history, statistics, templates, todo lists, zones, backups, and more
+- `ticktick` — TickTick task management: projects, tasks (create, update, complete, search, filter, batch), checklists, reminders, recurring tasks, and user preferences
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+- `amazon-sharepoint-mcp` — SharePoint and OneDrive file operations (list, read, write, search)
+- `aws-mcp` — AWS CLI commands, documentation search, regional availability checks, and SOPs
+- `aws-outlook-mcp` — Outlook email (read, search, send, reply, draft, attachments) and calendar (view, create, book rooms, check availability)
+- `aws-sentral-mcp` — Salesforce/CRM data: accounts, contacts, opportunities, tasks, events, PFRs, and SIFT activities
+- `builder-mcp` — Internal dev tools: code reviews, pipelines, ticketing, oncall, Brazil builds, Apollo deployments, Quip, internal search, SAS risks, internal websites, acronym lookup, Mechanic tools, remote test runs, and workspace/Git info
+- `pippin-mcp` — Pippin design document management: projects, artifacts, reviews, comments, reviewer assignments, and local/remote sync
+- `slack-mcp` — Slack messages (search, post, react), channels, threads, files, DMs, and reminders
+{{- end }}
+
+## Usage
+
+Run `--help` to check the latest usage and available options, then decide how to call the tool.
+
+```bash
+mcporter --help 2>&1 | cat
+mcporter list <server> --schema 2>&1 | grep -B20 -A20 "<keyword1>" | grep -B20 -A20 "<keyword2>" | cat
+mcporter call <server>.<tool> [key=value ...] 2>&1 | cat
+```
+
+## Tips
+
+- Always pipe output to `cat` to prevent pager from hanging the AI process
+- Run searches across multiple servers in parallel
+- When looking up tools with `--schema`, chain multiple `grep` commands to AND-search by keywords (e.g., `grep -B20 -A20 "room" | grep -B20 -A20 "booking"`). A single keyword often matches too many tools and wastes context
