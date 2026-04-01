@@ -3,14 +3,10 @@
 {{- $anthropicSkills := list
   "canvas-design"
   "doc-coauthoring"
-  "docx"
   "frontend-design"
   "mcp-builder"
-  "pdf"
-  "pptx"
   "skill-creator"
   "webapp-testing"
-  "xlsx"
 -}}
 
 {{- $marketingSkills := list
@@ -26,6 +22,11 @@
   "json-canvas"
   "obsidian-bases"
   "obsidian-markdown"
+-}}
+
+{{- $openaiSkills := list
+  "doc"
+  "pdf"
 -}}
 
 {{- $agentBrowserSkills := list
@@ -105,6 +106,18 @@ skills/aws-architecture-diagram:
     - "*/skills/aws-architecture-diagram/**"
   exact: true
   refreshPeriod: 168h
+
+# OpenAI Skills (https://github.com/openai/skills)
+{{- range $openaiSkills }}
+skills/{{ . }}:
+  type: archive
+  url: https://github.com/openai/skills/archive/refs/heads/main.tar.gz
+  stripComponents: 4
+  include:
+    - "*/skills/.curated/{{ . }}/**"
+  exact: true
+  refreshPeriod: 168h
+{{ end }}
 
 # Vercel Labs - agent-browser (https://github.com/vercel-labs/agent-browser)
 {{- range $agentBrowserSkills }}
