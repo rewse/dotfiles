@@ -2,7 +2,18 @@
   "name": "default",
   "description": "",
   "prompt": null,
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+  "mcpServers": {
+    "builder-mcp": {
+      "command": "builder-mcp",
+      "args": [
+        "--include-tools=ReadInternalWebsites"
+      ]
+    }
+  },
+{{- else }}
   "mcpServers": {},
+{{- end }}
   "tools": ["*"],
   "toolAliases": {},
   "allowedTools": [
@@ -15,12 +26,18 @@
     "@builtin/web_fetch",
     "@builtin/web_search",
     "@builtin/write"
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }},
+    "@builder-mcp"
+{{- end }}
   ],
   "resources": [
     "file://AGENTS.md",
     "file://README.md",
     "file://.kiro/steering/**/*.md",
     "file://~/.kiro/steering/**/*.md",
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+    "file://~/.kiro/steering.internal/**/*.md",
+{{- end }}
     "skill://.kiro/skills/**/SKILL.md",
     "skill://~/.kiro/skills/**/SKILL.md"
   ],
@@ -33,6 +50,10 @@
         "playwright-cli"
       ],
       "autoAllowReadonly": true
+    },
+    "subagent": {
+      "availableAgents": ["*"],
+      "trustedAgents": ["*"]
     },
     "write": {
       "allowedPaths": [
