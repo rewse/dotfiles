@@ -29,6 +29,12 @@
   "pdf"
 -}}
 
+{{- $minimaxSkills := list
+  "minimax-docx"
+  "minimax-pdf"
+  "minimax-xlsx"
+-}}
+
 {{- $agentBrowserSkills := list
   "agent-browser"
   "electron"
@@ -77,6 +83,16 @@ skills/{{ . }}:
   refreshPeriod: 168h
 {{ end }}
 
+# Microsoft HVE Core (https://github.com/microsoft/hve-core)
+skills/powerpoint:
+  type: archive
+  url: https://github.com/microsoft/hve-core/archive/refs/heads/main.tar.gz
+  stripComponents: 5
+  include:
+    - "*/.github/skills/experimental/powerpoint/**"
+  exact: true
+  refreshPeriod: 168h
+
 # Microsoft Playwright CLI (https://github.com/microsoft/playwright-cli)
 skills/playwright-cli:
   type: archive
@@ -86,6 +102,18 @@ skills/playwright-cli:
     - "*/skills/playwright-cli/**"
   exact: true
   refreshPeriod: 168h
+
+# MiniMax Skills (https://github.com/MiniMax-AI/skills)
+{{- range $minimaxSkills }}
+skills/{{ . }}:
+  type: archive
+  url: https://github.com/MiniMax-AI/skills/archive/refs/heads/main.tar.gz
+  stripComponents: 3
+  include:
+    - "*/skills/{{ . }}/**"
+  exact: true
+  refreshPeriod: 168h
+{{ end }}
 
 # Obra Superpowers (https://github.com/obra/superpowers)
 skills/brainstorming:

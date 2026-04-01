@@ -66,6 +66,11 @@ fi
 {{- end }}
 
 {{ if eq .chezmoi.os "darwin" }}
+# .NET tools
+if [[ -d "${HOME}/.dotnet/tools" ]]; then
+  export PATH="${PATH}:${HOME}/.dotnet/tools"
+fi
+
 # Node
 if [[ -d "/opt/homebrew/lib/node_modules" ]]; then
   export NODE_PATH="/opt/homebrew/lib/node_modules"
