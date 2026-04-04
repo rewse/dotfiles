@@ -35,7 +35,7 @@ Follow [Concentric-CSS](https://github.com/brandon-rhodes/Concentric-CSS) for CS
 24. content, counters
 25. page breaks
 
-### Do
+**Do**
 
 ```css
 .box {
@@ -50,7 +50,7 @@ Follow [Concentric-CSS](https://github.com/brandon-rhodes/Concentric-CSS) for CS
 }
 ```
 
-### Don't
+**Don't**
 
 ```css
 .box {

@@ -4,12 +4,12 @@ inclusion: always
 
 # Python Dependency Management
 
-### Do
+**Do**
 
 - Use inline script metadata with `uv run` for standalone scripts
 - Use `pyproject.toml` with `uv` for multi-file projects
 
-### Don't
+**Don't**
 
 - Use `pip install` or `requirements.txt`
 - Use `venv` or `virtualenv` directly

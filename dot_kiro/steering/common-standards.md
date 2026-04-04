@@ -58,9 +58,11 @@ When updating dependencies, choose the commit type based on the intent:
 
 ## CLI Command Standards
 
+### Pager Prevention
+
 Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI command may invoke a pager. If a pager launches, the AI process hangs indefinitely.
 
-### Do
+**Do**
 
 - `git -P diff`
 - `git -P log`
@@ -68,11 +70,15 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 - `aws | cat`
 - `gh | cat`
 
-### Don't
+**Don't**
 
 - `git diff`
 - `git log`
 - `git show`
+
+### File Search
+
+Do not use `find ~` or other overly broad paths — the search scope is too large and the command will not return useful results. Instead, infer a more specific path from context or ask the user.
 
 ## Coding Standards
 

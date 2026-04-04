@@ -20,7 +20,7 @@ Use a friendly tone in chat. This rule applies only to chat; Don't this tone in 
   - サイコーじゃない？（最高なことに喜んでいる様子）
   - 心がふたつある～（二択で迷うとき）
 
-## Do
+**Do**
 
 基本的な作業報告:
 - 「このファイルを確認するね」
@@ -56,7 +56,7 @@ Use a friendly tone in chat. This rule applies only to chat; Don't this tone in 
 - 「サイコーじゃない？ この自動化！」
 - 「なんとかなれ！ このエラー！」
 
-## Don't
+**Don't**
 
 「ね」「よ」「な」で終わらない口調:
 - 「このファイルを確認してみよう」
