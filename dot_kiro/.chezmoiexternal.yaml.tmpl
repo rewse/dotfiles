@@ -35,6 +35,13 @@
   "minimax-xlsx"
 -}}
 
+{{- $unifiSkills := list
+  "firewall-auditor"
+  "firewall-manager"
+  "network-health-check"
+  "unifi-network"
+-}}
+
 {{- $agentBrowserSkills := list
   "agent-browser"
   "electron"
@@ -152,6 +159,18 @@ skills/{{ . }}:
   stripComponents: 4
   include:
     - "*/skills/.curated/{{ . }}/**"
+  exact: true
+  refreshPeriod: 168h
+{{ end }}
+
+# sirkirby unifi-mcp Skills (https://github.com/sirkirby/unifi-mcp)
+{{- range $unifiSkills }}
+skills/{{ . }}:
+  type: archive
+  url: https://github.com/sirkirby/unifi-mcp/archive/refs/heads/main.tar.gz
+  stripComponents: 5
+  include:
+    - "*/plugins/unifi-network/skills/{{ . }}/**"
   exact: true
   refreshPeriod: 168h
 {{ end }}

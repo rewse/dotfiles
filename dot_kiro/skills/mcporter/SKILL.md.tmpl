@@ -24,6 +24,7 @@ The following is for reference only. Trust the output of `mcporter list` for the
 - `fetch` — Fetch a URL and extract its contents as markdown
 - `home-assistant` — Home Assistant smart home control: entities, devices, areas, automations, scripts, services, HACS, dashboards, history, statistics, templates, todo lists, zones, backups, and more
 - `ticktick` — TickTick task management: projects, tasks (create, update, complete, search, filter, batch), checklists, reminders, recurring tasks, and user preferences
+- `unifi-network` — UniFi Network Controller: WiFi networks, clients, devices, switches, APs, firewall, VPN, routing, and statistics, and more
 - `zabbix` — Zabbix full API access: hosts, host groups, items, triggers, events, problems, alerts, dashboards, SLA, maintenance windows, templates, discovery rules, actions, scripts, users, proxies, and more
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 - `amazon-sharepoint-mcp` — SharePoint and OneDrive file operations (list, read, write, search)
@@ -50,3 +51,4 @@ mcporter call <server>.<tool> [key=value ...] 2>&1 | cat
 - Always pipe output to `cat` to prevent pager from hanging the AI process
 - Run searches across multiple servers in parallel
 - When looking up tools with `--schema`, chain multiple `grep` commands to AND-search by keywords (e.g., `grep -B20 -A20 "room" | grep -B20 -A20 "booking"`). A single keyword often matches too many tools and wastes context
+- `unifi-network` uses a two-step workflow: call `unifi_tool_index` to discover tools, then `unifi_execute` to run them. Use parentheses syntax: `mcporter call 'unifi-network.unifi_execute(tool: "unifi_list_clients")'`

@@ -52,9 +52,17 @@
       }
     },
     "ticktick": {
-      "type": "http",
       "url": "https://mcp.ticktick.com",
       "oauthScopes": []
+    },
+    "unifi-network": {
+      "command": "uvx",
+      "args": ["unifi-network-mcp@latest"],
+      "env": {
+        "UNIFI_NETWORK_HOST": "{{ onepasswordRead "op://chezmoi/unifi-mcp/hostname" }}",
+        "UNIFI_NETWORK_USERNAME": "{{ onepasswordRead "op://chezmoi/unifi-mcp/username" }}",
+        "UNIFI_NETWORK_PASSWORD": "{{ onepasswordRead "op://chezmoi/unifi-mcp/credential" }}"
+      }
     },
     "zabbix": {
       "url": "http://fox.rewse.jp:8080/mcp",
