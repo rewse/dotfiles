@@ -55,6 +55,12 @@
       "type": "http",
       "url": "https://mcp.ticktick.com",
       "oauthScopes": []
+    },
+    "zabbix": {
+      "url": "http://fox.rewse.jp:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer {{ onepasswordRead "op://chezmoi/Zabbix MCP Server/credential" }}"
+      }
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
     },
     "amazon-sharepoint-mcp": {
