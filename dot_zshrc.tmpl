@@ -160,8 +160,14 @@ alias opsignin='eval $(op signin)'
 {{- end }}
 
 {{ if eq .chezmoi.hostname "7cf34ded5d65" }}
+# chezmoi
 alias chezmoiaddinternal="chezmoi add --source=$HOME/Documents/git/dotfiles-internal"
 alias chezmoiapplyinternal="chezmoi apply --source=$HOME/Documents/git/dotfiles-internal"
+{{- end }}
+
+{{ if eq .chezmoi.os "darwin" }}
+# Google Chrome
+alias chrome-agent="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --remote-allow-origins=http://localhost:9222 --user-data-dir=~/Library/Application\ Support/Google/Chrome\ Agent --no-first-run"
 {{- end }}
 
 # Kiro CLI
