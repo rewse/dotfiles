@@ -24,6 +24,10 @@ agent-browser --engine lightpanda open <url>
 
 # Fallback: Chrome (omit --engine)
 agent-browser open <url>
+
+# Headed mode: use --auto-connect to open in the user's existing Chrome
+# Requires remote debugging enabled at chrome://inspect/#remote-debugging
+agent-browser --headed --auto-connect open <url>
 ```
 
 ### Alternative Option: playwright-cli
