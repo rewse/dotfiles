@@ -43,17 +43,37 @@
   ],
   "hooks": {},
   "toolsSettings": {
+    "execute_bash": {
+      "allowedCommands": [
+        "agent-browser( .*)?",
+        "mcporter( .*)?",
+        "playwright-cli( .*)?"
+      ],
+      "autoAllowReadonly": true
+    },
     "shell": {
       "allowedCommands": [
-        "agent-browser",
-        "mcporter",
-        "playwright-cli"
+        "agent-browser( .*)?",
+        "mcporter( .*)?",
+        "playwright-cli( .*)?"
       ],
       "autoAllowReadonly": true
     },
     "subagent": {
-      "availableAgents": ["*"],
-      "trustedAgents": ["*"]
+      "availableAgents": [
+        "default",
+        "kiro_help",
+        "kiro_planner"
+      ],
+      "trustedAgents": ["default"]
+    },
+    "use_subagent": {
+      "availableAgents": [
+        "default",
+        "kiro_help",
+        "kiro_planner"
+      ],
+      "trustedAgents": ["default"]
     },
     "write": {
       "allowedPaths": [
