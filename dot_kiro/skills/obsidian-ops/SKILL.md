@@ -74,6 +74,15 @@ Example:
 obsidian create name="My Note" path="3 Notes/My Note.md" content="---\naliases:\n  - マイノート\ncreated_at: 2026-03-01T12:00:00+09:00\ncategories: \"[[Memos]]\"\ntags:\n  - yyyy-2026\n  - yyyymm-202603\n  - memo\n  - generated\n---\n\nUse \`obsidian\` to manage notes."
 ```
 
+### Append to Existing Note
+
+When appending content to an existing note, merge the new content into the relevant existing sections rather than adding a new section at the end, unless the user explicitly asks otherwise. This keeps notes cohesive and avoids redundant structure.
+
+**Example:**
+
+- Good: a new item under the existing "## Setup" section
+- Bad: Add a new "## Additional Setup" section at the bottom with overlapping content
+
 ## Directory Structure
 
 Directories have specific purposes and access rules. Writing to read-only directories will break the vault's organizational structure.
