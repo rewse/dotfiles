@@ -42,11 +42,6 @@
   "unifi-network"
 -}}
 
-{{- $agentBrowserSkills := list
-  "agent-browser"
-  "electron"
--}}
-
 # Anthropic Skills (https://github.com/anthropics/skills)
 {{- range $anthropicSkills }}
 skills/{{ . }}:
@@ -175,16 +170,23 @@ skills/{{ . }}:
 {{ end }}
 
 # Vercel Labs - agent-browser (https://github.com/vercel-labs/agent-browser)
-{{- range $agentBrowserSkills }}
-skills/{{ . }}:
+skills/agent-browser:
   type: archive
   url: https://github.com/vercel-labs/agent-browser/archive/refs/heads/main.tar.gz
   stripComponents: 3
   include:
-    - "*/skills/{{ . }}/**"
+    - "*/skills/agent-browser/**"
   exact: true
   refreshPeriod: 168h
-{{ end }}
+
+skills/electron:
+  type: archive
+  url: https://github.com/vercel-labs/agent-browser/archive/refs/heads/main.tar.gz
+  stripComponents: 3
+  include:
+    - "*/skill-data/electron/**"
+  exact: true
+  refreshPeriod: 168h
 
 # Vercel Labs - agent-skills (https://github.com/vercel-labs/agent-skills)
 skills/web-design-guidelines:
