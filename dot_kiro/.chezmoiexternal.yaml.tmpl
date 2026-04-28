@@ -157,6 +157,17 @@ skills/{{ . }}:
   refreshPeriod: 168h
 {{ end }}
 
+# Oracle DB Skills (https://github.com/oracle/skills)
+skills/oracle-db:
+  type: archive
+  url: https://github.com/oracle/skills/archive/refs/heads/main.tar.gz
+  stripComponents: 1
+  include:
+    - "*/SKILL.md"
+    - "*/skills/**"
+  exact: true
+  refreshPeriod: 168h
+
 # sirkirby unifi-mcp Skills (https://github.com/sirkirby/unifi-mcp)
 {{- range $unifiSkills }}
 skills/{{ . }}:
@@ -178,7 +189,6 @@ skills/agent-browser:
     - "*/skills/agent-browser/**"
   exact: true
   refreshPeriod: 168h
-
 
 # Vercel Labs - agent-skills (https://github.com/vercel-labs/agent-skills)
 skills/web-design-guidelines:
