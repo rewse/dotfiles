@@ -4,7 +4,7 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: "0 20 * * 3"  # Every Thursday at 05:00 JST (20:00 UTC Wed)
+    - cron: "37 19 * * 3"  # Every Thursday at 04:37 JST (19:37 UTC Wed)
 
 permissions:
   contents: read
