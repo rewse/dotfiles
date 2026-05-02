@@ -1,0 +1,23 @@
+name: Gitleaks
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 20 * * 3"  # Every Thursday at 05:00 JST (20:00 UTC Wed)
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
