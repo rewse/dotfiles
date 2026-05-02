@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Global pre-commit hook: run gitleaks on staged changes, then run local hook
+
+# Run gitleaks
+if command -v gitleaks &>/dev/null; then
+  gitleaks git --pre-commit --staged || exit $?
+fi
+
+# Run repo-local pre-commit hook if it exists
+LOCAL_HOOK="$(git rev-parse --git-dir)/hooks/pre-commit"
+if [ -x "$LOCAL_HOOK" ]; then
+  "$LOCAL_HOOK" "$@" || exit $?
+fi
