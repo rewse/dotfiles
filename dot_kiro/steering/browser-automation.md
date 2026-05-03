@@ -25,9 +25,11 @@ agent-browser --engine lightpanda open <url>
 # Fallback: Chrome (omit --engine)
 agent-browser open <url>
 
-# Headed mode: use --auto-connect to open in the user's existing Chrome
+# Headed mode: connect to the user's existing Chrome via the DevToolsActivePort file
 # Requires remote debugging enabled at chrome://inspect/#remote-debugging
-agent-browser --headed --auto-connect open <url>
+PORT=$(sed -n '1p' "$HOME/Library/Application Support/Google/Chrome/DevToolsActivePort")
+WS_PATH=$(sed -n '2p' "$HOME/Library/Application Support/Google/Chrome/DevToolsActivePort")
+agent-browser --cdp "ws://127.0.0.1:${PORT}${WS_PATH}" open <url>
 ```
 
 ### Alternative Option: playwright-cli
