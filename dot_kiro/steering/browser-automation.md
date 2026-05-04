@@ -12,11 +12,7 @@ Use `agent-browser` for web automation. Activate the `agent-browser` skill befor
 
 Use `--engine lightpanda` by default. It is ~10x faster and uses ~16x less memory than Chrome.
 
-Fall back to the default Chrome engine when:
-
-- Authentication is explicitly required (login, `--profile`, `--state`)
-- Headed mode is needed (`--headed`)
-- Lightpanda fails or crashes on the target site
+Fall back to the default Chrome engine when Lightpanda fails or crashes on the target site:
 
 ```bash
 # Default: use Lightpanda
@@ -24,13 +20,40 @@ agent-browser --engine lightpanda open <url>
 
 # Fallback: Chrome (omit --engine)
 agent-browser open <url>
-
-# Headed mode: connect to the user's existing Chrome via the DevToolsActivePort file
-# Requires remote debugging enabled at chrome://inspect/#remote-debugging
-PORT=$(sed -n '1p' "$HOME/Library/Application Support/Google/Chrome/DevToolsActivePort")
-WS_PATH=$(sed -n '2p' "$HOME/Library/Application Support/Google/Chrome/DevToolsActivePort")
-agent-browser --cdp "ws://127.0.0.1:${PORT}${WS_PATH}" open <url>
 ```
+
+When authentication or headed mode is needed, connect to the user's Arc browser instead of launching a new Chrome engine. See [Headed Mode: Connect to Arc](#headed-mode-connect-to-arc) below.
+
+#### Headed Mode: Connect to Arc
+
+Connect to the user's Arc browser (Chromium-based) via CDP when authentication or headed mode is needed. Arc is preferred over Chrome because:
+
+- Chrome M136+ blocks `--remote-debugging-port` on the default profile (DevToolsActivePort not created)
+- Arc uses a separate user data directory, so the restriction does not apply
+- Arc retains the user's extensions (e.g., 1Password) and login state
+
+Steps:
+
+1. Quit Arc if already running.
+2. Launch Arc with remote debugging enabled:
+
+   ```bash
+   nohup "/Applications/Arc.app/Contents/MacOS/Arc" --remote-debugging-port=9222 >/tmp/arc.log 2>&1 &
+   ```
+
+3. Extract the WebSocket debugger URL from `/tmp/arc.log`:
+
+   ```bash
+   WS_URL=$(grep -o 'ws://\[::1\]:9222/devtools/browser/[a-f0-9-]*' /tmp/arc.log | head -1)
+   ```
+
+   Arc binds only to IPv6 (`[::1]`), so the URL uses `ws://[::1]:9222/...` instead of `ws://127.0.0.1:...`.
+
+4. Run agent-browser with `--cdp` pointing to the WebSocket URL:
+
+   ```bash
+   agent-browser --cdp "$WS_URL" open <url>
+   ```
 
 ### Alternative Option: playwright-cli
 
