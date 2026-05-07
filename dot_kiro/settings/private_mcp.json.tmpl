@@ -1,7 +1,0 @@
-{{- $bin := "" }}
-{{- if eq .chezmoi.os "darwin" }}
-{{- $bin = "/opt/homebrew/bin/" }}
-{{- end }}{
-  "mcpServers": {
-{{ template "mcp-servers.json.tmpl" . }}  }
-}
