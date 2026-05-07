@@ -1,0 +1,11 @@
+# Agent Skills External Sources (npx skills non-compatible)
+
+# initMAX Zabbix AI Skills (https://github.com/initMAX/zabbix-ai-skills)
+skills/zabbix-ai-skills:
+  type: archive
+  url: https://github.com/initMAX/zabbix-ai-skills/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/skills/*.md"
+  exact: true
+  refreshPeriod: 168h
