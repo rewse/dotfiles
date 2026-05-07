@@ -5,16 +5,18 @@
 ```
 .
 ├── .chezmoitemplates/            # Shared templates (can be included from other templates)
-├── .kiro/                        # Kiro-related configurations
-│   └── steering/                 # Guidelines for AI assistant
+│   └── rules/                    # Shared AI agent rule templates
+├── dot_agents/                   # Shared AI agent configurations (rules, skills)
+│   ├── .chezmoiexternal.yaml     # External skill sources not compatible with npx skills
+│   └── skills/                   # Custom skills for AI agents
+├── dot_claude/                   # Claude Code settings and configurations
+├── dot_codex/                    # Codex agent settings and configurations
 ├── dot_config/                   # XDG Base Directory compliant configurations
-│   └── chezmoi/                  # chezmoi configuration and examples
-│       └── chezmoi.yaml          # Configuration file
-├── dot_kiro/                     # Kiro CLI settings and steering rules
+├── dot_kiro/                     # Kiro CLI settings and configurations
 ├── dot_vim/                      # Vim configurations
 ├── dot_*                         # Other dotfiles (zshrc, gitconfig, etc.)
-├── private_dot_ssh/              # SSH keys and config (private attribute 0600)
 ├── private_*                     # Other private files
+├── run_install-skills.sh         # Script to install AI agent skills globally
 └── *.tmpl                        # Template files (processed by chezmoi)
 ```
 
