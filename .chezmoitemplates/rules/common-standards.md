@@ -1,7 +1,3 @@
----
-inclusion: always
----
-
 # Common Standards
 
 ## Language Usage Guide
@@ -89,17 +85,3 @@ Follow [Google Style Guides](https://google.github.io/styleguide/) as the baseli
 ### Comments
 
 Write comments to explain background information or reasons that cannot be expressed in the code itself, or to explain code that is difficult to understand intuitively. Do not write comments for self-explanatory code. DRY: do not repeat between code and comments.
-
-## Subagent
-
-Always delegate tasks to other agents via `use_subagent` or `delegate` tools. Do not pipe to another agent because it pollutes your context with the subagent's entire output.
-
-- NG: `printf "Find the root cause\n/quit\n" | kiro-cli chat --agent default`
-
-### Agent Selection Standards
-
-When using `use_subagent` or `delegate` tools:
-
-- Select an appropriate specialized agent based on the task requirements
-- If no specialized agent is suitable, use `default` as the agent name
-- Do not use `kiro_default` as an agent name

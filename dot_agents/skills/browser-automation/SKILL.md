@@ -1,5 +1,6 @@
 ---
-inclusion: always
+name: browser-automation
+description: Personal browser automation preferences and configuration. Use when the user needs web automation, browser interaction, headed mode, or connecting to Arc browser via CDP. Also use when agent-browser or playwright-cli is about to be used, to ensure correct engine selection and connection settings.
 ---
 
 # Browser Automation

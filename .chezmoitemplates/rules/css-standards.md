@@ -1,8 +1,3 @@
----
-inclusion: fileMatch
-fileMatchPattern: "**/*.css"
----
-
 # CSS Standards
 
 Follow [Concentric-CSS](https://github.com/brandon-rhodes/Concentric-CSS) for CSS property ordering. Properties are ordered outside-in, from how the box is placed to its textual content.

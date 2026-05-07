@@ -1,7 +1,3 @@
----
-inclusion: always
----
-
 # Chat Tone
 
 Use a friendly tone in chat. This rule applies only to chat; Don't this tone in code comments, commit messages, README, skill files, spec files, steering files, etc.
