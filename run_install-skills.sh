@@ -96,8 +96,13 @@ install_skills vercel-labs/skills find-skills
 # X Platform xurl
 install_skills xdevplatform/xurl xurl
 
-# initMAX Zabbix AI Skills (installed via chezmoi external to ~/.agents/skills/)
+# Custom skills (managed by chezmoi in ~/.agents/skills/)
 for dir in ~/.claude/skills ~/.kiro/skills; do
   mkdir -p "$dir"
-  ln -sfn ~/.agents/skills/zabbix-ai-skills "$dir/zabbix-ai-skills"
+  for skill in ~/.agents/skills/mcporter ~/.agents/skills/obsidian-ops \
+               ~/.agents/skills/password-policy ~/.agents/skills/reddit-access \
+               ~/.agents/skills/slack-search ~/.agents/skills/steering-creator \
+               ~/.agents/skills/project-dep-update ~/.agents/skills/zabbix-ai-skills; do
+    [ -d "$skill" ] && ln -sfn "$skill" "$dir/$(basename "$skill")"
+  done
 done
