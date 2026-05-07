@@ -2,7 +2,11 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
     "CLAUDE_CODE_USE_BEDROCK": "1",
+{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
+    "AWS_PROFILE": "claude-code-DO-NOT-DELETE",
+{{ else }}
     "AWS_PROFILE": "bedrock",
+{{- end }}
     "AWS_REGION": "us-west-2"
   }
 }
