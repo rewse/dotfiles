@@ -88,6 +88,9 @@ install_skills oracle/skills db
 install_skills sirkirby/unifi-mcp \
   firewall-auditor firewall-manager network-health-check unifi-network
 
+# Upstash Context7
+install_skills upstash/context7 find-docs
+
 # Vercel Labs
 install_skills vercel-labs/agent-browser agent-browser
 install_skills vercel-labs/agent-skills web-design-guidelines
