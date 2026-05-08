@@ -42,19 +42,14 @@ Steps:
    nohup "/Applications/Arc.app/Contents/MacOS/Arc" --remote-debugging-port=9222 >/tmp/arc.log 2>&1 &
    ```
 
-3. Extract the WebSocket debugger URL from `/tmp/arc.log`:
+3. Run agent-browser with `--cdp 9222`. Close any stale daemon first to avoid cached state:
 
    ```bash
-   WS_URL=$(grep -o 'ws://\[::1\]:9222/devtools/browser/[a-f0-9-]*' /tmp/arc.log | head -1)
+   agent-browser close --all
+   agent-browser --cdp 9222 open <url>
    ```
 
-   Arc binds only to IPv6 (`[::1]`), so the URL uses `ws://[::1]:9222/...` instead of `ws://127.0.0.1:...`.
-
-4. Run agent-browser with `--cdp` pointing to the WebSocket URL:
-
-   ```bash
-   agent-browser --cdp "$WS_URL" open <url>
-   ```
+   Arc may bind to IPv4 (`127.0.0.1`) or IPv6 (`[::1]`) depending on the launch — passing just the port number lets agent-browser auto-detect. If you get `Invalid CDP target` errors, the daemon is holding stale state; run `agent-browser close --all` and retry.
 
 ### Alternative Option: playwright-cli
 
