@@ -1,7 +1,7 @@
 #!/bin/bash
 # Install agent skills using npx skills
 
-set -euo pipefail
+set -uo pipefail
 
 AGENTS="--agent claude-code --agent codex --agent kiro-cli"
 AGENTS_NO_CLAUDE="--agent codex --agent kiro-cli"
@@ -14,9 +14,9 @@ install_skills() {
   shift
   for skill in "$@"; do
     if [ -d "$SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g
+      skills update "$skill" -g || true
     else
-      skills add "$repo" --skill "$skill" -g $AGENTS -y
+      skills add "$repo" --skill "$skill" -g $AGENTS -y || true
     fi
   done
 }
@@ -26,9 +26,9 @@ install_skills_claude_only() {
   shift
   for skill in "$@"; do
     if [ -d "$CLAUDE_SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g
+      skills update "$skill" -g || true
     else
-      skills add "$repo" --skill "$skill" -g --agent claude-code -y
+      skills add "$repo" --skill "$skill" -g --agent claude-code -y || true
     fi
   done
 }
@@ -38,9 +38,9 @@ install_skills_no_claude() {
   shift
   for skill in "$@"; do
     if [ -d "$SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g
+      skills update "$skill" -g || true
     else
-      skills add "$repo" --skill "$skill" -g $AGENTS_NO_CLAUDE -y
+      skills add "$repo" --skill "$skill" -g $AGENTS_NO_CLAUDE -y || true
     fi
   done
 }
@@ -57,6 +57,24 @@ install_skills blader/humanizer humanizer
 # Corey Haines Marketing Skills
 install_skills coreyhaines31/marketingskills \
   copy-editing copywriting marketing-ideas marketing-psychology programmatic-seo social-content
+
+# Everything Claude Code
+install_skills affaan-m/everything-claude-code \
+  brand-voice \
+  click-path-audit \
+  connections-optimizer \
+  content-engine \
+  continuous-learning-v2 \
+  crosspost \
+  eval-harness \
+  gan-style-harness \
+  gateguard \
+  iterative-retrieval \
+  lead-intelligence \
+  santa-method \
+  social-graph-ranker \
+  strategic-compact \
+  x-api
 
 # Kepano Obsidian Skills
 install_skills kepano/obsidian-skills \
