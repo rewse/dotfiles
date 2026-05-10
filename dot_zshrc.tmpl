@@ -46,6 +46,11 @@ fi
 autoload -Uz compinit
 compinit
 
+# 1Password CLI Completion
+if [ -x "$(command -v op)" ]; then
+  eval "$(op completion zsh)"; compdef _op op
+fi
+
 {{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 # Brazil Completion
 if [[ -f "${HOME}/.brazil_completion/zsh_completion" ]]; then
@@ -53,10 +58,9 @@ if [[ -f "${HOME}/.brazil_completion/zsh_completion" ]]; then
 fi
 {{- end }}
 
-# 1Password CLI Completion
-if [ -x "$(command -v op)" ]; then
-  eval "$(op completion zsh)"; compdef _op op
-fi
+# broot
+if [[ -f "${HOME}/.config/broot/launcher/bash/br" ]]; then
+  builtin source "${HOME}/.config/broot/launcher/bash/br"
 
 # direnv
 if [ -x "$(command -v direnv)" ]; then
@@ -168,6 +172,9 @@ alias chezmoiapplyinternal="chezmoi apply --source=$HOME/Documents/git/dotfiles-
 # Claude code
 alias cl="claude"
 alias clr="claude --resume"
+
+# cmux
+alias cmmd="cmux markdown open"
 
 # Kiro CLI
 alias k="kiro-cli chat"

@@ -24,6 +24,10 @@ window-theme = ghostty
 window-height = 45
 window-width = 155
 
+# Working Directory
+tab-inherit-working-directory = true
+split-inherit-working-directory = true
+
 # Keybindings - Clipboard
 keybind = cmd+c=copy_to_clipboard
 keybind = cmd+v=paste_from_clipboard

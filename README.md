@@ -85,7 +85,7 @@ chezmoi update
 ├── .chezmoitemplates/            # Shared templates (can be included from other templates)
 │   └── rules/                    # Shared AI agent rule templates
 ├── dot_agents/                   # Shared AI agent configurations (rules, skills)
-│   ├── .chezmoiexternal.yaml     # External skill sources not compatible with npx skills
+│   ├── .chezmoiexternal.yaml     # External commands and skill sources not compatible with npx skills
 │   └── skills/                   # Custom skills for AI agents
 ├── dot_claude/                   # Claude Code settings and configurations
 ├── dot_codex/                    # Codex agent settings and configurations

@@ -76,9 +76,16 @@ install_skills affaan-m/everything-claude-code \
   strategic-compact \
   x-api
 
+# Hummer98 using-cmux
+install_skills hummer98/using-cmux using-cmux
+
 # Kepano Obsidian Skills
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
+
+# Manaflow cmux
+install_skills manaflow-ai/cmux \
+  cmux-browser cmux-markdown cmux
 
 # Microsoft HVE Core
 install_skills microsoft/hve-core powerpoint
@@ -116,3 +123,25 @@ install_skills vercel-labs/skills find-skills
 
 # X Platform xurl
 install_skills xdevplatform/xurl xurl
+
+# Patch using-cmux: make sub-agent launch command agent-agnostic
+patch_using_cmux() {
+  local file="$SKILLS_DIR/using-cmux/SKILL.md"
+  [ -f "$file" ] || return 0
+  grep -q "AGENT_LAUNCH_CMD" "$file" && return 0
+  sed -i '' '/### Step 2: Claude Code 起動/c\
+### Step 2: サブエージェント起動\
+\
+起動コマンドはエージェントに応じて変える:\
+\
+| Agent | AGENT_LAUNCH_CMD |\
+|-------|------------------|\
+| Claude Code | `claude --dangerously-skip-permissions` |\
+| Kiro CLI | `kiro-cli chat --trust-all-tools` |\
+| Codex | `codex --dangerously-bypass-approvals-and-sandbox` |\
+\
+```bash\
+cmux-send --workspace $WS "$AGENT_LAUNCH_CMD\\n"\
+```' "$file"
+}
+patch_using_cmux
