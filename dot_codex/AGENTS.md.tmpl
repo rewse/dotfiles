@@ -7,3 +7,5 @@
 {{ template "rules/css-standards.md" . }}
 
 {{ template "rules/development-workflow.md" . }}
+
+{{ output "cat" (joinPath .chezmoi.homeDir ".agents/rules/aws-agent-rules.md") }}
