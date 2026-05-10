@@ -28,6 +28,15 @@ setopt PUSHD_IGNORE_DUPS     # Ignore duplicate directories in stack
 setopt CORRECT               # Correct command spelling
 
 # >>>
+# <<< Terminal Directory Notification (OSC 7)
+
+_notify_terminal_cwd() {
+  printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
+}
+chpwd_functions+=(_notify_terminal_cwd)
+precmd_functions+=(_notify_terminal_cwd)
+
+# >>>
 # <<< Prompt Configuration
 
 PS1='%n@%m:%1~%# '
