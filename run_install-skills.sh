@@ -51,6 +51,10 @@ install_skills anthropics/skills \
 install_skills_claude_only anthropics/skills \
   docx pdf pptx xlsx
 
+# AWS Agent Toolkit
+install_skills aws/agent-toolkit-for-aws \
+  agents-build agents-connect agents-debug agents-deploy agents-get-started agents-harden agents-optimize
+
 # Blader Humanizer
 install_skills blader/humanizer humanizer
 

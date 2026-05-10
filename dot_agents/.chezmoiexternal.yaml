@@ -39,14 +39,6 @@ commands/using-cmux:
   exact: true
   refreshPeriod: 168h
 
-## Rules
-
-# aws agent-toolkit-for-aws rules (https://github.com/aws/agent-toolkit-for-aws)
-rules/aws-agent-rules.md:
-  type: file
-  url: https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/main/rules/aws-agent-rules.md
-  refreshPeriod: 168h
-
 ## Skills not compatible with npx skills
 
 # initMAX Zabbix AI Skills (https://github.com/initMAX/zabbix-ai-skills)

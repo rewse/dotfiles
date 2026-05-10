@@ -8,4 +8,4 @@
 
 {{ template "rules/development-workflow.md" . }}
 
-{{ output "cat" (joinPath .chezmoi.homeDir ".agents/rules/aws-agent-rules.md") }}
+{{ template "rules/aws-agent-rules.md" . }}
