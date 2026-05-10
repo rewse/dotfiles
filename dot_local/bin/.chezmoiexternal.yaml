@@ -1,0 +1,9 @@
+# hummer98 using-cmux bin wrappers (https://github.com/hummer98/using-cmux)
+using-cmux:
+  type: archive
+  url: https://github.com/hummer98/using-cmux/archive/refs/heads/main.tar.gz
+  stripComponents: 2
+  include:
+    - "*/bin/*"
+  exact: true
+  refreshPeriod: 168h
