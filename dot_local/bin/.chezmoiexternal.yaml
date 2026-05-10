@@ -1,9 +1,33 @@
 # hummer98 using-cmux bin wrappers (https://github.com/hummer98/using-cmux)
-using-cmux:
-  type: archive
-  url: https://github.com/hummer98/using-cmux/archive/refs/heads/main.tar.gz
-  stripComponents: 2
-  include:
-    - "*/bin/*"
-  exact: true
+# TODO: revert to hummer98/main once https://github.com/hummer98/using-cmux/pull/12 is merged
+{{- $base := "https://raw.githubusercontent.com/rewse/using-cmux/fix/preserve-surface-flag/bin" }}
+
+cmux-send:
+  type: file
+  url: {{ $base }}/cmux-send
+  executable: true
+  refreshPeriod: 168h
+
+cmux-send-key:
+  type: file
+  url: {{ $base }}/cmux-send-key
+  executable: true
+  refreshPeriod: 168h
+
+cmux-read:
+  type: file
+  url: {{ $base }}/cmux-read
+  executable: true
+  refreshPeriod: 168h
+
+cmux-grid:
+  type: file
+  url: {{ $base }}/cmux-grid
+  executable: true
+  refreshPeriod: 168h
+
+cfork:
+  type: file
+  url: {{ $base }}/cfork
+  executable: true
   refreshPeriod: 168h
