@@ -6,4 +6,4 @@
 
 {{ template "rules/css-standards.md" . }}
 
-{{ template "rules/ecc/development-workflow.md" . }}
+{{ output "cat" (joinPath .chezmoi.homeDir ".agents/rules/development-workflow.md") }}

@@ -39,6 +39,14 @@ commands/using-cmux:
   exact: true
   refreshPeriod: 168h
 
+## Rules
+
+# affaan-m everything-claude-code rules (https://github.com/affaan-m/everything-claude-code)
+rules/development-workflow.md:
+  type: file
+  url: https://raw.githubusercontent.com/affaan-m/everything-claude-code/main/rules/common/development-workflow.md
+  refreshPeriod: 168h
+
 ## Skills not compatible with npx skills
 
 # initMAX Zabbix AI Skills (https://github.com/initMAX/zabbix-ai-skills)

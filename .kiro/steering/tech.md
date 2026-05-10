@@ -45,9 +45,13 @@ Use `include` to select specific files rather than downloading all commands from
 
 ## Rules (Shared Agent Instructions)
 
-Rules are shared across multiple agents (Claude Code, Codex, Kiro CLI). A single source in `.chezmoitemplates/rules/` is referenced by each agent's config via chezmoi templates.
+Rules are shared across multiple agents (Claude Code, Codex, Kiro CLI). There are two types: custom rules authored in this repo, and external rules fetched from GitHub.
 
-### File Structure
+### Custom Rules (authored in `.chezmoitemplates/`)
+
+Custom rules are authored in `.chezmoitemplates/rules/` and distributed to each agent via chezmoi templates.
+
+#### File Structure
 
 ```
 .chezmoitemplates/rules/          # Rule source (single source of truth)
@@ -66,13 +70,46 @@ dot_kiro/steering/                 # For Kiro CLI (symlink to generated file)
   symlink_common-standards.md.tmpl # → {{ .chezmoi.homeDir }}/.agents/rules/common-standards.md
 ```
 
-### Adding a New Rule
+#### Adding a New Custom Rule
 
 1. Create the rule body in `.chezmoitemplates/rules/<name>.md`
 2. Create `dot_agents/rules/<name>.md.tmpl` with frontmatter and template reference
 3. Create `dot_claude/rules/symlink_<name>.md.tmpl` pointing to the generated file
 4. Add `{{ template "rules/<name>.md" . }}` to `dot_codex/AGENTS.md.tmpl`
 5. Create `dot_kiro/steering/symlink_<name>.md.tmpl` pointing to the generated file
+
+### External Rules (fetched via `.chezmoiexternal.yaml`)
+
+External rules are fetched from GitHub repos via `dot_agents/.chezmoiexternal.yaml` and placed directly into `~/.agents/rules/`. Each agent references the downloaded file.
+
+#### File Structure
+
+```
+dot_agents/.chezmoiexternal.yaml   # Downloads rules from GitHub repos
+  → ~/.agents/rules/<name>.md      # Downloaded rule file
+
+dot_claude/rules/                  # For Claude Code (symlink to downloaded file)
+  symlink_<name>.md.tmpl           # → {{ .chezmoi.homeDir }}/.agents/rules/<name>.md
+
+dot_codex/AGENTS.md.tmpl           # For Codex (output cat to inline the file)
+  {{ output "cat" (joinPath .chezmoi.homeDir ".agents/rules/<name>.md") }}
+
+dot_kiro/steering/                 # For Kiro CLI (symlink to downloaded file)
+  symlink_<name>.md.tmpl           # → {{ .chezmoi.homeDir }}/.agents/rules/<name>.md
+```
+
+#### Adding a New External Rule
+
+1. Add a `type: file` entry to `dot_agents/.chezmoiexternal.yaml`:
+   ```yaml
+   rules/<name>.md:
+     type: file
+     url: https://raw.githubusercontent.com/<owner>/<repo>/main/<path-to-file>.md
+     refreshPeriod: 168h
+   ```
+2. Create `dot_claude/rules/symlink_<name>.md.tmpl` pointing to the downloaded file
+3. Add `{{ output "cat" (joinPath .chezmoi.homeDir ".agents/rules/<name>.md") }}` to `dot_codex/AGENTS.md.tmpl`
+4. Create `dot_kiro/steering/symlink_<name>.md.tmpl` pointing to the downloaded file
 
 ## Skills (Shared Agent Skills)
 
