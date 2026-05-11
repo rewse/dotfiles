@@ -4,21 +4,126 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Right Command -> y + Enter",
+                        "description": "Internal Keyboard: Ctrl + - -> Escape",
                         "manipulators": [
                             {
-                                "from": { "key_code": "right_command" },
-                                "to": [
-                                    { "key_code": "japanese_eisuu" },
-                                    { "key_code": "y" },
-                                    { "key_code": "return_or_enter" }
+                                "conditions": [
+                                    {
+                                        "identifiers": [
+                                            {
+                                                "is_built_in_keyboard": true
+                                            }
+                                        ],
+                                        "type": "device_if"
+                                    }
                                 ],
+                                "from": {
+                                    "key_code": "hyphen",
+                                    "modifiers": { "mandatory": ["left_control"] }
+                                },
+                                "to": [{ "key_code": "escape" }],
                                 "type": "basic"
                             }
                         ]
                     },
                     {
-                        "description": "LM Studio: Return <-> Shift + Return",
+                        "description": "Internal Keyboard: Right Option -> ' / Shift + Right Option -> \"",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "right_option",
+                                    "modifiers": { "mandatory": ["left_shift"] }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "quote",
+                                        "modifiers": ["left_shift"]
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": { "key_code": "right_option" },
+                                "to": [{ "key_code": "quote" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Internal Keyboard: Left Option + HJKL -> Arrow Keys",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "h",
+                                    "modifiers": { "mandatory": ["left_option"], "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "left_arrow" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "j",
+                                    "modifiers": { "mandatory": ["left_option"], "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "down_arrow" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "k",
+                                    "modifiers": { "mandatory": ["left_option"], "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "up_arrow" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "l",
+                                    "modifiers": { "mandatory": ["left_option"], "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "right_arrow" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "LM Studio: Return <-> Command + Return",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -33,7 +138,7 @@
                                 "to": [
                                     {
                                         "key_code": "return_or_enter",
-                                        "modifiers": ["left_shift"]
+                                        "modifiers": ["left_command"]
                                     }
                                 ],
                                 "type": "basic"
@@ -49,7 +154,7 @@
                                 ],
                                 "from": {
                                     "key_code": "return_or_enter",
-                                    "modifiers": { "mandatory": ["left_shift"] }
+                                    "modifiers": { "mandatory": ["left_command"] }
                                 },
                                 "to": [{ "key_code": "return_or_enter" }],
                                 "type": "basic"
@@ -57,7 +162,7 @@
                         ]
                     },
                     {
-                        "description": "Discord: Return <-> Shift + Return",
+                        "description": "Discord: Return <-> Command + Return",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -72,7 +177,7 @@
                                 "to": [
                                     {
                                         "key_code": "return_or_enter",
-                                        "modifiers": ["left_shift"]
+                                        "modifiers": ["left_command"]
                                     }
                                 ],
                                 "type": "basic"
@@ -90,7 +195,7 @@
                                     "key_code": "return_or_enter",
                                     "modifiers": { "mandatory": ["command"] }
                                 },
-                                "to": { "key_code": "return_or_enter" },
+                                "to": [{ "key_code": "return_or_enter" }],
                                 "type": "basic"
                             }
                         ]
@@ -155,6 +260,10 @@
                     "identifiers": { "is_keyboard": true },
                     "simple_modifications": [
                         {
+                            "from": { "apple_vendor_top_case_key_code": "keyboard_fn" },
+                            "to": [{ "key_code": "escape" }]
+                        },
+                        {
                             "from": { "key_code": "backslash" },
                             "to": [{ "key_code": "delete_or_backspace" }]
                         },
@@ -163,8 +272,16 @@
                             "to": [{ "key_code": "left_control" }]
                         },
                         {
+                            "from": { "key_code": "close_bracket" },
+                            "to": [{ "key_code": "equal_sign" }]
+                        },
+                        {
                             "from": { "key_code": "delete_or_backspace" },
                             "to": [{ "key_code": "backslash" }]
+                        },
+                        {
+                            "from": { "key_code": "equal_sign" },
+                            "to": [{ "key_code": "close_bracket" }]
                         },
                         {
                             "from": { "key_code": "escape" },
@@ -175,8 +292,24 @@
                             "to": [{ "key_code": "escape" }]
                         },
                         {
+                            "from": { "key_code": "hyphen" },
+                            "to": [{ "key_code": "open_bracket" }]
+                        },
+                        {
                             "from": { "key_code": "left_control" },
-                            "to": [{ "key_code": "caps_lock" }]
+                            "to": [{ "apple_vendor_top_case_key_code": "keyboard_fn" }]
+                        },
+                        {
+                            "from": { "key_code": "open_bracket" },
+                            "to": [{ "key_code": "hyphen" }]
+                        },
+                        {
+                            "from": { "key_code": "quote" },
+                            "to": [{ "key_code": "return_or_enter" }]
+                        },
+                        {
+                            "from": { "key_code": "right_command" },
+                            "to": [{ "key_code": "delete_or_backspace" }]
                         }
                     ]
                 },
