@@ -1,0 +1,3 @@
+# False positives: example URIs/credentials in external docs
+dot_agents/commands/update-docs.md
+dot_kiro/skills/agent-browser/SKILL.md
