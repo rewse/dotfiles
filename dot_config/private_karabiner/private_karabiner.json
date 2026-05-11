@@ -4,19 +4,9 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Internal Keyboard: Ctrl + - -> Escape",
+                        "description": "Ctrl + - -> Escape",
                         "manipulators": [
                             {
-                                "conditions": [
-                                    {
-                                        "identifiers": [
-                                            {
-                                                "is_built_in_keyboard": true
-                                            }
-                                        ],
-                                        "type": "device_if"
-                                    }
-                                ],
                                 "from": {
                                     "key_code": "hyphen",
                                     "modifiers": { "mandatory": ["left_control"] }
