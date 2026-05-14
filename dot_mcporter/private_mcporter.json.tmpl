@@ -20,16 +20,6 @@
         "AWS_REGION=ap-northeast-1"
       ]
     },
-    "brave-search": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-brave-search"
-      ],
-      "env": {
-        "BRAVE_API_KEY": "{{ onepasswordRead "op://chezmoi/Brave/credential" }}"
-      }
-    },
     "chrome-devtools": {
       "command": "npx",
       "args": [
@@ -44,13 +34,6 @@
     },
     "exa": {
       "url": "https://mcp.exa.ai/mcp"
-    },
-    "fetch": {
-      "command": "uvx",
-      "args": [
-        "mcp-server-fetch",
-        "--ignore-robots-txt"
-      ]
     },
     "home-assistant": {
       "command": "uvx",
