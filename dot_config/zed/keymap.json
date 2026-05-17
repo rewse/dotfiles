@@ -1,0 +1,11 @@
+[
+  {
+    "context": "VimControl && !menu",
+    "bindings": {
+      "j": ["workspace::SendKeystrokes", "g j"],
+      "k": ["workspace::SendKeystrokes", "g k"],
+      "shift-h": ["workspace::SendKeystrokes", "^"],
+      "shift-l": ["workspace::SendKeystrokes", "$"]
+    }
+  }
+]
