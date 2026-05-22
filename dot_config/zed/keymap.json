@@ -5,7 +5,89 @@
       "j": ["workspace::SendKeystrokes", "g j"],
       "k": ["workspace::SendKeystrokes", "g k"],
       "shift-h": ["workspace::SendKeystrokes", "^"],
-      "shift-l": ["workspace::SendKeystrokes", "$"]
+      "shift-l": ["workspace::SendKeystrokes", "$"],
+    },
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "cmd-6": [
+        "workspace::ActivatePane",
+        5
+      ]
+    }
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "cmd-7": [
+        "workspace::ActivatePane",
+        6
+      ]
+    }
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "cmd-8": [
+        "workspace::ActivatePane",
+        7
+      ]
+    }
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "cmd-9": [
+        "workspace::ActivatePane",
+        8
+      ]
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-6": "outline_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "cmd-shift-b": "outline_panel::ToggleFocus"
+    }
+  },
+  {
+    "bindings": {
+      "cmd-7": "collab_panel::ToggleFocus"
+    }
+  },
+  {
+    "unbind": {
+      "cmd-shift-c": "collab_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-8": "git_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "ctrl-shift-g": "git_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-9": "project_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "Workspace",
+    "unbind": {
+      "cmd-shift-e": "project_panel::ToggleFocus"
     }
   }
 ]

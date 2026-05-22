@@ -7,6 +7,8 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "soft_wrap": "editor_width",
+  "diff_view_style": "split",
   "collaboration_panel": {
     "default_width": 300.0,
   },
