@@ -1,6 +1,6 @@
 ---
 name: mcporter
-description: Interact with external services using mcporter CLI, which connects to MCP servers for web search, browser automation, diagram editing, URL fetching, smart home control, and task management. Use when the user wants to search the web via Brave, automate browser interactions via Chrome DevTools, create or view draw.io diagrams, fetch web page content, control Home Assistant devices and automations, or manage TickTick tasks and projects — even if they don't mention "mcporter" explicitly.
+description: Interact with external services using mcporter CLI, which connects to MCP servers for web search, browser automation, diagram editing, URL fetching, smart home control, task management, and GitLab operations. Use when the user wants to search the web via Brave, automate browser interactions via Chrome DevTools, create or view draw.io diagrams, fetch web page content, control Home Assistant devices and automations, manage TickTick tasks and projects, or interact with GitLab (gitlab.aws.dev) projects, merge requests, pipelines, and CI/CD — even if they don't mention "mcporter" explicitly.
 ---
 
 # mcporter
@@ -29,6 +29,7 @@ The following is for reference only. Trust the output of `mcporter list` for the
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 - `amazon-sharepoint-mcp` — SharePoint and OneDrive file operations (list, read, write, search)
 - `atoz-mcp` — Amazon AtoZ HR data: compensation (pay, RSU, stock), career (reviews, feedback, goals), benefits (HSA, 401K, elections), tax/payroll, documents, and Aza HR chat
+- `aws-gitlab-mcp` — GitLab (gitlab.aws.dev): projects, groups, merge requests, pipelines, CI/CD jobs, repository files, issues, branches, commits, users, bindles, and topics
 - `aws-outlook-mcp` — Outlook email (read, search, send, reply, draft, attachments) and calendar (view, create, book rooms, check availability)
 - `aws-sentral-mcp` — Salesforce/CRM data: accounts, contacts, opportunities, tasks, events, PFRs, and SIFT activities
 - `builder-mcp` — Internal dev tools: code reviews, pipelines, ticketing, oncall, Brazil builds, Apollo deployments, Quip, internal search, SAS risks, internal websites, acronym lookup, Mechanic tools, remote test runs, and workspace/Git info
