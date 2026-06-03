@@ -2,6 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
     "CLAUDE_CODE_USE_BEDROCK": "1",
+    "CLAUDE_CODE_ENABLE_AUTO_MODE": "1",
 {{ if eq .chezmoi.hostname "7cf34ded5d65" }}
     "AWS_PROFILE": "claude-code-DO-NOT-DELETE",
 {{ else }}
@@ -21,10 +22,12 @@
 {{ else }}
   "mcpServers": {},
 {{- end }}
-  "model": "us.anthropic.claude-sonnet-4-6[1m]",
+  "model": "us.anthropic.claude-opus-4-8[1m]",
   "permissions": {
+    "defaultMode": "auto",
     "additionalDirectories": [
       "/tmp",
+      "{{ .chezmoi.homeDir }}/Desktop",
       "{{ .chezmoi.homeDir }}/Downloads"
     ]
   },
