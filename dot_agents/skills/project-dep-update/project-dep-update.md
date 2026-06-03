@@ -1,6 +1,6 @@
 # Project Dependency Update Prompt
 
-Update the following projects in `~/Documents/git` according to the procedure:
+Update the following projects in `~/git` according to the procedure:
 
 - enecoq-data-fetcher
 - stock-price-fetcher
