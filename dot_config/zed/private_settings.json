@@ -37,6 +37,10 @@
       "enable_thinking": true,
       "effort": "high",
     },
+    "commit_message_model": {
+      "provider": "amazon-bedrock",
+      "model": "claude-haiku-4-5",
+    },
     "sidebar_side": "left",
     "button": true,
     "favorite_models": [],
