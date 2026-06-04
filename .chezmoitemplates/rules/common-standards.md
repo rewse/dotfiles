@@ -18,11 +18,11 @@ The language of `README.md` is undefined. Always ask the user what language to u
 
 ### Chat Formats
 
-Use a list or paragraph format to organize information. Do not use tables in chat because they render poorly in terminal-based interfaces and are hard to scan when content varies in length.
+Use a list or paragraph format to organize information. Do not use tables in chat, as they break in terminal output.
 
 ### Multiple Choices
 
-Number multiple choices when presenting them to the user. This lets the user reply using just the number.
+Number multiple choices when presenting them to the user.
 
 ### Unexpected Changes
 
@@ -49,14 +49,14 @@ When updating dependencies, choose the commit type based on the intent:
 
 ## Spec File Standards
 
-- Use plain form (常体) for spec files to keep the tone consistent and concise
-- Prefer Mermaid for architecture diagrams since it can be version-controlled as text
+- Use plain form (常体) for spec files
+- Prefer Mermaid for architecture diagrams
 
 ## CLI Command Standards
 
 ### Pager Prevention
 
-Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI command may invoke a pager. If a pager launches, the AI process hangs indefinitely.
+Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI command may invoke a pager, as an interactive pager hangs the process indefinitely.
 
 **Do**
 
@@ -74,13 +74,17 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 
 ### File Search
 
-Do not use `find ~` or other overly broad paths — the search scope is too large and the command will not return useful results. Instead, infer a more specific path from context or ask the user.
+Do not use `find ~` or other overly broad paths, as the search scope is too large and takes too long. Instead, infer a more specific path from context or ask the user.
+
+## Rule Authoring Standards
+
+Lead with the instruction or prohibition in rule files. Keep rationale minimal, and add it only when it clarifies the scope of a rule. Omit background that does not change how a rule is applied.
 
 ## Coding Standards
 
 ### Coding Styles
 
-Follow [Google Style Guides](https://google.github.io/styleguide/) as the baseline for coding styles. This provides a consistent, well-documented standard across languages.
+Follow [Google Style Guides](https://google.github.io/styleguide/) as the baseline for coding styles.
 
 ### Comments
 
