@@ -6,6 +6,8 @@
 // To see all of Zed's default settings without changing your
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
+//
+// Top-level keys are kept in the same order as Zed's default settings.
 {
   "theme": {
     "mode": "system",
@@ -100,6 +102,13 @@
   },
   "terminal": {
     "button": true
+  },
+  "language_models": {
+    "bedrock": {
+      "authentication_method": "named_profile",
+      "region": "us-west-2",
+      "profile": "bedrock"
+    }
   },
   "vim": {
     "use_system_clipboard": "on_yank"
