@@ -7,57 +7,22 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "soft_wrap": "editor_width",
-  "diff_view_style": "split",
-  "collaboration_panel": {
-    "default_width": 300.0,
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark"
   },
-  "git_panel": {
-    "default_width": 300.0,
-  },
-  "agent_servers": {
-    "Kiro Agent": {
-      "type": "custom",
-      "command": "~/.local/bin/kiro-cli",
-      "args": ["acp"],
-    },
-  },
-  "edit_predictions": {
-    "open_ai_compatible_api": {
-      "model": "claude-sonnet-4-6",
-      "api_url": "https://litellm.rewse.jp/",
-    },
-  },
-  "agent": {
-    "max_content_width": 840.0,
-    "default_width": 300.0,
-    "default_model": {
-      "provider": "amazon-bedrock",
-      "model": "claude-sonnet-4-6",
-      "enable_thinking": true,
-      "effort": "high",
-    },
-    "commit_message_model": {
-      "provider": "amazon-bedrock",
-      "model": "claude-haiku-4-5",
-    },
-    "sidebar_side": "left",
-    "button": true,
-    "favorite_models": [],
-    "model_parameters": [],
-  },
+  "base_keymap": "VSCode",
+  "buffer_font_family": "HackGen",
+  "buffer_font_size": 14.0,
+  "ui_font_size": 16.0,
   "active_pane_modifiers": {},
+  "vim_mode": true,
+  "cursor_blink": true,
+  "cursor_shape": "bar",
+  "diff_view_style": "split",
+  "use_autoclose": false,
   "use_system_window_tabs": false,
-  "tabs": {
-    "file_icons": false,
-    "git_status": false,
-  },
-  "tab_bar": {
-    "show_pinned_tabs_in_separate_row": false,
-    "show_tab_bar_buttons": true,
-    "show_nav_history_buttons": true,
-    "show": true,
-  },
   "title_bar": {
     "show_menus": true,
     "show_user_picture": true,
@@ -66,45 +31,84 @@
     "show_onboarding_banner": true,
     "show_project_items": true,
     "show_branch_name": true,
-    "show_branch_status_icon": false,
+    "show_branch_status_icon": false
   },
   "search": {
-    "button": true,
+    "button": true
   },
+  "project_panel": {
+    "default_width": 300.0,
+    "scrollbar": {
+      "horizontal_scroll": true
+    },
+    "bold_folder_labels": false,
+    "git_status": true,
+    "folder_icons": false,
+    "file_icons": true,
+    "button": true
+  },
+  "collaboration_panel": {
+    "default_width": 300.0
+  },
+  "git_panel": {
+    "default_width": 300.0
+  },
+  "agent": {
+    "max_content_width": 840.0,
+    "default_width": 300.0,
+    "default_model": {
+      "provider": "amazon-bedrock",
+      "model": "claude-sonnet-4-6",
+      "enable_thinking": true,
+      "effort": "high"
+    },
+    "commit_message_model": {
+      "provider": "amazon-bedrock",
+      "model": "claude-haiku-4-5"
+    },
+    "sidebar_side": "left",
+    "button": true,
+    "favorite_models": [],
+    "model_parameters": []
+  },
+  "tab_bar": {
+    "show_pinned_tabs_in_separate_row": false,
+    "show_tab_bar_buttons": true,
+    "show_nav_history_buttons": true,
+    "show": true
+  },
+  "tabs": {
+    "file_icons": false,
+    "git_status": false
+  },
+  "soft_wrap": "editor_width",
   "diagnostics": {
-    "button": true,
+    "button": true
   },
-  "terminal": {
-    "button": true,
+  "edit_predictions": {
+    "open_ai_compatible_api": {
+      "model": "claude-sonnet-4-6",
+      "api_url": "https://litellm.rewse.jp/"
+    }
   },
   "status_bar": {
     "show_active_file": false,
     "line_endings_button": true,
     "cursor_position_button": true,
     "active_encoding_button": "non_utf8",
-    "active_language_button": true,
+    "active_language_button": true
   },
-  "project_panel": {
-    "default_width": 300.0,
-    "scrollbar": {
-      "horizontal_scroll": true,
-    },
-    "bold_folder_labels": false,
-    "git_status": true,
-    "folder_icons": false,
-    "file_icons": true,
-    "button": true,
+  "terminal": {
+    "button": true
   },
-  "cursor_shape": "bar",
-  "cursor_blink": true,
-  "buffer_font_family": "HackGen",
-  "vim_mode": true,
-  "base_keymap": "VSCode",
-  "ui_font_size": 16.0,
-  "buffer_font_size": 14.0,
-  "theme": {
-    "mode": "system",
-    "light": "One Light",
-    "dark": "One Dark",
+  "vim": {
+    "use_system_clipboard": "on_yank"
   },
+  "agent_servers": {
+    "Kiro Agent": {
+      "type": "custom",
+      "command": "~/.local/bin/kiro-cli",
+      "args": ["acp"]
+    }
+  }
 }
