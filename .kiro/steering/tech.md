@@ -12,6 +12,20 @@
 - `.kiro/` directory files: You MUST use `docs:` type
 - `dot_*` or `private_dot_*` files: You MUST NOT use `docs:` type (use `feat:`, `fix:`, `refactor:`, or `chore:` based on intent)
 
+## Editor Configuration
+
+### Zed Settings Key Order
+
+Keep keys in `dot_config/zed/private_settings.json` ordered to match Zed's bundled `default.json`. Insert new keys at their default position; do not append to the end. Apply the same order to nested keys.
+
+Resolve the canonical order by listing the top-level keys of `default.json` for the installed version:
+
+```bash
+ver="$(zed --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+curl -fsSL "https://raw.githubusercontent.com/zed-industries/zed/v${ver}/assets/settings/default.json" \
+  | grep -nE '^\s{2}"[a-z_]+"\s*:'
+```
+
 ## Commands (Shared Agent Commands)
 
 Commands are slash commands shared across agents. External commands are managed via `dot_agents/.chezmoiexternal.yaml` and symlinked into each agent's directory.
