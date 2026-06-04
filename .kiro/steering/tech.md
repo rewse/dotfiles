@@ -12,6 +12,16 @@
 - `.kiro/` directory files: You MUST use `docs:` type
 - `dot_*` or `private_dot_*` files: You MUST NOT use `docs:` type (use `feat:`, `fix:`, `refactor:`, or `chore:` based on intent)
 
+### Committing and Pushing
+
+The host `7cf34ded5d65` cannot push to `origin`. When working on it, commit and push from `fox` instead.
+
+1. On `7cf34ded5d65`, generate a patch of the working-tree changes: `git -P diff -- <files> > /tmp/changes.patch`
+2. Copy it to `fox`: `scp /tmp/changes.patch fox:/tmp/changes.patch`
+3. On `fox`, bring the repo up to date and apply: `cd ~/.local/share/chezmoi && git pull --ff-only && git apply --check /tmp/changes.patch && git apply /tmp/changes.patch`
+4. Commit on `fox`, then `git push origin HEAD`
+5. Sync `7cf34ded5d65` afterward with `chezmoi update` or `git pull`
+
 ## Editor Configuration
 
 ### Zed Settings Key Order
