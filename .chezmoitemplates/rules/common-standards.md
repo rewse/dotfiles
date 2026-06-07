@@ -78,7 +78,7 @@ Do not use `find ~` or other overly broad paths, as the search scope is too larg
 
 ### URL Fetch Retry
 
-When a URL fetch is denied (403, access denied, bot block), retry with `defuddle parse -m <URL>`.
+When a URL fetch is denied (403, access denied, bot block), retry with `defuddle parse -j <URL>`.
 
 ### TickTick Task Creation
 
