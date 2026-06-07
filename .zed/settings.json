@@ -1,10 +1,12 @@
 {
   "file_types": {
-    "ini": ["dot_gitconfig.tmpl"],
+    "ini": ["**/dot_aws/config.tmpl", "**/dot_aws/private_credentials.tmpl"],
+    "Git Config": ["dot_gitconfig.tmpl"],
     "JSON": ["*.json.tmpl"],
     "JSONC": ["private_settings.json"],
     "TOML": ["*.toml.tmpl"],
     "YAML": ["*.yaml.tmpl"],
-    "Shell Script": ["dot_zprofile.tmpl", "dot_zshrc.tmpl"]
-  }
+    "Shell Script": ["dot_zprofile.tmpl", "dot_zshrc.tmpl"],
+    "SSH Config": ["**/private_dot_ssh/config.tmpl"],
+  },
 }
