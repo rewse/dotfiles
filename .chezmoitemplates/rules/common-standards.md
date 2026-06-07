@@ -76,6 +76,14 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 
 Do not use `find ~` or other overly broad paths, as the search scope is too large and takes too long. Instead, infer a more specific path from context or ask the user.
 
+### URL Fetch Retry
+
+When a URL fetch is denied (403, access denied, bot block), retry with `defuddle parse -m <URL>`.
+
+### TickTick Task Creation
+
+When creating TickTick tasks, omit `startDate` and `dueDate` time components unless the user explicitly specifies a time. Use date-only values (e.g., `2026-06-08`) to avoid unnecessary reminders.
+
 ## Rule Authoring Standards
 
 Lead with the instruction or prohibition in rule files. Keep rationale minimal, and add it only when it clarifies the scope of a rule. Omit background that does not change how a rule is applied.
