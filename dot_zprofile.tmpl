@@ -33,7 +33,12 @@ fi
 
 # GitHub
 if command -v gh &> /dev/null; then
-  export GITHUB_TOKEN="$(gh auth token)"
+  if github_token="$(gh auth token 2>/dev/null)" && [ -n "$github_token" ]; then
+    export GITHUB_TOKEN="$github_token"
+  else
+    echo "gh is not authenticated. Run 'gh auth login' to set GITHUB_TOKEN." >&2
+  fi
+  unset github_token
 fi
 
 # >>>
