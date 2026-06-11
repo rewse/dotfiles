@@ -80,6 +80,10 @@ Do not use `find ~` or other overly broad paths, as the search scope is too larg
 
 When a URL fetch is denied (403, access denied, bot block), retry with `defuddle parse -m <URL>`.
 
+## Ordering Standards
+
+Sort entries alphabetically whenever their order does not carry meaning. This applies everywhere: list items, configuration entries, package lists, imports, dictionary keys, and similar collections. Keep a deliberate order only when it is significant (e.g., execution sequence, dependency order, or priority).
+
 ## Rule Authoring Standards
 
 Lead with the instruction or prohibition in rule files. Keep rationale minimal, and add it only when it clarifies the scope of a rule. Omit background that does not change how a rule is applied.
