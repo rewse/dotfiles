@@ -1,6 +1,6 @@
 # Committing and Pushing via fox
 
-The host `7cf34ded5d65` cannot push to `origin`. When working on it, commit and push from `fox` instead. This applies to every git repository (chezmoi, ansible-playbooks, etc.), not just one.
+The host `7cf34ded5d65` cannot push to GitHub (`github.com`). Other remotes (e.g. internal GitLab) are unaffected. When a repository's `origin` is on GitHub, commit and push from `fox` instead. This applies to every such repository (chezmoi, ansible-playbooks, etc.), not just one.
 
 1. On `7cf34ded5d65`, generate a patch of the working-tree changes: `git -P diff -- <files> > /tmp/changes.patch`
 2. Copy it to `fox`: `scp /tmp/changes.patch fox:/tmp/changes.patch`
