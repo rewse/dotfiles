@@ -9,6 +9,9 @@ README.md
 .config/karabiner
 .kiro/skill/obsidian-ops/SKILL.md
 Library
+.agents/rules/cmux-subagent.md
+.claude/rules/cmux-subagent.md
+.kiro/steering/cmux-subagent.md
 {{- end }}
 
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}

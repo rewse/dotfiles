@@ -1,9 +1,9 @@
 {{ template "rules/common-standards.md" . }}
 
 {{ template "rules/chat-tone.md" . }}
-
+{{ if eq .chezmoi.os "darwin" }}
 {{ template "rules/cmux-subagent.md" . }}
-
+{{ end }}
 {{ template "rules/css-standards.md" . }}
 
 {{ template "rules/development-workflow.md" . }}
