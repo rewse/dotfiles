@@ -14,7 +14,7 @@ install_skills() {
   shift
   for skill in "$@"; do
     if [ -d "$SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g || true
+      skills update "$skill" -g < /dev/null || true
     else
       skills add "$repo" --skill "$skill" -g $AGENTS -y || true
     fi
@@ -26,7 +26,7 @@ install_skills_claude_only() {
   shift
   for skill in "$@"; do
     if [ -d "$CLAUDE_SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g || true
+      skills update "$skill" -g < /dev/null || true
     else
       skills add "$repo" --skill "$skill" -g --agent claude-code -y || true
     fi
@@ -38,7 +38,7 @@ install_skills_no_claude() {
   shift
   for skill in "$@"; do
     if [ -d "$SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g || true
+      skills update "$skill" -g < /dev/null || true
     else
       skills add "$repo" --skill "$skill" -g $AGENTS_NO_CLAUDE -y || true
     fi
