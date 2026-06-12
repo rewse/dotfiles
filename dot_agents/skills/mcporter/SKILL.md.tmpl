@@ -55,4 +55,5 @@ mcporter call <server>.<tool> [key=value ...] 2>&1 | cat
 - Run searches across multiple servers in parallel
 - When looking up tools with `--schema`, chain multiple `grep` commands to AND-search by keywords (e.g., `grep -B20 -A20 "room" | grep -B20 -A20 "booking"`). A single keyword often matches too many tools and wastes context
 - When creating `ticktick` tasks, omit `startDate` and `dueDate` time components unless the user explicitly specifies a time. Use date-only values (e.g., `2026-06-08`) to avoid unnecessary reminders.
+- When creating tasks in `ticktick` or `aws-outlook-mcp`, write titles in English using imperative mood (e.g., "Review PR feedback", "Submit expense report").
 - `unifi-network` uses a two-step workflow: call `unifi_tool_index` to discover tools, then `unifi_execute` to run them. Use parentheses syntax: `mcporter call 'unifi-network.unifi_execute(tool: "unifi_list_clients")'`
