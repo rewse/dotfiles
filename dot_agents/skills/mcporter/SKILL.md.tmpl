@@ -1,6 +1,10 @@
 ---
 name: mcporter
-description: Interact with external services using mcporter CLI, which connects to MCP servers for web search, browser automation, diagram editing, URL fetching, smart home control, task management, and GitLab operations. Use when the user wants to search the web via Brave, automate browser interactions via Chrome DevTools, create or view draw.io diagrams, fetch web page content, control Home Assistant devices and automations, manage TickTick tasks and projects, or interact with GitLab (gitlab.aws.dev) projects, merge requests, pipelines, and CI/CD — even if they don't mention "mcporter" explicitly.
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks, query Zabbix or UniFi, or work with Amazon internal systems — GitLab (gitlab.aws.dev), Outlook mail and calendar, Slack, SharePoint and OneDrive, Quip and Microsoft Loop, Salesforce/CRM (Sentral), Amazon Quick (QuickSight) dashboards and datasets, AtoZ HR data, Highspot/KnowledgeMine, Pippin design docs, and builder tools (code reviews, pipelines, ticketing, Brazil, Apollo) — even if they don't mention "mcporter" explicitly.
+{{- else }}
+description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks and projects, query Zabbix monitoring, or manage a UniFi network — even if they don't mention "mcporter" explicitly.
+{{- end }}
 ---
 
 # mcporter
@@ -27,6 +31,7 @@ The following is for reference only. Trust the output of `mcporter list` for the
 - `unifi-network` — UniFi Network Controller: WiFi networks, clients, devices, switches, APs, firewall, VPN, routing, and statistics, and more
 - `zabbix` — Zabbix full API access: hosts, host groups, items, triggers, events, problems, alerts, dashboards, SLA, maintenance windows, templates, discovery rules, actions, scripts, users, proxies, and more
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+- `amazon-quick-mcp` — Amazon Quick (formerly QuickSight): dashboards, analyses, datasets, data sources, and SQL lineage; Q Topics natural-language queries; Spaces and documents; deep research reports; and the Quick assistant chat
 - `amazon-sharepoint-mcp` — SharePoint and OneDrive file operations (list, read, write, search)
 - `atoz-mcp` — Amazon AtoZ HR data: compensation (pay, RSU, stock), career (reviews, feedback, goals), benefits (HSA, 401K, elections), tax/payroll, documents, and Aza HR chat
 - `aws-gitlab-mcp` — GitLab (gitlab.aws.dev): projects, groups, merge requests, pipelines, CI/CD jobs, repository files, issues, branches, commits, users, bindles, and topics

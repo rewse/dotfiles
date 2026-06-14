@@ -66,6 +66,13 @@
       }
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
     },
+    "amazon-quick-mcp": {
+      "command": "amazon-quick-mcp",
+      "env": {
+        "QUICKSIGHT_ACCOUNT": "amazonbi",
+        "QUICKSIGHT_REGION": "us-east-1"
+      }
+    },
     "amazon-sharepoint-mcp": {
       "command": "amazon-sharepoint-mcp"
     },
