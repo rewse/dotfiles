@@ -1,3 +1,7 @@
+---
+description: Update dependencies for the personal projects in ~/git, then push and verify GitHub Actions.
+---
+
 # Project Dependency Update Prompt
 
 Update the following projects in `~/git` according to the procedure:
