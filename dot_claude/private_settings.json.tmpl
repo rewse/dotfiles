@@ -3,15 +3,25 @@
   "env": {
     "CLAUDE_CODE_USE_BEDROCK": "1",
     "CLAUDE_CODE_ENABLE_AUTO_MODE": "1",
-{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
-    "AWS_PROFILE": "claude-code-DO-NOT-DELETE",
-{{ else }}
+{{- if ne .chezmoi.hostname "7cf34ded5d65" }}
     "AWS_PROFILE": "bedrock",
 {{- end }}
     "AWS_REGION": "us-west-2"
   },
 {{ if eq .chezmoi.hostname "7cf34ded5d65" }}
   "awsCredentialExport": "\"{{ .chezmoi.homeDir }}/.toolbox/bin/claude\" default-credential-export",
+  "enabledPlugins": {
+    "AmazonBuilderCoreAIAgents-core@aim": true,
+    "AmazonBuilderCoreAIAgents-pipeline-assistant@aim": true
+  },
+  "extraKnownMarketplaces": {
+    "aim": {
+      "source": {
+        "source": "directory",
+        "path": "{{ .chezmoi.homeDir }}/.aim/cc-plugins"
+      }
+    }
+  },
   "mcpServers": {
     "builder-mcp": {
       "command": "builder-mcp",
@@ -29,7 +39,6 @@
   ],
   "includeCoAuthoredBy": false,
   "model": "us.anthropic.claude-opus-4-8[1m]",
-  "showThinkingSummaries": true,
   "permissions": {
     "defaultMode": "auto",
     "additionalDirectories": [
@@ -38,9 +47,11 @@
       "{{ .chezmoi.homeDir }}/Downloads"
     ]
   },
+  "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": true,
   "statusLine": {
     "command": "~/.claude/statusline.sh",
     "type": "command"
-  }
+  },
+  "theme": "auto"
 }
