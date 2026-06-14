@@ -88,6 +88,12 @@ Sort entries alphabetically whenever their order does not carry meaning. This ap
 
 Lead with the instruction or prohibition in rule files. Keep rationale minimal, and add it only when it clarifies the scope of a rule. Omit background that does not change how a rule is applied.
 
+## Writing Standards
+
+### Line Wrapping
+
+Do not hard-wrap prose. Write each paragraph as a single line and let the editor soft-wrap it. This applies to Markdown documents, specs, READMEs, and rule files. It does not apply to code, code blocks, or list items, where line breaks are meaningful.
+
 ## Coding Standards
 
 ### Coding Styles
