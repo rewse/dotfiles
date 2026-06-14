@@ -28,19 +28,45 @@ curl -fsSL "https://raw.githubusercontent.com/zed-industries/zed/v${ver}/assets/
 
 ## Commands (Shared Agent Commands)
 
-Commands are slash commands shared across agents. External commands are managed via `dot_agents/.chezmoiexternal.yaml` and symlinked into each agent's directory.
+Commands are slash commands shared across agents. There are two types: custom commands authored in this repo, and external commands fetched from GitHub. Each agent references the shared `~/.agents/commands` directory through a single directory-level symlink.
 
-### File Structure
+### Agent Symlinks
+
+```
+dot_claude/symlink_commands.tmpl   # ~/.claude/commands  → ~/.agents/commands
+dot_kiro/symlink_commands.tmpl     # ~/.kiro/commands    → ~/.agents/commands
+dot_codex/symlink_prompts.tmpl     # ~/.codex/prompts    → ~/.agents/commands
+```
+
+Because each agent symlinks the whole directory, any `.md` file placed in `~/.agents/commands` is picked up by all agents automatically; no per-command symlink is needed.
+
+### Custom Commands (authored in `dot_agents/commands/`)
+
+Custom commands are real files committed under `dot_agents/commands/` and deployed to `~/.agents/commands/<name>.md`. They live as siblings of the external `commands/<source>/` subdirectories, so the call name has no namespace (e.g. `dot_agents/commands/outlook-todo.md` → `/outlook-todo`).
+
+#### Adding a New Custom Command
+
+1. Create `dot_agents/commands/<name>.md` with frontmatter:
+   ```markdown
+   ---
+   description: One-line summary of what the command does.
+   argument-hint: "<expected argument>"   # omit if the command takes no arguments
+   ---
+   ```
+2. Write the command body as an instruction prompt. No symlink changes are needed; the existing directory symlinks expose it to all agents.
+
+### External Commands (fetched via `.chezmoiexternal.yaml`)
+
+External commands are managed via `dot_agents/.chezmoiexternal.yaml` and land in `commands/<source>/` subdirectories, giving them a namespaced call name (e.g. `/everything-claude-code:plan`).
+
+#### File Structure
 
 ```
 dot_agents/.chezmoiexternal.yaml   # Downloads commands from GitHub repos
   → ~/.agents/commands/<source>/   # Downloaded command .md files
-
-dot_claude/symlink_commands.tmpl   # → ~/.agents/commands
-dot_kiro/symlink_commands.tmpl     # → ~/.agents/commands
 ```
 
-### Adding a New Command Source
+#### Adding a New Command Source
 
 Add an entry to `dot_agents/.chezmoiexternal.yaml`:
 
