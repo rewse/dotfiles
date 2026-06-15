@@ -102,7 +102,7 @@ install_skills MiniMax-AI/skills \
   minimax-docx minimax-pdf minimax-xlsx
 
 # Obra Superpowers
-install_skills obra/superpowers brainstorming
+install_skills obra/superpowers brainstorming writing-plans
 
 # oharu121 Commands Skills Gems
 install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
