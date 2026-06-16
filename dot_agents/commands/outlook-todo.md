@@ -32,7 +32,7 @@ Set `title` to the leftover text after removing all tokens above. Rewrite it in 
 Interpret times in the local timezone and always include the offset in the ISO string (e.g. `2026-06-15T17:00:00+09:00` for JST). Without an offset the server treats the value as UTC and the time shifts.
 
 - With a time component: set `reminderDateTime` to the resolved ISO datetime with offset and `isReminderOn=true`. Also set `dueDateTime` to the same value, but note that To-Do keeps only the date part of `dueDateTime` (the time is dropped); the time of day lives in `reminderDateTime`.
-- Date only (no time): set `dueDateTime` to the date and do NOT set a reminder.
+- Date only (no time): set `dueDateTime` to the date at noon local time with offset (e.g. `2026-06-18T12:00:00+09:00`) and do NOT set a reminder. Use noon, NOT midnight: a midnight value like `2026-06-18T00:00:00+09:00` converts to the previous day in UTC, so the server stores the wrong date. Noon keeps the date stable across timezone conversion.
 
 ### Body
 
