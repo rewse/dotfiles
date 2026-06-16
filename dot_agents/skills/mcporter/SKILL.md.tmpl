@@ -62,3 +62,6 @@ mcporter call <server>.<tool> [key=value ...] 2>&1 | cat
 - When creating `ticktick` tasks, omit `startDate` and `dueDate` time components unless the user explicitly specifies a time. Use date-only values (e.g., `2026-06-08`) to avoid unnecessary reminders.
 - When creating tasks in `ticktick` or `aws-outlook-mcp`, write titles in English using imperative mood (e.g., "Review PR feedback", "Submit expense report").
 - `unifi-network` uses a two-step workflow: call `unifi_tool_index` to discover tools, then `unifi_execute` to run them. Use parentheses syntax: `mcporter call 'unifi-network.unifi_execute(tool: "unifi_list_clients")'`
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+- To read an `amazon-sharepoint-mcp` file from a share URL, do not call `sharepoint_read_file` with the raw URL (it fails with 400). First call `sharepoint_resolve_url url=<share URL>` to get `siteUrl` and `serverRelativeUrl`, then call `sharepoint_read_file siteUrl=<...> serverRelativeUrl=<...> inline=true` to get the content as text. Without `inline=true`, `sharepoint_read_file` requires a `savePath` to download to.
+{{- end }}
