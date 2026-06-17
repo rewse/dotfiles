@@ -25,7 +25,17 @@ Extract these tokens from `$ARGUMENTS`. Each token may appear anywhere in the li
 
 ### Title
 
-Set `title` to the leftover text after removing all tokens above. Rewrite it in English using the imperative mood (e.g. "Review Q3 report"), translating from Japanese if needed.
+Set `title` to the leftover text after removing all tokens above. Rewrite it in English using the imperative mood (e.g. "Review Q3 report"), translating from Japanese if needed. Limit the title to 10 words maximum; if the full meaning requires more, keep the title as a concise summary and move the additional detail into `body`.
+
+### Person names → alias hashtag
+
+When a person's name appears in `$ARGUMENTS`, resolve their Amazon alias via Phonetool:
+
+```bash
+mcporter call builder-mcp.InternalSearch query="<person name>" domain=PHONETOOL 2>&1 | cat
+```
+
+The result returns a JSON object with `uid` (the alias), `title`, and `departmentName`. Extract the `uid` value (lowercased) and append `#<alias>` to the end of the title (e.g. "Discuss roadmap with Gowri" → title becomes `Discuss roadmap with Gowri #gowrishb`). If multiple people are mentioned, append one hashtag per person. If the lookup fails or returns no match, skip the hashtag for that person.
 
 ### Date / time → due and reminder
 
