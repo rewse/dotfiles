@@ -1,0 +1,25 @@
+{{ if eq .chezmoi.hostname "7cf34ded5d65" -}}
+#!/bin/bash
+# Register user-scope MCP servers with Claude Code.
+#
+# Claude Code does not read mcpServers from settings.json. User-scope servers
+# live in ~/.claude.json, a stateful file Claude Code rewrites continuously, so
+# it is registered imperatively here instead of being managed as a file.
+
+set -uo pipefail
+
+add_mcp() {
+  local name="$1"
+  shift
+  if claude mcp get "$name" >/dev/null 2>&1; then
+    return 0
+  fi
+  claude mcp add -s user "$name" -- "$@" || true
+}
+
+add_mcp builder-mcp builder-mcp --include-tools=ReadInternalWebsites
+add_mcp wis-web-search-mcp wis-web-search-mcp
+{{ else -}}
+#!/bin/bash
+# No user-scope MCP servers are configured for this host.
+{{ end -}}
