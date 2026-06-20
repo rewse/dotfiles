@@ -1,5 +1,5 @@
 ---
-name: python-dependency-management
+name: python-dependency
 description: Python dependency management preferences using uv. Use when adding Python dependencies, creating Python projects, setting up virtual environments, writing standalone scripts with external packages, or when pip, requirements.txt, venv, virtualenv, pyproject.toml, or uv is mentioned. Ensures uv is used instead of pip/venv.
 ---
 

@@ -63,12 +63,9 @@ install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
 # Oracle DB Skills
 install_skills oracle/skills db
 
-# sirkirby unifi-mcp Skills
-install_skills sirkirby/unifi-mcp \
-  firewall-auditor firewall-manager network-health-check unifi-network
-
 # Tavily AI
-install_skills tavily-ai/skills tavily-search
+install_skills tavily-ai/skills \
+  tavily-cli tavily-crawl tavily-extract tavily-map tavily-research tavily-search
 
 # Upstash Context7
 install_skills upstash/context7 find-docs
