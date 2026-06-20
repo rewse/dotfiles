@@ -67,6 +67,9 @@ install_skills oracle/skills db
 install_skills sirkirby/unifi-mcp \
   firewall-auditor firewall-manager network-health-check unifi-network
 
+# Tavily AI
+install_skills tavily-ai/skills tavily-search
+
 # Upstash Context7
 install_skills upstash/context7 find-docs
 
