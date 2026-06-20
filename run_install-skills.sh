@@ -33,52 +33,14 @@ install_skills_claude_only() {
   done
 }
 
-install_skills_no_claude() {
-  local repo="$1"
-  shift
-  for skill in "$@"; do
-    if [ -d "$SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g < /dev/null || true
-    else
-      skills add "$repo" --skill "$skill" -g $AGENTS_NO_CLAUDE -y || true
-    fi
-  done
-}
-
 # Anthropic Skills
 install_skills anthropics/skills \
-  canvas-design doc-coauthoring frontend-design mcp-builder skill-creator webapp-testing
+  canvas-design doc-coauthoring frontend-design mcp-builder skill-creator
 install_skills_claude_only anthropics/skills \
   docx pdf pptx xlsx
 
-# AWS Agent Toolkit
-install_skills aws/agent-toolkit-for-aws \
-  agents-build agents-connect agents-debug agents-deploy agents-get-started agents-harden agents-optimize
-
 # Blader Humanizer
 install_skills blader/humanizer humanizer
-
-# Corey Haines Marketing Skills
-install_skills coreyhaines31/marketingskills \
-  copy-editing copywriting marketing-ideas marketing-psychology programmatic-seo social-content
-
-# Everything Claude Code
-install_skills affaan-m/everything-claude-code \
-  brand-voice \
-  click-path-audit \
-  connections-optimizer \
-  content-engine \
-  continuous-learning-v2 \
-  crosspost \
-  eval-harness \
-  gan-style-harness \
-  gateguard \
-  iterative-retrieval \
-  lead-intelligence \
-  santa-method \
-  social-graph-ranker \
-  strategic-compact \
-  x-api
 
 # Hummer98 using-cmux
 install_skills hummer98/using-cmux using-cmux
@@ -91,24 +53,12 @@ install_skills kepano/obsidian-skills \
 install_skills manaflow-ai/cmux \
   cmux-browser cmux-markdown cmux
 
-# Microsoft HVE Core
-install_skills microsoft/hve-core powerpoint
-
-# Microsoft Playwright CLI
-install_skills microsoft/playwright-cli playwright-cli
-
-# MiniMax Skills
-install_skills MiniMax-AI/skills \
-  minimax-docx minimax-pdf minimax-xlsx
-
 # Obra Superpowers
-install_skills obra/superpowers brainstorming writing-plans
+install_skills obra/superpowers \
+  brainstorming writing-plans
 
 # oharu121 Commands Skills Gems
 install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
-
-# OpenAI Skills
-install_skills_no_claude openai/skills pdf
 
 # Oracle DB Skills
 install_skills oracle/skills db
@@ -122,7 +72,6 @@ install_skills upstash/context7 find-docs
 
 # Vercel Labs
 install_skills vercel-labs/agent-browser agent-browser
-install_skills vercel-labs/agent-skills web-design-guidelines
 install_skills vercel-labs/skills find-skills
 
 # X Platform xurl
