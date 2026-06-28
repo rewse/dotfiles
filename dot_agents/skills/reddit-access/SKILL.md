@@ -1,22 +1,23 @@
 ---
 name: reddit-access
-description: Access Reddit content via old.reddit.com JSON endpoints without authentication. Use when you need to fetch Reddit posts, search subreddits, get post details with comments, or retrieve user posts. Triggers include "get Reddit posts", "search Reddit", "fetch from r/", "Reddit comments", "user posts on Reddit", when the user provides a Reddit URL starting with "https://www.reddit.com/r/" or "https://old.reddit.com/r/", or any task involving reading public Reddit content.
+description: Access Reddit content via old.reddit.com HTML parsing without authentication. Use when you need to fetch Reddit posts, search subreddits, get post details with comments, or retrieve user posts. Triggers include "get Reddit posts", "search Reddit", "fetch from r/", "Reddit comments", "user posts on Reddit", when the user provides a Reddit URL starting with "https://www.reddit.com/r/" or "https://old.reddit.com/r/", or any task involving reading public Reddit content.
 ---
 
 # reddit-access
 
-Access Reddit content via `old.reddit.com` JSON endpoints.
+Access Reddit content by parsing `old.reddit.com` HTML pages.
 
 ## Prerequisites
 
-Python 3 with standard library (no external dependencies).
+- Python 3
+- [uv](https://docs.astral.sh/uv/) (dependencies are managed inline via script metadata)
 
 ## Commands
 
 ### Get subreddit posts
 
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts <subreddit> [limit] [sort]
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py posts <subreddit> [limit] [sort]
 ```
 
 - `subreddit`: Subreddit name (without r/)
@@ -25,7 +26,7 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts <subreddit> [limit]
 
 **Example:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts python 10 hot
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py posts python 10 hot
 ```
 
 **Output:**
@@ -47,12 +48,12 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts python 10 hot
 
 **With post ID:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details <post_id> [subreddit]
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py details <post_id> [subreddit]
 ```
 
 **With URL:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details <url>
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py details <url>
 ```
 
 - `post_id`: Reddit post ID
@@ -61,12 +62,12 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details <url>
 
 **Example with post ID:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details abc123 python
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py details abc123 python
 ```
 
 **Example with new Reddit URL:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details "https://www.reddit.com/r/python/comments/abc123/post_title/"
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py details "https://www.reddit.com/r/python/comments/abc123/post_title/"
 ```
 
 **Output:**
@@ -91,7 +92,7 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details "https://www.redd
 ### Search within subreddit
 
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py search <subreddit> <query> [limit]
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py search <subreddit> <query> [limit]
 ```
 
 - `subreddit`: Subreddit to search in
@@ -100,13 +101,13 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py search <subreddit> <query
 
 **Example:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py search python "async await" 10
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py search python "async await" 10
 ```
 
 ### Get user posts
 
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py user <username> [limit]
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py user <username> [limit]
 ```
 
 - `username`: Reddit username (without u/)
@@ -114,7 +115,7 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py user <username> [limit]
 
 **Example:**
 ```bash
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py user rewselab 10
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py user rewselab 10
 ```
 
 ## Common Workflows
@@ -123,47 +124,47 @@ python3 ~/.kiro/skills/reddit-access/scripts/reddit.py user rewselab 10
 
 ```bash
 # Simply pass the Reddit URL (new or old Reddit)
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details "https://www.reddit.com/r/python/comments/abc123/post_title/"
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py details "https://www.reddit.com/r/python/comments/abc123/post_title/"
 ```
 
 ### Read discussion
 
 ```bash
 # Get post and read comments
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py details abc123 python
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py details abc123 python
 ```
 
 ### Monitor trending topics
 
 ```bash
 # Get hot posts from multiple subreddits
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts programming 15 hot
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts python 15 hot
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py posts MachineLearning 15 hot
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py posts programming 15 hot
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py posts python 15 hot
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py posts MachineLearning 15 hot
 ```
 
 ### Research a topic
 
 ```bash
 # Search across relevant subreddits
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py search python "type hints" 20
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py search learnpython "type hints" 20
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py search python "type hints" 20
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py search learnpython "type hints" 20
 ```
 
 ### Track user activity
 
 ```bash
 # Get recent posts from a user
-python3 ~/.kiro/skills/reddit-access/scripts/reddit.py user username 25
+uv run ~/.agents/skills/reddit-access/scripts/reddit.py user username 25
 ```
 
 ## Notes
 
-- Uses `old.reddit.com` JSON endpoints (public, no auth required)
+- Parses `old.reddit.com` HTML pages (no API key or auth required)
 - Rate limiting: Be respectful, avoid rapid requests
-- User-Agent is set automatically to avoid 403 errors
+- User-Agent is set to a browser string to avoid blocks
 - All output is JSON format
-- Standard library only (no pip dependencies)
+- Dependencies managed inline via uv script metadata (beautifulsoup4)
 - Works with public content only (no private subreddits or user data)
 
 ## Error Handling
