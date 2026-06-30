@@ -151,6 +151,10 @@ dot_kiro/steering/                 # For Kiro CLI (symlink to downloaded file)
 3. Add `{{ output "cat" (joinPath .chezmoi.homeDir ".agents/rules/<name>.md") }}` to `dot_codex/AGENTS.md.tmpl`
 4. Create `dot_kiro/steering/symlink_<name>.md.tmpl` pointing to the downloaded file
 
+## MCP Servers
+
+When adding or removing a server in `dot_mcporter/private_mcporter.json.tmpl`, also update `dot_agents/skills/mcporter/SKILL.md.tmpl` (both the `description` frontmatter and the server list in the body).
+
 ## Skills (Shared Agent Skills)
 
 External skills are installed via `run_install-skills.sh` using the `skills` CLI. The script runs on `chezmoi apply` and handles install, update, and post-install patching.
