@@ -74,7 +74,9 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 
 ### File Search
 
-Do not use `find ~` or other overly broad paths, as the search scope is too large and takes too long. Instead, infer a more specific path from context or ask the user.
+On macOS, use `mdfind` for file searches. Spotlight indexing makes broad paths like `mdfind -onlyin ~` fast and acceptable.
+
+On Linux, do not use `find ~` or other overly broad paths, as the search scope is too large and takes too long. Instead, infer a more specific path from context or ask the user.
 
 ### URL Fetch Retry
 
