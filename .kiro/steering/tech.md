@@ -34,7 +34,7 @@ Commands are slash commands shared across agents. There are two types: custom co
 
 ```
 dot_claude/symlink_commands.tmpl   # ~/.claude/commands  → ~/.agents/commands
-dot_kiro/symlink_commands.tmpl     # ~/.kiro/commands    → ~/.agents/commands
+dot_kiro/symlink_prompts.tmpl      # ~/.kiro/prompts     → ~/.agents/commands
 dot_codex/symlink_prompts.tmpl     # ~/.codex/prompts    → ~/.agents/commands
 ```
 
