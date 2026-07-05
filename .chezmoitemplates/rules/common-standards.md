@@ -100,6 +100,10 @@ Lead with the instruction or prohibition in rule files. Keep rationale minimal, 
 
 Do not hard-wrap prose. Write each paragraph as a single line and let the editor soft-wrap it. This applies to Markdown documents, specs, READMEs, and rule files. It does not apply to code, code blocks, or list items, where line breaks are meaningful.
 
+### Humanizer
+
+When writing prose longer than a few sentences (documentation, README, specs, commit descriptions, or any multi-paragraph text), apply the humanizer skill to remove AI writing patterns before finalizing. This does not apply to code comments, chat messages, or structured data.
+
 ## Coding Standards
 
 ### Coding Styles
