@@ -38,7 +38,14 @@
     "skill://.kiro/skills/**/SKILL.md",
     "skill://~/.kiro/skills/**/SKILL.md"
   ],
-  "hooks": {},
+  "hooks": {
+    "preToolUse": [
+      {
+        "matcher": "shell",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
+      }
+    ]
+  },
   "toolsSettings": {
     "execute_bash": {
       "allowedCommands": [
