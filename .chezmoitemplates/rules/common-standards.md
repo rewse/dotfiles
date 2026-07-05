@@ -78,6 +78,10 @@ On macOS, use `mdfind` for file searches. Spotlight indexing makes broad paths l
 
 On Linux, do not use `find ~` or other overly broad paths, as the search scope is too large and takes too long. Instead, infer a more specific path from context or ask the user.
 
+### Container Runtime
+
+On macOS, use `container` instead of `docker`. On Linux, use `docker`.
+
 ### URL Fetch Retry
 
 When a URL fetch is denied (403, access denied, bot block), retry with `defuddle parse -m <URL>`.
