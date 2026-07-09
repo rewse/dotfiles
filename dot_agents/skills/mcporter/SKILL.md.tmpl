@@ -1,7 +1,7 @@
 ---
 name: mcporter
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
-description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks, query Zabbix or UniFi, or work with Amazon internal systems — Amazon Quick (QuickSight) dashboards and datasets, AtoZ HR data, builder tools (code reviews, pipelines, ticketing, Brazil, Apollo), Concur expense reports and receipts, GitLab (gitlab.aws.dev), Highspot/KnowledgeMine, Outlook mail and calendar, Pippin design docs, Quip and Microsoft Loop, Salesforce/CRM (Sentral), SharePoint and OneDrive, and Slack — even if they don't mention "mcporter" explicitly.
+description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks, query Zabbix or UniFi, or work with Amazon internal systems — Amazon Quick (QuickSight) dashboards and datasets, AtoZ HR data, builder tools (code reviews, pipelines, ticketing, Brazil, Apollo), Concur expense reports and receipts, GitLab (gitlab.aws.dev), Highspot/KnowledgeMine, Outlook mail and calendar, Pippin design docs, Quip and Microsoft Loop, Salesforce/CRM (Sentral), SharePoint and OneDrive, Slack, SpecReq Sales/Enterprise Support requests, and the Specialist Super Agent for AWS technical expertise — even if they don't mention "mcporter" explicitly.
 {{- else }}
 description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks and projects, query Zabbix monitoring, or manage a UniFi network — even if they don't mention "mcporter" explicitly.
 {{- end }}
@@ -43,6 +43,8 @@ The following is for reference only. Trust the output of `mcporter list` for the
 - `loop-mcp` — Microsoft Loop page reading: fetch and extract content from Loop pages as markdown, supporting both Loop app URLs (loop.cloud.microsoft) and SharePoint-hosted Loop URLs
 - `pippin-mcp` — Pippin design document management: projects, artifacts, reviews, comments, reviewer assignments, and local/remote sync
 - `slack-mcp` — Slack messages (search, post, react), channels, threads, files, DMs, and reminders
+- `spec-req-mcp` — SpecReq Sales Support and Enterprise Support requests: create, draft, submit, acknowledge, complete, comment, and search requests; find resolver groups, members, topics, tags, request types, and cost types; user profiles and TAM checks
+- `specialist-super-agent-mcp` — Specialist Super Agent (SSAg): AI-powered AWS technical expertise across 56+ Technical Field Communities, grounded in the Specialist Knowledge Vault, via a single `invoke_agent` tool for deep analysis, comparisons, and architecture guidance
 {{- end }}
 
 ## Usage
