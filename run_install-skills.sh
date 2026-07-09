@@ -42,9 +42,6 @@ install_skills_claude_only anthropics/skills \
 # Blader Humanizer
 install_skills blader/humanizer humanizer
 
-# Hummer98 using-cmux
-install_skills hummer98/using-cmux using-cmux
-
 # Kepano Obsidian Skills
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
@@ -76,42 +73,3 @@ install_skills vercel-labs/skills find-skills
 
 # X Platform xurl
 install_skills xdevplatform/xurl xurl
-
-# Patch using-cmux: make sub-agent launch command agent-agnostic.
-# Replaces the "Step 2" heading line with an agent-agnostic block. Uses awk
-# instead of `sed -i` to stay portable across BSD (macOS) and GNU (Linux) sed,
-# whose -i flags are incompatible.
-patch_using_cmux() {
-  local file="$SKILLS_DIR/using-cmux/SKILL.md"
-  [ -f "$file" ] || return 0
-  grep -q "AGENT_LAUNCH_CMD" "$file" && return 0
-
-  local block tmp
-  block=$(mktemp)
-  cat > "$block" <<'EOF'
-### Step 2: サブエージェント起動
-
-起動コマンドはエージェントに応じて変える:
-
-| Agent | AGENT_LAUNCH_CMD |
-|-------|------------------|
-| Claude Code | `claude --dangerously-skip-permissions` |
-| Kiro CLI | `kiro-cli chat --trust-all-tools` |
-| Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
-
-```bash
-cmux-send --workspace $WS "$AGENT_LAUNCH_CMD\n"
-```
-EOF
-  tmp=$(mktemp)
-  awk -v blockfile="$block" '
-    /^### Step 2: Claude Code 起動$/ {
-      while ((getline line < blockfile) > 0) print line
-      close(blockfile)
-      next
-    }
-    { print }
-  ' "$file" > "$tmp" && mv -f "$tmp" "$file"
-  rm -f "$block"
-}
-patch_using_cmux
