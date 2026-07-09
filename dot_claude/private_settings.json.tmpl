@@ -22,12 +22,26 @@
       }
     }
   },
-{{- end }}
+  "availableModels": [
+    "claude-fable-5",
+    "claude-opus-4-6[1m]",
+    "claude-opus-4-6",
+    "claude-opus-4-7[1m]",
+    "claude-opus-4-7",
+    "claude-opus-4-8[1m]",
+    "claude-opus-4-8",
+    "claude-sonnet-4-6",
+    "claude-sonnet-4-6[1m]",
+    "claude-sonnet-5",
+    "claude-haiku-4-5"
+  ],
+{{- else }}
   "availableModels": [
     "haiku",
     "opus",
     "sonnet"
   ],
+{{- end }}
   "hooks": {
     "PreToolUse": [
       {
@@ -56,5 +70,25 @@
     "command": "~/.claude/statusline.sh",
     "type": "command"
   },
-  "theme": "auto"
+  "theme": "auto",
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+  "model": "global.anthropic.claude-opus-4-6-v1[1m]",
+  "modelOverrides": {
+    "claude-fable-5": "global.anthropic.claude-fable-5[1m]",
+    "claude-haiku-4-5": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+    "claude-opus-4-6": "global.anthropic.claude-opus-4-6-v1",
+    "claude-opus-4-6[1m]": "global.anthropic.claude-opus-4-6-v1[1m]",
+    "claude-opus-4-7": "global.anthropic.claude-opus-4-7",
+    "claude-opus-4-7[1m]": "global.anthropic.claude-opus-4-7[1m]",
+    "claude-opus-4-8": "global.anthropic.claude-opus-4-8",
+    "claude-opus-4-8[1m]": "global.anthropic.claude-opus-4-8[1m]",
+    "claude-sonnet-4-6": "global.anthropic.claude-sonnet-4-6",
+    "claude-sonnet-4-6[1m]": "global.anthropic.claude-sonnet-4-6[1m]",
+    "claude-sonnet-5": "global.anthropic.claude-sonnet-5"
+  },
+  "enforceAvailableModels": true,
+  "fallbackModel": [
+    "global.anthropic.claude-opus-4-6-v1[1m]"
+  ]
+{{- end }}
 }
