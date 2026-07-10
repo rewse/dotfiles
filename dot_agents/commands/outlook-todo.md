@@ -62,23 +62,25 @@ Build `body` from the `#tag` and `@user` tokens that have no To-Do equivalent, e
 
 ## Create the task
 
-Run, including only the parameters that were resolved:
+Run, including only the parameters that were resolved. Wrap every `key=value` argument in single quotes so that shell metacharacters (`&`, `?`, spaces) in a value are passed through literally:
 
 ```bash
 mcporter call aws-outlook-mcp.todo_tasks operation=create \
-  listId=<resolved listId> \
-  title=<title> \
-  body=<body> \
-  importance=<high|normal|low> \
-  dueDateTime=<ISO datetime> \
-  reminderDateTime=<ISO datetime> \
-  isReminderOn=<true|false> 2>&1 | cat
+  'listId=<resolved listId>' \
+  'title=<title>' \
+  'body=<body>' \
+  'importance=<high|normal|low>' \
+  'dueDateTime=<ISO datetime>' \
+  'reminderDateTime=<ISO datetime>' \
+  'isReminderOn=<true|false>' 2>&1 | cat
 ```
 
 Notes:
 
 - `listId` is required by `todo_tasks` when targeting a specific list. When no `^list` was given, omit `listId` only if the tool allows it; otherwise resolve the default list via `todo_lists` first and use its id.
 - Omit `dueDateTime`, `reminderDateTime`, and `isReminderOn` entirely when no date was parsed.
+- Always single-quote each `key=value` argument, especially `body` when it holds a URL. An unquoted `&` in a URL (e.g. `...?thread_ts=...&cid=...`) is parsed by the shell as a background operator, which splits the command and makes it hang. Single-quoting the whole `'body=<URL>'` passes the value as one argument to `mcporter`.
+- If a value contains a literal single quote, close the quote, add `\'`, and reopen (e.g. `'title=Fix Bob'\''s bug'`).
 
 ## Report
 
