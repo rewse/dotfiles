@@ -194,15 +194,6 @@ alias k="kiro-cli chat"
 alias ka="kiro-cli chat --agent"
 alias kr="kiro-cli chat --resume"
 
-# Otty
-# >>> otty shell integration >>>
-# Added by Otty — toggle in Settings > Shell > Shell Integration.
-# Inert unless launched by Otty (it sets $OTTY_SHELL_INTEGRATION).
-if [ -n "$OTTY_SHELL_INTEGRATION" ] && [ -r "$OTTY_SHELL_INTEGRATION/otty-integration.zsh" ]; then
-  . "$OTTY_SHELL_INTEGRATION/otty-integration.zsh"
-fi
-# <<< otty shell integration <<<
-
 # >>>
 # <<< Safe-chain Initialization
 
@@ -235,3 +226,11 @@ fi
 {{- end }}
 
 # >>>
+
+# >>> otty shell integration >>>
+# Added by Otty — toggle in Settings > Shell > Shell Integration.
+# Inert unless launched by Otty (it sets $OTTY_SHELL_INTEGRATION).
+if [ -n "$OTTY_SHELL_INTEGRATION" ] && [ -r "$OTTY_SHELL_INTEGRATION/otty-integration.zsh" ]; then
+  . "$OTTY_SHELL_INTEGRATION/otty-integration.zsh"
+fi
+# <<< otty shell integration <<<
