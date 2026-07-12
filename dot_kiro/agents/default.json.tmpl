@@ -40,12 +40,44 @@
     "skill://~/.kiro/skills/**/SKILL.md"
   ],
   "hooks": {
+{{- if eq .chezmoi.os "darwin" }}
+    "agentSpawn": [
+      {
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh idle"
+      }
+    ],
+    "userPromptSubmit": [
+      {
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    ],
+    "preToolUse": [
+      {
+        "matcher": "shell",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
+      },
+      {
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    ],
+    "stop": [
+      {
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh idle"
+      }
+    ]
+{{- else }}
     "preToolUse": [
       {
         "matcher": "shell",
         "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
       }
     ]
+{{- end }}
   },
   "toolsSettings": {
     "execute_bash": {
