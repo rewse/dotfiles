@@ -1,0 +1,101 @@
+
+# font-blending = "linear" (reset to default)
+theme = "One Light"
+theme-dark = "Nord"
+foreground = "#f1f6ff"
+background = "#2e3440"
+palette-0 = "#3b4252"
+palette-1 = "#bf616a"
+palette-2 = "#a3be8c"
+palette-3 = "#ebcb8b"
+palette-4 = "#81a1c1"
+palette-5 = "#b48ead"
+palette-6 = "#88c0d0"
+palette-7 = "#e5e9f0"
+palette-8 = "#4c566a"
+palette-9 = "#bf616a"
+palette-10 = "#a3be8c"
+palette-11 = "#ebcb8b"
+palette-12 = "#81a1c1"
+palette-13 = "#b48ead"
+palette-14 = "#8fbcbb"
+# palette-15 = "#eceff4" (reset to default)
+# selection-foreground = "#2e3440" (reset to default)
+# selection-background = "#e5e9f0" (reset to default)
+# cursor-color = "#e5e9f0" (reset to default)
+# cursor-text = "#2e3440" (reset to default)
+privilege-notification-on-finish = true
+
+notification-foreground = "tab-unfocused"
+
+# palette-15 = "#ebdbb2" (reset to default)
+
+# font-blending = "linear" (reset to default)
+# palette-15 = "#eceff4" (reset to default)
+# selection-foreground = "#2e3440" (reset to default)
+# selection-background = "#e5e9f0" (reset to default)
+# cursor-color = "#e5e9f0" (reset to default)
+# cursor-text = "#2e3440" (reset to default)
+
+# font-blending = "linear" (reset to default)
+# palette-15 = "#eceff4" (reset to default)
+# selection-foreground = "#2e3440" (reset to default)
+# selection-background = "#e5e9f0" (reset to default)
+# cursor-color = "#e5e9f0" (reset to default)
+# cursor-text = "#2e3440" (reset to default)
+
+auto-hide-tabs-panel = "always"
+
+# font-blending = "linear" (reset to default)
+# palette-15 = "#eceff4" (reset to default)
+# selection-foreground = "#2e3440" (reset to default)
+# selection-background = "#e5e9f0" (reset to default)
+# cursor-color = "#e5e9f0" (reset to default)
+# cursor-text = "#2e3440" (reset to default)
+
+# font-blending = "linear" (reset to default)
+# palette-15 = "#eceff4" (reset to default)
+
+# selection-foreground = "#2f2b2c" (reset to default)
+# selection-background = "#dedede" (reset to default)
+# cursor-color = "#dedede" (reset to default)
+# cursor-text = "#2f2b2c" (reset to default)
+
+# palette-15 = "#ebdbb2" (reset to default)
+# selection-foreground = "#fdfff1" (reset to default)
+# selection-background = "#57584f" (reset to default)
+# cursor-color = "#c0c1b5" (reset to default)
+# cursor-text = "#8d8e82" (reset to default)
+
+# selection-background = "#ad95e9" (reset to default)
+# cursor-color = "#303030" (reset to default)
+
+# auto-theme-dark-mode = false (reset to default)
+
+# palette-15 = "#cdcdcd" (reset to default)
+
+# selection-foreground = "#fafaff" (reset to default)
+# cursor-text = "#565656" (reset to default)
+
+# palette-15 = "#ebebe6" (reset to default)
+
+# palette-15 = "#d1d5da" (reset to default)
+
+# selection-background = "#e4e4e7" (reset to default)
+# cursor-color = "#18181b" (reset to default)
+
+# selection-foreground = "#fafaff" (reset to default)
+# cursor-text = "#565656" (reset to default)
+
+font-family = "HackGen Console"
+
+keybind = "cmd+r=rename_tab"
+
+font-blending = "linear"
+palette-15 = "#eceff4"
+selection-foreground = "#2e3440"
+selection-background = "#e5e9f0"
+cursor-color = "#e5e9f0"
+cursor-text = "#2e3440"
+
+adjust-cell-height = "20%"
