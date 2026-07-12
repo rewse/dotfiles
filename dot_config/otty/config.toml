@@ -1,24 +1,24 @@
 
 # font-blending = "linear" (reset to default)
 theme = "One Light"
-theme-dark = "Nord"
+theme-dark = "One Dark"
 foreground = "#f1f6ff"
-background = "#2e3440"
-palette-0 = "#3b4252"
-palette-1 = "#bf616a"
-palette-2 = "#a3be8c"
-palette-3 = "#ebcb8b"
-palette-4 = "#81a1c1"
-palette-5 = "#b48ead"
-palette-6 = "#88c0d0"
-palette-7 = "#e5e9f0"
-palette-8 = "#4c566a"
-palette-9 = "#bf616a"
-palette-10 = "#a3be8c"
-palette-11 = "#ebcb8b"
-palette-12 = "#81a1c1"
-palette-13 = "#b48ead"
-palette-14 = "#8fbcbb"
+background = "#282c34"
+palette-0 = "#1e2127"
+palette-1 = "#e06c75"
+palette-2 = "#98c379"
+palette-3 = "#d19a66"
+palette-4 = "#61afef"
+palette-5 = "#c678dd"
+palette-6 = "#56b6c2"
+palette-7 = "#abb2bf"
+palette-8 = "#5c6370"
+palette-9 = "#e06c75"
+palette-10 = "#98c379"
+palette-11 = "#d19a66"
+palette-12 = "#61afef"
+palette-13 = "#c678dd"
+palette-14 = "#56b6c2"
 # palette-15 = "#eceff4" (reset to default)
 # selection-foreground = "#2e3440" (reset to default)
 # selection-background = "#e5e9f0" (reset to default)
@@ -90,12 +90,41 @@ auto-hide-tabs-panel = "always"
 font-family = "HackGen Console"
 
 keybind = "cmd+r=rename_tab"
+keybind = "cmd+up=focus_pane_up"
+keybind = "cmd+left=focus_pane_left"
+keybind = "cmd+right=focus_pane_right"
+keybind = "cmd+shift+space=toggle_vi_mode"
+keybind = "shift+enter=unbind"
+keybind = "cmd+e=compose_overlay"
+keybind = "cmd+shift+up=move_divider_up"
+keybind = "cmd+shift+down=move_divider_down"
+keybind = "cmd+shift+left=move_divider_left"
+keybind = "cmd+shift+right=move_divider_right"
+keybind = "cmd+9=details_tab_files"
+keybind = "cmd+8=details_tab_git"
+keybind = "cmd+7=details_tab_outline"
+keybind = "cmd+6=details_tab_info"
 
-font-blending = "linear"
-palette-15 = "#eceff4"
-selection-foreground = "#2e3440"
-selection-background = "#e5e9f0"
-cursor-color = "#e5e9f0"
-cursor-text = "#2e3440"
+# font-blending = "linear" (reset to default)
+# palette-15 = "#eceff4" (reset to default)
+# selection-foreground = "#2e3440" (reset to default)
+# selection-background = "#e5e9f0" (reset to default)
+# cursor-color = "#e5e9f0" (reset to default)
+# cursor-text = "#2e3440" (reset to default)
 
 adjust-cell-height = "20%"
+
+# font-blending = "linear" (reset to default)
+# palette-15 = "#eceff4" (reset to default)
+# selection-foreground = "#2e3440" (reset to default)
+# selection-background = "#e5e9f0" (reset to default)
+# cursor-color = "#e5e9f0" (reset to default)
+# cursor-text = "#2e3440" (reset to default)
+
+# window-working-directory = "inherit" (reset to default)
+
+# omit-otty-prefix = true (reset to default)
+
+# cli-allow-overwrite = true (reset to default)
+
+# omit-otty-prefix = true (reset to default)
