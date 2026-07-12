@@ -12,7 +12,7 @@
 #   processing → "running" spinner
 #   awaiting   → "awaiting-input" hand icon
 
-CLI="${OTTY_CLI:-/usr/bin/otty}"
+CLI="${OTTY_CLI:-/usr/local/bin/otty}"
 state="$1"
 
 # --- Tab ID cache (keyed by session to support parallel sessions) ----------
