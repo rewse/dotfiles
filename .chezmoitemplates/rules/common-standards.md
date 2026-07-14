@@ -78,6 +78,12 @@ Do not pass a bounded quantifier (`.{N}`, `{m,n}`) to a bare `grep` inside a Bas
 
 Instead use `command grep` (GNU grep), `rg`, or the Grep tool, which all handle the same pattern instantly. To capture surrounding context, prefer `grep -B/-A` over a bounded-quantifier wildcard.
 
+### Python stdin Read Hangs
+
+Do not pipe into a `python3 -c` snippet that reads standard input (`sys.stdin.read()`, `json.load(sys.stdin)`, `for line in sys.stdin`) inside a Bash tool call. When the upstream stream does not send EOF, Python blocks on the read forever. `timeout` does not help: the `python3` runs as a grandchild of `timeout`, so it is reparented and keeps waiting after `timeout` kills its parent shell (same failure mode as the grep hang above).
+
+Instead, save the data to a file and read it with the Read tool, or pass the path as an argument (`python3 script.py /tmp/foo.json`) so Python opens the file directly. If a pipe is unavoidable, redirect from a file (`python3 -c '...' < /tmp/foo.json`) so EOF is guaranteed.
+
 ### File Search
 
 On macOS, use `mdfind` for file searches. Spotlight indexing makes broad paths like `mdfind -onlyin ~` fast and acceptable.
