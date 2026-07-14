@@ -72,6 +72,12 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 - `git log`
 - `git show`
 
+### Standard Input Hangs
+
+Do not run a command that reads standard input (e.g. `python3 -c "json.load(sys.stdin)"`, `python3 -c "sys.stdin.read()"`) unless standard input is guaranteed to reach EOF. In this harness standard input stays open, so such a command blocks forever waiting for input. This is independent of the tool feeding the pipe; a slow or streaming upstream (e.g. `mcporter`, `curl`) makes it worse by not closing the pipe promptly.
+
+Instead, save output to a file and read the file (`cmd > /tmp/out.json` then `python3 -c "import json; d = json.load(open('/tmp/out.json'))"`), extract with `grep` or `jq`, or redirect from a file (`< /tmp/out.json`) to guarantee EOF. Append `< /dev/null` as a safeguard when a command might read standard input unexpectedly.
+
 ### File Search
 
 On macOS, use `mdfind` for file searches. Spotlight indexing makes broad paths like `mdfind -onlyin ~` fast and acceptable.
