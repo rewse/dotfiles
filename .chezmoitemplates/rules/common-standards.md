@@ -72,11 +72,11 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 - `git log`
 - `git show`
 
-### Standard Input Hangs
+### Grep Bounded-Quantifier Hangs
 
-Do not run a command that reads standard input (e.g. `python3 -c "json.load(sys.stdin)"`, `python3 -c "sys.stdin.read()"`) unless standard input is guaranteed to reach EOF. In this harness standard input stays open, so such a command blocks forever waiting for input. This is independent of the tool feeding the pipe; a slow or streaming upstream (e.g. `mcporter`, `curl`) makes it worse by not closing the pipe promptly.
+Do not pass a bounded quantifier (`.{N}`, `{m,n}`) to a bare `grep` inside a Bash tool call, especially wrapping a term on both sides (e.g. `grep -oE '.{60}receipt.{80}' file`). The bundled `grep` routes to a ugrep emulation whose ERE engine grows memory without bound on such patterns, producing no output and freezing until the host OOMs. `timeout` does not help because the runaway process is reparented and keeps running. See [anthropics/claude-code#74143](https://github.com/anthropics/claude-code/issues/74143).
 
-Instead, save output to a file and read the file (`cmd > /tmp/out.json` then `python3 -c "import json; d = json.load(open('/tmp/out.json'))"`), extract with `grep` or `jq`, or redirect from a file (`< /tmp/out.json`) to guarantee EOF. Append `< /dev/null` as a safeguard when a command might read standard input unexpectedly.
+Instead use `command grep` (GNU grep), `rg`, or the Grep tool, which all handle the same pattern instantly. To capture surrounding context, prefer `grep -B/-A` over a bounded-quantifier wildcard.
 
 ### File Search
 
