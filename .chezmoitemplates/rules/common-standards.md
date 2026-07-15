@@ -60,23 +60,15 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 
 **Do**
 
-- `git -P diff`
-- `git -P log`
-- `git -P show`
 - `aws | cat`
+- `chezmoi --no-pager <any command>`
 - `gh | cat`
+- `git -P <any commands>`
 
 **Don't**
 
+- `chezmoi diff`
 - `git diff`
-- `git log`
-- `git show`
-
-### Grep Bounded-Quantifier Hangs
-
-Do not pass a bounded quantifier (`.{N}`, `{m,n}`) to a bare `grep` inside a Bash tool call, especially wrapping a term on both sides (e.g. `grep -oE '.{60}receipt.{80}' file`). The bundled `grep` routes to a ugrep emulation whose ERE engine grows memory without bound on such patterns, producing no output and freezing until the host OOMs. `timeout` does not help because the runaway process is reparented and keeps running. See [anthropics/claude-code#74143](https://github.com/anthropics/claude-code/issues/74143).
-
-Instead use `command grep` (GNU grep), `rg`, or the Grep tool, which all handle the same pattern instantly. To capture surrounding context, prefer `grep -B/-A` over a bounded-quantifier wildcard.
 
 ### Python stdin Read Hangs
 
