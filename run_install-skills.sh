@@ -36,6 +36,17 @@ install_skills_claude_only() {
 # Anthropic Skills
 install_skills anthropics/skills \
   canvas-design doc-coauthoring frontend-design mcp-builder skill-creator
+
+# hugohe3 PPT Master (paired with the ppt-master-aws wrapper skill).
+# Deps live in a dedicated uv venv so they stay out of the system python3;
+# the wrapper points ppt-master's scripts at it via PPT_MASTER_PYTHON.
+# --upgrade on every apply keeps the pinned-range deps current.
+install_skills hugohe3/ppt-master ppt-master
+PPT_MASTER_VENV="${XDG_DATA_HOME:-$HOME/.local/share}/ppt-master/venv"
+[ -d "$PPT_MASTER_VENV" ] || uv venv "$PPT_MASTER_VENV" --python 3.12
+uv pip install --python "$PPT_MASTER_VENV/bin/python" --upgrade \
+  -r "$SKILLS_DIR/ppt-master/requirements.txt"
+
 install_skills_claude_only anthropics/skills \
   docx pdf pptx xlsx
 
