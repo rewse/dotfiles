@@ -41,6 +41,9 @@ if command -v gh &> /dev/null; then
   unset github_token
 fi
 
+# GitLab
+export GITLAB_TOKEN="{{ onepasswordRead "op://chezmoi/GitLab/credential" }}"
+
 # >>>
 # <<< Path Configuration
 
