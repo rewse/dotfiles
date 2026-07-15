@@ -1,94 +1,26 @@
-
-# font-blending = "linear" (reset to default)
 theme = "One Light"
 theme-dark = "One Dark"
-foreground = "#f1f6ff"
-background = "#282c34"
-palette-0 = "#1e2127"
-palette-1 = "#e06c75"
-palette-2 = "#98c379"
-palette-3 = "#d19a66"
-palette-4 = "#61afef"
-palette-5 = "#c678dd"
-palette-6 = "#56b6c2"
-palette-7 = "#abb2bf"
-palette-8 = "#5c6370"
-palette-9 = "#e06c75"
-palette-10 = "#98c379"
-palette-11 = "#d19a66"
-palette-12 = "#61afef"
-palette-13 = "#c678dd"
-palette-14 = "#56b6c2"
-# palette-15 = "#eceff4" (reset to default)
-# selection-foreground = "#2e3440" (reset to default)
-# selection-background = "#e5e9f0" (reset to default)
-# cursor-color = "#e5e9f0" (reset to default)
-# cursor-text = "#2e3440" (reset to default)
+foreground = "#2a2b33"
+background = "#f8f8f8"
+palette-0 = "#000000"
+palette-1 = "#de3d35"
+palette-2 = "#3e953a"
+palette-3 = "#d2b67b"
+palette-4 = "#2f5af3"
+palette-5 = "#a00095"
+palette-6 = "#3e953a"
+palette-7 = "#bbbbbb"
+palette-8 = "#000000"
+palette-9 = "#de3d35"
+palette-10 = "#3e953a"
+palette-11 = "#d2b67b"
+palette-12 = "#2f5af3"
+palette-13 = "#a00095"
+palette-14 = "#3e953a"
 privilege-notification-on-finish = true
-
 notification-foreground = "tab-unfocused"
-
-# palette-15 = "#ebdbb2" (reset to default)
-
-# font-blending = "linear" (reset to default)
-# palette-15 = "#eceff4" (reset to default)
-# selection-foreground = "#2e3440" (reset to default)
-# selection-background = "#e5e9f0" (reset to default)
-# cursor-color = "#e5e9f0" (reset to default)
-# cursor-text = "#2e3440" (reset to default)
-
-# font-blending = "linear" (reset to default)
-# palette-15 = "#eceff4" (reset to default)
-# selection-foreground = "#2e3440" (reset to default)
-# selection-background = "#e5e9f0" (reset to default)
-# cursor-color = "#e5e9f0" (reset to default)
-# cursor-text = "#2e3440" (reset to default)
-
 auto-hide-tabs-panel = "always"
-
-# font-blending = "linear" (reset to default)
-# palette-15 = "#eceff4" (reset to default)
-# selection-foreground = "#2e3440" (reset to default)
-# selection-background = "#e5e9f0" (reset to default)
-# cursor-color = "#e5e9f0" (reset to default)
-# cursor-text = "#2e3440" (reset to default)
-
-# font-blending = "linear" (reset to default)
-# palette-15 = "#eceff4" (reset to default)
-
-# selection-foreground = "#2f2b2c" (reset to default)
-# selection-background = "#dedede" (reset to default)
-# cursor-color = "#dedede" (reset to default)
-# cursor-text = "#2f2b2c" (reset to default)
-
-# palette-15 = "#ebdbb2" (reset to default)
-# selection-foreground = "#fdfff1" (reset to default)
-# selection-background = "#57584f" (reset to default)
-# cursor-color = "#c0c1b5" (reset to default)
-# cursor-text = "#8d8e82" (reset to default)
-
-# selection-background = "#ad95e9" (reset to default)
-# cursor-color = "#303030" (reset to default)
-
-# auto-theme-dark-mode = false (reset to default)
-
-# palette-15 = "#cdcdcd" (reset to default)
-
-# selection-foreground = "#fafaff" (reset to default)
-# cursor-text = "#565656" (reset to default)
-
-# palette-15 = "#ebebe6" (reset to default)
-
-# palette-15 = "#d1d5da" (reset to default)
-
-# selection-background = "#e4e4e7" (reset to default)
-# cursor-color = "#18181b" (reset to default)
-
-# selection-foreground = "#fafaff" (reset to default)
-# cursor-text = "#565656" (reset to default)
-
 font-family = "HackGen Console"
-
 keybind = "cmd+r=rename_tab"
 keybind = "cmd+up=focus_pane_up"
 keybind = "cmd+left=focus_pane_left"
@@ -104,27 +36,6 @@ keybind = "cmd+9=details_tab_files"
 keybind = "cmd+8=details_tab_git"
 keybind = "cmd+7=details_tab_outline"
 keybind = "cmd+6=details_tab_info"
-
-# font-blending = "linear" (reset to default)
-# palette-15 = "#eceff4" (reset to default)
-# selection-foreground = "#2e3440" (reset to default)
-# selection-background = "#e5e9f0" (reset to default)
-# cursor-color = "#e5e9f0" (reset to default)
-# cursor-text = "#2e3440" (reset to default)
-
 adjust-cell-height = "20%"
-
-# font-blending = "linear" (reset to default)
-# palette-15 = "#eceff4" (reset to default)
-# selection-foreground = "#2e3440" (reset to default)
-# selection-background = "#e5e9f0" (reset to default)
-# cursor-color = "#e5e9f0" (reset to default)
-# cursor-text = "#2e3440" (reset to default)
-
-# window-working-directory = "inherit" (reset to default)
-
-# omit-otty-prefix = true (reset to default)
-
-# cli-allow-overwrite = true (reset to default)
-
-# omit-otty-prefix = true (reset to default)
+omit-otty-prefix = true
+cli-allow-overwrite = true

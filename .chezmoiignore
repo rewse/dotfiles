@@ -22,5 +22,6 @@ Library
 .agents/commands/outlook-todo.md
 .agents/rules/git-push-via-fox.md
 .claude/rules/git-push-via-fox.md
+.codex/config.toml
 .kiro/steering/git-push-via-fox.md
 {{- end }}

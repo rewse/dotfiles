@@ -43,6 +43,28 @@
   ],
 {{- end }}
   "hooks": {
+{{- if eq .chezmoi.os "darwin" }}
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "OTTY_CLI='/Applications/Otty.app/Contents/MacOS/otty-cli' '/Applications/Otty.app/Contents/Resources/agent-integration/claude/otty-hook.sh' awaiting \"$PPID\" ctx"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "OTTY_CLI='/Applications/Otty.app/Contents/MacOS/otty-cli' '/Applications/Otty.app/Contents/Resources/agent-integration/claude/otty-hook.sh' processing \"$PPID\""
+          }
+        ]
+      }
+    ],
+{{- end }}
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -52,8 +74,46 @@
             "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
           }
         ]
+      }{{ if eq .chezmoi.os "darwin" }},
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "OTTY_CLI='/Applications/Otty.app/Contents/MacOS/otty-cli' '/Applications/Otty.app/Contents/Resources/agent-integration/claude/otty-hook.sh' processing \"$PPID\""
+          }
+        ]
+      }{{ end }}
+    ]{{ if eq .chezmoi.os "darwin" }},
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "OTTY_CLI='/Applications/Otty.app/Contents/MacOS/otty-cli' '/Applications/Otty.app/Contents/Resources/agent-integration/claude/otty-hook.sh' idle \"$PPID\""
+          }
+        ]
       }
-    ]
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "OTTY_CLI='/Applications/Otty.app/Contents/MacOS/otty-cli' '/Applications/Otty.app/Contents/Resources/agent-integration/claude/otty-hook.sh' idle \"$PPID\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "OTTY_CLI='/Applications/Otty.app/Contents/MacOS/otty-cli' '/Applications/Otty.app/Contents/Resources/agent-integration/claude/otty-hook.sh' processing \"$PPID\""
+          }
+        ]
+      }
+    ]{{ end }}
   },
   "includeCoAuthoredBy": false,
   "permissions": {
@@ -72,7 +132,7 @@
   },
   "theme": "auto",
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
-  "model": "global.anthropic.claude-opus-4-6-v1[1m]",
+  "model": "global.anthropic.claude-opus-4-8[1m]",
   "modelOverrides": {
     "claude-fable-5": "global.anthropic.claude-fable-5[1m]",
     "claude-haiku-4-5": "global.anthropic.claude-haiku-4-5-20251001-v1:0",

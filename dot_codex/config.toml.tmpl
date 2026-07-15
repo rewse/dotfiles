@@ -1,5 +1,50 @@
-{{ if eq .chezmoi.hostname "7cf34ded5d65" -}}
+model_provider = "amazon-bedrock"
+forced_login_method = "api"
+check_for_update_on_startup = false
+commit_attribution = ""
+chatgpt_base_url = "http://127.0.0.1:9"
+approvals_reviewer = "auto_review"
+model_reasoning_effort = "high"
+model = "openai.gpt-5.4"
 [mcp_servers.builder-mcp]
 command = "builder-mcp"
 args = ["--include-tools=ReadInternalWebsites"]
-{{ end -}}
+
+[mcp_servers.builder-mcp.env]
+TOOL_PERSONALIZATION_ENABLED = "false"
+TOOL_PERSONALIZATION_MIN_EXECUTIONS = "0"
+TOOL_PERSONALIZATION_ROLLOUT_PERCENTAGE = "100"
+TOOL_PERSONALIZATION_TRAINING_DAYS = "0"
+
+[features]
+hooks = true
+
+[shell_environment_policy]
+inherit = "all"
+
+[analytics]
+enabled = true
+
+[feedback]
+enabled = false
+
+[otel]
+exporter = "none"
+metrics_exporter = "none"
+trace_exporter = "none"
+log_user_prompt = true
+environment = "stable"
+
+[model_providers.amazon-bedrock.aws]
+region = "us-east-2"
+
+[marketplaces.aim]
+last_updated = "2026-07-14T02:23:46Z"
+source_type = "local"
+source = "{{ .chezmoi.homeDir }}/.aim/cc-plugins"
+
+[plugins."AmazonBuilderCoreAIAgents-pipeline-assistant@aim"]
+enabled = true
+
+[plugins."AmazonBuilderCoreAIAgents-core@aim"]
+enabled = true
