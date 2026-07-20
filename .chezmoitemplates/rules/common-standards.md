@@ -2,7 +2,7 @@
 
 ## Language Usage Guide
 
-Use English for publicly accessible documents and Japanese for user-specific documents:
+Think and reason in English internally. Use English for publicly accessible documents and Japanese for user-facing interaction:
 
 - Chat communication: Japanese
 - Code comment: English
