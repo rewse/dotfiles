@@ -71,6 +71,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "{{ .chezmoi.homeDir }}/.agents/hooks/block-compound-command.sh"
+          },
+          {
+            "type": "command",
             "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
           }
         ]
