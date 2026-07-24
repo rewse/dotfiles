@@ -57,7 +57,7 @@ Custom commands are real files committed under `dot_agents/commands/` and deploy
 
 ### External Commands (fetched via `.chezmoiexternal.yaml`)
 
-External commands are managed via `dot_agents/.chezmoiexternal.yaml` and land in `commands/<source>/` subdirectories, giving them a namespaced call name (e.g. `/using-cmux:cmux`).
+External commands are managed via `dot_agents/.chezmoiexternal.yaml` and land in `commands/<source>/` subdirectories, giving them a namespaced call name (e.g. `/<source>:<command>`).
 
 #### File Structure
 
@@ -96,7 +96,7 @@ Custom rules are authored in `.chezmoitemplates/rules/` and distributed to each 
 ```
 .chezmoitemplates/rules/          # Rule source (single source of truth)
   common-standards.md
-  cmux-subagent.md
+  chat-tone.md
 
 dot_agents/rules/                  # For Claude Code / Kiro CLI (template reference)
   common-standards.md.tmpl         # → {{ template "rules/common-standards.md" . }}
@@ -172,15 +172,15 @@ install_skills <github-owner/repo> <skill-name>
 If a skill needs modification (e.g., to support multiple agents), add a patch function after the install call:
 
 ```bash
-install_skills hummer98/using-cmux using-cmux
+install_skills <github-owner/repo> <skill-name>
 
-patch_using_cmux() {
-  local file="$SKILLS_DIR/using-cmux/SKILL.md"
+patch_<skill_name>() {
+  local file="$SKILLS_DIR/<skill-name>/SKILL.md"
   [ -f "$file" ] || return 0
   grep -q "PATCHED_MARKER" "$file" && return 0
   sed -i '' '...' "$file"
 }
-patch_using_cmux
+patch_<skill_name>
 ```
 
 The pattern: install → check if already patched → apply sed. Patches are idempotent and re-applied on every `skills update`.
