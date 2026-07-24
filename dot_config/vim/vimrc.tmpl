@@ -137,6 +137,12 @@ set noswapfile
 " Do not create undofile
 set noundofile
 
+" Keep viminfo under XDG_STATE_HOME instead of $HOME/.viminfo
+if !isdirectory($HOME . '/.local/state/vim')
+    call mkdir($HOME . '/.local/state/vim', 'p')
+endif
+set viminfofile=$HOME/.local/state/vim/viminfo
+
 " >>>
 " <<< Buffer
 
