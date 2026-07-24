@@ -2,5 +2,6 @@
 # This prevents malicious packages from executing code during installation
 ignore-scripts=true
 
-# Store the npm cache under XDG_CACHE_HOME instead of ~/.npm
+# Store the npm cache and logs under XDG directories instead of ~/.npm
 cache=${XDG_CACHE_HOME}/npm
+logs-dir=${XDG_STATE_HOME}/npm/logs
