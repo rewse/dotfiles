@@ -1,0 +1,12 @@
+# XDG Base Directory specification
+# Defined in .zshenv because these are the foundation every zsh instance relies
+# on, including non-login and non-interactive shells (zsh -c, scripts) that read
+# neither .zprofile nor .zshrc. Tools such as npm and python may be launched from
+# those shells and expect these variables to be set.
+export XDG_CONFIG_HOME="${HOME}/.config"
+export XDG_CACHE_HOME="${HOME}/.cache"
+export XDG_DATA_HOME="${HOME}/.local/share"
+export XDG_STATE_HOME="${HOME}/.local/state"
+{{- if eq .chezmoi.os "linux" }}
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+{{- end }}

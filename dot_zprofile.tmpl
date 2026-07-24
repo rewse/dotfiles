@@ -18,6 +18,11 @@ export EDITOR="vim"
 export PAGER="less"
 export LANG="en_US.UTF-8"
 
+# XDG-compliant locations for tools that default to $HOME
+export ANSIBLE_HOME="${XDG_DATA_HOME}/ansible"
+export IPYTHONDIR="${XDG_CONFIG_HOME}/ipython"
+export JUPYTER_CONFIG_DIR="${XDG_CONFIG_HOME}/jupyter"
+
 # bat as pager
 {{- if eq .chezmoi.os "darwin" }}
 if command -v bat &> /dev/null; then

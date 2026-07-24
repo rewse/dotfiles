@@ -1,3 +1,6 @@
 # Disable lifecycle scripts by default for security
 # This prevents malicious packages from executing code during installation
 ignore-scripts=true
+
+# Store the npm cache under XDG_CACHE_HOME instead of ~/.npm
+cache=${XDG_CACHE_HOME}/npm
