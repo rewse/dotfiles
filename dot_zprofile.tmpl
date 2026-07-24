@@ -20,9 +20,9 @@ export LANG="en_US.UTF-8"
 
 # XDG-compliant locations for tools that default to $HOME
 export ANSIBLE_HOME="${XDG_DATA_HOME}/ansible"
+export DOTNET_CLI_HOME="${XDG_DATA_HOME}/dotnet"
 export INPUTRC="${XDG_CONFIG_HOME}/readline/inputrc"
 export IPYTHONDIR="${XDG_CONFIG_HOME}/ipython"
-export DOTNET_CLI_HOME="${XDG_DATA_HOME}/dotnet"
 export JUPYTER_CONFIG_DIR="${XDG_CONFIG_HOME}/jupyter"
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME}/npm/npmrc"
 
@@ -65,12 +65,22 @@ if [[ -d "${HOME}/.local/bin" ]]; then
 fi
 
 {{ if eq .chezmoi.os "darwin" }}
+# .NET tools
+if [[ -d "${DOTNET_CLI_HOME}/tools" ]]; then
+  export PATH="${PATH}:${DOTNET_CLI_HOME}/tools"
+fi
+
 # Homebrew
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # LM Studio CLI
 if [[ -d "${HOME}/.lmstudio/bin" ]]; then
   export PATH="${PATH}:${HOME}/.lmstudio/bin"
+fi
+
+# Node
+if [[ -d "/opt/homebrew/lib/node_modules" ]]; then
+  export NODE_PATH="/opt/homebrew/lib/node_modules"
 fi
 
 # Obsidian
@@ -84,21 +94,7 @@ fi
 if [[ -d "${HOME}/.aim/mcp-servers" ]]; then
   export PATH="${HOME}/.aim/mcp-servers:$PATH"
 fi
-{{- end }}
 
-{{ if eq .chezmoi.os "darwin" }}
-# .NET tools
-if [[ -d "${DOTNET_CLI_HOME}/tools" ]]; then
-  export PATH="${PATH}:${DOTNET_CLI_HOME}/tools"
-fi
-
-# Node
-if [[ -d "/opt/homebrew/lib/node_modules" ]]; then
-  export NODE_PATH="/opt/homebrew/lib/node_modules"
-fi
-{{- end }}
-
-{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 # Toolbox
 if [[ -d "${HOME}/.toolbox/bin" ]]; then
   export PATH="${HOME}/.toolbox/bin:${PATH}"
