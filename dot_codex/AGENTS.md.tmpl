@@ -6,8 +6,6 @@
 {{ end }}
 {{ template "rules/css-standards.md" . }}
 
-{{ template "rules/development-workflow.md" . }}
-
 {{ template "rules/aws-agent-rules.md" . }}
 {{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 {{ template "rules/git-push-via-fox.md" . }}

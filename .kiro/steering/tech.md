@@ -57,7 +57,7 @@ Custom commands are real files committed under `dot_agents/commands/` and deploy
 
 ### External Commands (fetched via `.chezmoiexternal.yaml`)
 
-External commands are managed via `dot_agents/.chezmoiexternal.yaml` and land in `commands/<source>/` subdirectories, giving them a namespaced call name (e.g. `/everything-claude-code:plan`).
+External commands are managed via `dot_agents/.chezmoiexternal.yaml` and land in `commands/<source>/` subdirectories, giving them a namespaced call name (e.g. `/using-cmux:cmux`).
 
 #### File Structure
 

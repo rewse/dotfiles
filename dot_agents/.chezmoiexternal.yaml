@@ -2,33 +2,6 @@
 
 ## Commands
 
-# affaan-m everything-claude-code commands (https://github.com/affaan-m/everything-claude-code)
-commands/everything-claude-code:
-  type: archive
-  url: https://github.com/affaan-m/everything-claude-code/archive/refs/heads/main.tar.gz
-  stripComponents: 2
-  include:
-    - "*/commands/build-fix.md"
-    - "*/commands/code-review.md"
-    - "*/commands/gan-build.md"
-    - "*/commands/gan-design.md"
-    - "*/commands/learn-eval.md"
-    - "*/commands/learn.md"
-    - "*/commands/plan.md"
-    - "*/commands/prp-commit.md"
-    - "*/commands/prp-implement.md"
-    - "*/commands/prp-plan.md"
-    - "*/commands/prp-pr.md"
-    - "*/commands/prp-prd.md"
-    - "*/commands/python-review.md"
-    - "*/commands/refactor-clean.md"
-    - "*/commands/review-pr.md"
-    - "*/commands/santa-loop.md"
-    - "*/commands/test-coverage.md"
-    - "*/commands/update-docs.md"
-  exact: true
-  refreshPeriod: 168h
-
 # hummer98 using-cmux commands (https://github.com/hummer98/using-cmux)
 commands/using-cmux:
   type: archive
