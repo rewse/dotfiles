@@ -22,6 +22,7 @@ export LANG="en_US.UTF-8"
 export ANSIBLE_HOME="${XDG_DATA_HOME}/ansible"
 export INPUTRC="${XDG_CONFIG_HOME}/readline/inputrc"
 export IPYTHONDIR="${XDG_CONFIG_HOME}/ipython"
+export DOTNET_CLI_HOME="${XDG_DATA_HOME}/dotnet"
 export JUPYTER_CONFIG_DIR="${XDG_CONFIG_HOME}/jupyter"
 export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME}/npm/npmrc"
 
@@ -87,8 +88,8 @@ fi
 
 {{ if eq .chezmoi.os "darwin" }}
 # .NET tools
-if [[ -d "${HOME}/.dotnet/tools" ]]; then
-  export PATH="${PATH}:${HOME}/.dotnet/tools"
+if [[ -d "${DOTNET_CLI_HOME}/tools" ]]; then
+  export PATH="${PATH}:${DOTNET_CLI_HOME}/tools"
 fi
 
 # Node
