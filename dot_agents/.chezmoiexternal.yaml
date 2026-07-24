@@ -1,17 +1,5 @@
 # External agent resources managed by chezmoi
 
-## Commands
-
-# hummer98 using-cmux commands (https://github.com/hummer98/using-cmux)
-commands/using-cmux:
-  type: archive
-  url: https://github.com/hummer98/using-cmux/archive/refs/heads/main.tar.gz
-  stripComponents: 2
-  include:
-    - "*/commands/*.md"
-  exact: true
-  refreshPeriod: 168h
-
 ## Skills not compatible with npx skills
 
 # initMAX Zabbix AI Skills (https://github.com/initMAX/zabbix-ai-skills)

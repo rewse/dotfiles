@@ -56,10 +56,6 @@ install_skills blader/humanizer humanizer
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
 
-# Manaflow cmux
-install_skills manaflow-ai/cmux \
-  cmux-browser cmux-markdown cmux
-
 # Obra Superpowers
 install_skills obra/superpowers \
   brainstorming writing-plans

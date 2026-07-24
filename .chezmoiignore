@@ -5,15 +5,12 @@ README.md
 .ssh/id_rsa
 .ssh/id_rsa.pub
 {{- else }}
-.agents/rules/cmux-subagent.md
 .agents/skills/obsidian-ops
-.claude/rules/cmux-subagent.md
 .claude/skills/obsidian-ops
 .config/1Password/ssh/agent.toml
 .config/karabiner
 .kiro/hooks
 .kiro/skills/obsidian-ops
-.kiro/steering/cmux-subagent.md
 Library
 {{- end }}
 
