@@ -6,7 +6,7 @@
     "JSONC": ["private_settings.json"],
     "TOML": ["*.toml.tmpl"],
     "YAML": ["*.yaml.tmpl"],
-    "Shell Script": ["dot_zprofile.tmpl", "dot_zshrc.tmpl"],
+    "Shell Script": ["dot_zprofile.tmpl", "dot_zshenv.tmpl", "dot_zshrc.tmpl"],
     "SSH Config": ["**/private_dot_ssh/config.tmpl"],
   },
 }
