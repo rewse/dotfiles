@@ -47,8 +47,7 @@ PPT_MASTER_VENV="${XDG_DATA_HOME:-$HOME/.local/share}/ppt-master/venv"
 uv pip install --python "$PPT_MASTER_VENV/bin/python" --upgrade \
   -r "$SKILLS_DIR/ppt-master/requirements.txt"
 
-install_skills_claude_only anthropics/skills \
-  docx pdf pptx xlsx
+install_skills_claude_only anthropics/skills pdf
 
 # Blader Humanizer
 install_skills blader/humanizer humanizer
@@ -84,3 +83,16 @@ install_skills vercel-labs/skills find-skills
 
 # X Platform xurl
 install_skills xdevplatform/xurl xurl
+
+# OfficeCLI (iOfficeAI/OfficeCLI) — AI-friendly CLI for Office documents.
+# Not distributed via `skills`; its own installer embeds the SKILL.md files and
+# writes them into agent skill dirs. The `codex` target maps to ~/.agents/skills,
+# which is the chezmoi-managed source of truth, so the .claude/.kiro symlinks
+# stay valid. Installing here (rather than `chezmoi add`) keeps the skills in
+# sync with the officecli binary on every apply.
+if command -v officecli >/dev/null 2>&1; then
+  officecli skills codex < /dev/null || true
+  for skill in pptx word excel; do
+    officecli skills install "$skill" codex < /dev/null || true
+  done
+fi
