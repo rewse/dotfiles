@@ -33,6 +33,10 @@ Choose the type by the intent of the change, not by the mechanism. Deleting a fi
 
 ## CLI Command Standards
 
+### AWS Skill Discovery
+
+Before starting an AWS task, look for a relevant AWS skill: run `mcporter call aws-mcp.aws___search_documentation search_phrase="..."` to discover what exists, then `mcporter call aws-mcp.aws___retrieve_skill skill_name="<skill-name>"` to load one, and prefer its guidance over general knowledge. Do not use `npx skills find/search` for AWS skill discovery.
+
 ### Pager Prevention
 
 Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI command may invoke a pager, as an interactive pager hangs the process indefinitely.
