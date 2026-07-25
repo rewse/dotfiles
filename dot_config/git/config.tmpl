@@ -6,6 +6,11 @@
     email = 868951+rewse@users.noreply.github.com
 {{- end }}
 
+[includeIf "hasconfig:remote.*.url:https://github.com/**"]
+    path = {{ .chezmoi.homeDir }}/.config/git/github.inc
+[includeIf "hasconfig:remote.*.url:git@github.com:**"]
+    path = {{ .chezmoi.homeDir }}/.config/git/github.inc
+
 [core]
     editor = vim
     pager = bat
