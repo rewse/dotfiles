@@ -54,10 +54,6 @@
     "preToolUse": [
       {
         "matcher": "shell",
-        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/block-compound-command.sh"
-      },
-      {
-        "matcher": "shell",
         "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
       },
       {
@@ -76,10 +72,6 @@
     ]
 {{- else }}
     "preToolUse": [
-      {
-        "matcher": "shell",
-        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/block-compound-command.sh"
-      },
       {
         "matcher": "shell",
         "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
