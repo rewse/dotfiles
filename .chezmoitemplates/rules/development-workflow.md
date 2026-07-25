@@ -7,7 +7,7 @@ Apply this workflow when implementing a feature or making a non-trivial change t
 Search for an existing implementation before writing new code, in this order:
 
 1. `gh search repos` and `gh search code` for existing implementations and patterns
-2. `ctx7 library <name>` to resolve the library ID, then `ctx7 docs <libraryId> "<query>"` for API behavior and version-specific details
+2. `ctx7 library <name> "<query>"` to resolve the library ID, then `ctx7 docs <libraryId> "<query>"` for API behavior and version-specific details
 3. `tvly search "<query>" --json` only when the first two are insufficient
 
 Prefer adopting or porting a proven approach over writing net-new code when it meets the requirement.
