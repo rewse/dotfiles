@@ -10,9 +10,11 @@ COMMAND=$(jq -r '.tool_input.command // ""')
 while IFS= read -r subcmd; do
   # Trim leading whitespace
   subcmd="${subcmd#"${subcmd%%[![:space:]]*}"}"
-  # Strip leading env assignments (VAR=value ...)
-  while [[ "$subcmd" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; do
-    subcmd="${subcmd#* }"
+  # Strip leading env assignments (VAR=value ...). The trailing whitespace and
+  # capture group are required: without them a bare "VAR=value" leaves subcmd
+  # unchanged and the loop never terminates.
+  while [[ "$subcmd" =~ ^[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+(.*)$ ]]; do
+    subcmd="${BASH_REMATCH[1]}"
   done
 
   if [[ "$subcmd" =~ ^(pip|pip3)(\ |$) ]] ||
