@@ -87,17 +87,21 @@
           }
         ]
       }{{ end }}
-    ]{{ if eq .chezmoi.os "darwin" }},
+    ],
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
+            "command": "{{ .chezmoi.homeDir }}/.agents/hooks/inject-kiro-steering.sh"
+          }{{ if eq .chezmoi.os "darwin" }},
+          {
+            "type": "command",
             "command": "OTTY_CLI='/Applications/Otty.app/Contents/MacOS/otty-cli' '/Applications/Otty.app/Contents/Resources/agent-integration/claude/otty-hook.sh' idle \"$PPID\""
-          }
+          }{{ end }}
         ]
       }
-    ],
+    ]{{ if eq .chezmoi.os "darwin" }},
     "Stop": [
       {
         "hooks": [
