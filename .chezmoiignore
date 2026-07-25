@@ -17,8 +17,8 @@ Library
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}
 .local/bin/check-midway-key
 .agents/commands/outlook-todo.md
-.agents/rules/git-push-via-fox.md
-.claude/rules/git-push-via-fox.md
+.agents/skills/github-push-via-fox
+.claude/skills/github-push-via-fox
 .codex/config.toml
-.kiro/steering/git-push-via-fox.md
+.kiro/skills/github-push-via-fox
 {{- end }}
