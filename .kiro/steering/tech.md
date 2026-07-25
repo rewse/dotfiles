@@ -157,9 +157,27 @@ When adding or removing a server in `dot_mcporter/private_mcporter.json.tmpl`, a
 
 ## Skills (Shared Agent Skills)
 
+Skills are shared across agents. There are two types: custom skills authored in this repo, and external skills installed from GitHub.
+
+### Custom Skills (authored in `dot_agents/skills/`)
+
+Custom skills live in `dot_agents/skills/<name>/SKILL.md` and deploy to `~/.agents/skills/<name>/`.
+
+#### Adding a New Custom Skill
+
+1. Create `dot_agents/skills/<name>/SKILL.md` with `name` and `description` frontmatter. The `description` is the only trigger mechanism, so state what the skill does and every context that should activate it.
+2. Create `dot_kiro/skills/symlink_<name>.tmpl` pointing to `{{ .chezmoi.homeDir }}/.agents/skills/<name>`
+3. Create `dot_claude/skills/symlink_<name>.tmpl` pointing to the same directory
+
+Codex needs no wiring: it scans `$HOME/.agents/skills` natively and follows symlinks. Do not add custom skills to `dot_codex/AGENTS.md.tmpl`, which would load them on every turn and defeat progressive disclosure.
+
+Prefer a skill over a rule when the content is reference material needed only for a specific task. Rules in `~/.agents/rules` are loaded on every turn; skills load only when their description matches.
+
+### External Skills (installed via `run_install-skills.sh`)
+
 External skills are installed via `run_install-skills.sh` using the `skills` CLI. The script runs on `chezmoi apply` and handles install, update, and post-install patching.
 
-### Adding a New Skill
+#### Adding a New External Skill
 
 Add an `install_skills` call to `run_install-skills.sh`:
 
@@ -167,7 +185,7 @@ Add an `install_skills` call to `run_install-skills.sh`:
 install_skills <github-owner/repo> <skill-name>
 ```
 
-### Post-Install Patching
+#### Post-Install Patching
 
 If a skill needs modification (e.g., to support multiple agents), add a patch function after the install call:
 
