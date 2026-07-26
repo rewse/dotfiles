@@ -16,6 +16,26 @@ The language of `README.md` is undefined. Always ask the user what language to u
 
 ## Chat Standards
 
+### Approach Before Acting
+
+When a request is ambiguous or spans multiple steps or files, state how it was read and the approach to be taken, then continue into the work in the same turn. This is a statement, not an approval gate. Act immediately on a small, clear request.
+
+### Corrections
+
+Note a correction to an earlier statement only when the error would change the user's code, conclusions, or decisions. For a slip that changes nothing, fix it and move on.
+
+### Progress Updates
+
+Report rather than narrate: give an interim update when something important is found or the direction changes, and lead the closing report with the outcome.
+
+### Response Length
+
+Spend most of a response on the main answer, keep caveats short, and summarize at a high level unless depth is requested.
+
+### Task Scope
+
+Deliver what was asked, at the scope intended. Make routine judgment calls without asking, and check in only when different readings would lead to materially different work. When the request looks mistaken or a better approach exists, say so in a sentence and continue as asked.
+
 ### Unexpected Changes
 
 If you notice that the code or text you wrote has been unexpectedly changed, accept it without trying to undo it. That change was made by the user without going through you.
@@ -60,21 +80,25 @@ When a URL fetch is denied (403, access denied, bot block), retry with `tvly ext
 
 ## Ordering Standards
 
-Sort entries alphabetically whenever their order does not carry meaning. This applies everywhere: list items, configuration entries, package lists, dictionary keys, and similar collections. Keep a deliberate order only when it is significant (e.g., execution sequence, dependency order, or priority).
+Sort entries alphabetically unless their order carries meaning (execution sequence, dependency order, priority). This applies to list items, configuration entries, package lists, dictionary keys, and similar collections.
 
 ## Rule Authoring Standards
 
-Lead with the instruction or prohibition in rule files. Keep rationale minimal, and add it only when it clarifies the scope of a rule or forecloses a plausible wrong workaround. Omit background that does not change how a rule is applied.
+Lead with the instruction or prohibition in rule files. Add rationale only when it clarifies the scope of a rule or forecloses a plausible wrong workaround.
 
 ## Writing Standards
 
+### Document Length
+
+Match document length to what the task needs. Cover the substance without filler sections, redundant summaries, or boilerplate.
+
 ### Line Wrapping
 
-Do not hard-wrap prose. Write each paragraph as a single line and let the editor soft-wrap it. This applies to Markdown documents, specs, READMEs, and rule files. It does not apply to code, code blocks, or list items, where line breaks are meaningful.
+Do not hard-wrap prose: write each paragraph as a single line and let the editor soft-wrap it. This applies to Markdown documents, specs, READMEs, and rule files, but not to code, code blocks, or list items, where line breaks are meaningful.
 
 ### Humanizer
 
-Before finalizing prose longer than a few paragraphs (documentation, README, specs, or similar), read `~/.agents/skills/humanizer/SKILL.md` and remove the AI writing patterns it lists. This does not apply to code comments, commit messages, chat messages, or structured data.
+Before finalizing prose longer than a few paragraphs (documentation, README, specs), read `~/.agents/skills/humanizer/SKILL.md` and remove the AI writing patterns it lists. This does not apply to code comments, commit messages, chat messages, or structured data.
 
 ## Coding Standards
 

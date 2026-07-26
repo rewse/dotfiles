@@ -14,7 +14,7 @@ Prefer adopting or porting a proven approach over writing net-new code when it m
 
 ## 2. Plan
 
-Use the **planner** agent to create the implementation plan. Write planning docs to disk only when the user asks for them.
+Use the **planner** agent when the change spans multiple files or phases. Plan it yourself when you can plan it in a handful of tool calls. Write planning docs to disk only when the user asks for them.
 
 ## 3. Test First
 
@@ -22,8 +22,12 @@ Write a failing test before the implementation (RED), implement until it passes 
 
 ## 4. Review
 
-Use the **code-reviewer** agent immediately after writing code.
+Use the **code-reviewer** agent when the change spans multiple files or touches authentication, authorization, data handling, secrets, or infrastructure. Review smaller changes yourself as part of finishing them.
 
 ## 5. Before Requesting Review
 
 Request review only after CI passes, conflicts are resolved, and the branch is up to date with its target.
+
+## Subagent Delegation
+
+Delegate only for large, independent, parallelizable work such as a wide multi-file investigation, and use one subagent where one suffices. Do not delegate what you can finish in a handful of tool calls, or use a subagent to verify your own work.
