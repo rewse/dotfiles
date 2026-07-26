@@ -1,6 +1,6 @@
 ---
 name: browser-automation
-description: Personal browser automation preferences and configuration. Use when the user needs web automation, browser interaction, headed mode, or connecting to Arc browser via CDP. Also use when agent-browser or playwright-cli is about to be used, to ensure correct engine selection and connection settings.
+description: Personal browser automation preferences and configuration. Use when the user needs web automation, browser interaction, headed mode, or connecting to the user's Google Chrome via CDP. Also use when agent-browser or playwright-cli is about to be used, to ensure correct engine selection and connection settings.
 ---
 
 # Browser Automation
@@ -23,34 +23,32 @@ agent-browser --engine lightpanda open <url>
 agent-browser open <url>
 ```
 
-When authentication or headed mode is needed, connect to the user's Arc browser instead of launching a new Chrome engine. See [Headed Mode: Connect to Arc](#headed-mode-connect-to-arc) below.
+When authentication or headed mode is needed, connect to the user's running Google Chrome instead of launching a new Chrome engine. See [Headed Mode: Connect to Chrome](#headed-mode-connect-to-chrome) below.
 
-#### Headed Mode: Connect to Arc
+#### Headed Mode: Connect to Chrome
 
-Connect to the user's Arc browser (Chromium-based) via CDP when authentication or headed mode is needed. Arc is preferred over Chrome because:
+Connect to the user's Google Chrome over CDP when authentication or headed mode is needed. This attaches to the real default profile (`~/Library/Application Support/Google/Chrome/Default`), so installed extensions such as 1Password and existing login state are available.
 
-- Chrome M136+ blocks `--remote-debugging-port` on the default profile (DevToolsActivePort not created)
-- Arc uses a separate user data directory, so the restriction does not apply
-- Arc retains the user's extensions (e.g., 1Password) and login state
+One-time setup: open `chrome://inspect/#remote-debugging` in Chrome and enable "Allow remote debugging for this browser instance" (requires Chrome 144+). The setting persists in `Local State` under `devtools.remote_debugging.user-enabled`, and Chrome then listens on port 9222 on every normal launch.
 
 Steps:
 
-1. Quit Arc if already running.
-2. Launch Arc with remote debugging enabled:
+1. Make sure Chrome is running. Launch it normally — do not pass `--remote-debugging-port`.
+2. Connect to the GUID-less browser endpoint, and open a new tab before the first navigation so the user's existing tabs stay untouched:
 
    ```bash
-   nohup "/Applications/Arc.app/Contents/MacOS/Arc" --remote-debugging-port=9222 >/tmp/arc.log 2>&1 &
+   agent-browser --cdp "ws://127.0.0.1:9222/devtools/browser" tab new
+   agent-browser --cdp "ws://127.0.0.1:9222/devtools/browser" open <url>
    ```
 
-3. Run agent-browser with `--cdp 9222`. Close any stale daemon first to avoid cached state:
+Start every new task with `tab new`. Never navigate a tab the user already had open, and keep working in the tab you created for the rest of the task. `tab list` shows which tab is active (`→`).
 
-   ```bash
-   agent-browser close --all
-   agent-browser --cdp 9222 open <url>
-   ```
+Constraints to respect:
 
-   Arc may bind to IPv4 (`127.0.0.1`) or IPv6 (`[::1]`) depending on the launch — passing just the port number lets agent-browser auto-detect. If you get `Invalid CDP target` errors, the daemon is holding stale state; run `agent-browser close --all` and retry.
-
-### Alternative Option: playwright-cli
-
-If `agent-browser` cannot handle the task, use `playwright-cli` instead. Activate the `playwright-cli` skill before the first command.
+- Chrome 136+ ignores `--remote-debugging-port` and `--remote-debugging-pipe` whenever the data directory is the default one, and prints `DevTools remote debugging requires a non-default data directory.` Passing a path that resolves to the default directory (trailing `/.`, a symlink) does not bypass the check, because Chrome normalizes the path first.
+- Pass the WebSocket URL, not `--cdp 9222`. In this mode Chrome serves only the browser WebSocket; every `/json/*` HTTP endpoint returns 404, so port-only discovery times out.
+- `--auto-connect` works only while `~/Library/Application Support/Google/Chrome/DevToolsActivePort` exists. That file disappears at times even though Chrome keeps listening on 9222, so prefer the explicit WebSocket URL.
+- Never launch Chrome with a `--user-data-dir` that resolves to the default directory. Chrome treats the profile as tampered, resets its protected preferences, and uninstalls every extension in that profile. Recovering needs a backup.
+- Do not use `--profile Default` to reach the real profile. agent-browser launches its bundled Chrome for Testing with a temporary user data directory, so extensions and login state are absent.
+- Run `agent-browser close --all` only to clear a stale daemon holding `Invalid CDP target` errors. It can also close the connected Chrome window, so relaunch Chrome afterwards.
+- While remote debugging is enabled, any local process can drive the browser and read its cookies. Keep it on only on a trusted machine.
