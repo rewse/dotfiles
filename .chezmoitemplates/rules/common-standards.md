@@ -103,3 +103,7 @@ Before finalizing prose longer than a few paragraphs (documentation, README, spe
 ## Coding Standards
 
 Follow [Google Style Guides](https://google.github.io/styleguide/) as the baseline for coding styles.
+
+### Code Comments
+
+Write comments about the code as it stands, not about the change that produced it. Put the history in the commit message: the previous behavior, the version that changed it, the alternatives rejected, and how the change was verified.
