@@ -78,6 +78,10 @@ On macOS, use `container` instead of `docker`. On Linux, use `docker`.
 
 When a URL fetch is denied (403, access denied, bot block), retry with `tvly extract <URL> --format markdown --json`. Tavily fetches server-side, so the block on this host does not apply.
 
+### Web Search
+
+Use `tvly` for web search, not a built-in web search or fetch tool. Before running `tvly`, read the matching skill for the subcommand in use (`tavily-crawl`, `tavily-extract`, `tavily-map`, `tavily-research`, `tavily-search`) and follow its guidance on flags and output handling.
+
 ## Ordering Standards
 
 Sort entries alphabetically unless their order carries meaning (execution sequence, dependency order, priority). This applies to list items, configuration entries, package lists, dictionary keys, and similar collections.
