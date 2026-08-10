@@ -1,0 +1,70 @@
+model_provider = "amazon-bedrock"
+forced_login_method = "api"
+check_for_update_on_startup = false
+commit_attribution = ""
+chatgpt_base_url = "http://127.0.0.1:9"
+approvals_reviewer = "auto_review"
+model_auto_compact_token_limit = 800000
+model_catalog_json = "~/.codex/model_catalog.json"
+model_context_window = 1048576
+model_reasoning_effort = "medium"
+model = "openai.gpt-5.6-sol"
+[mcp_servers.builder-mcp]
+command = "builder-mcp"
+args = ["--include-tools=ReadInternalWebsites"]
+
+[mcp_servers.builder-mcp.env]
+TOOL_PERSONALIZATION_ENABLED = "false"
+TOOL_PERSONALIZATION_MIN_EXECUTIONS = "0"
+TOOL_PERSONALIZATION_ROLLOUT_PERCENTAGE = "100"
+TOOL_PERSONALIZATION_TRAINING_DAYS = "0"
+
+[features]
+hooks = true
+
+[shell_environment_policy]
+inherit = "all"
+
+[analytics]
+enabled = true
+
+[feedback]
+enabled = false
+
+[otel]
+exporter = "none"
+metrics_exporter = "none"
+trace_exporter = "none"
+log_user_prompt = true
+environment = "stable"
+
+[model_providers.amazon-bedrock.aws]
+region = "us-east-2"
+
+[plugins."AmazonBuilderCoreAIAgents-pipeline-assistant@aim"]
+enabled = true
+
+[plugins."AmazonBuilderCoreAIAgents-core@aim"]
+enabled = true
+
+[marketplaces.aim]
+last_updated = "2026-08-07T04:08:56Z"
+source_type = "local"
+source = "{{ .chezmoi.homeDir }}/.aim/plugins/codex"
+
+[projects."{{ .chezmoi.sourceDir }}"]
+trust_level = "trusted"
+
+[hooks.state]
+
+[hooks.state."{{ .chezmoi.homeDir }}/.codex/hooks.json:permission_request:0:0"]
+trusted_hash = "sha256:16bb3ddbc8c94ed0ea6443410d3b95aa2db5d078c81ceff9b44fe7d70c03ce32"
+
+[hooks.state."{{ .chezmoi.homeDir }}/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:b4503087e573a9161ddd1a88c75b363f82af4d677de43f0583db0805201c1a15"
+
+[hooks.state."{{ .chezmoi.homeDir }}/.codex/hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:3d3c7fbe5ed33368f3ff134e8a791e23cadb69ffce912237411b4834b71fb961"
+
+[hooks.state."{{ .chezmoi.homeDir }}/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:f17a453b8dd92504b361d3bb1c331583d5023dfd05ace29d93c5057c7bcfc9b8"
