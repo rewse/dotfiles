@@ -1,3 +1,6 @@
 # False positives: example URIs/credentials in external docs
 dot_agents/commands/update-docs.md
 dot_kiro/skills/agent-browser/SKILL.md
+
+# False positives: unittest method names matching the Lob key pattern (live|test)_[a-zA-Z0-9_]{35}
+dot_kiro/skills/pdf/scripts/check_bounding_boxes_test.py
