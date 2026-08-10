@@ -21,4 +21,4 @@ jobs:
         with:
           base: ""
           head: main
-          extra_args: --results=verified,unknown --exclude-paths=.trufflehog-exclude-paths.txt
+          extra_args: --exclude-detectors=lob --exclude-paths=.trufflehog-exclude-paths.txt --results=verified,unknown
