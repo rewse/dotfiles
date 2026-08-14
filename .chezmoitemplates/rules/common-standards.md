@@ -115,3 +115,7 @@ Follow [Google Style Guides](https://google.github.io/styleguide/) as the baseli
 ### Code Comments
 
 Write comments about the code as it stands, not about the change that produced it. Put the history in the commit message: the previous behavior, the version that changed it, the alternatives rejected, and how the change was verified.
+
+Test a comment by asking whether a reader who never saw the previous version would find it true and worth reading. Past tense about the code's own behavior, a date, a host name, or a value observed once is history.
+
+A bug fix is where this is hardest, the rationale and the history being nearly the same sentence. Keep the failure mode and drop the incident, stating it in the present tense as a property that still holds. Deleting the rationale is the wrong correction, a setting whose reason is not obvious needing one.
