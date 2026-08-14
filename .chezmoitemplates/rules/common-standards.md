@@ -82,6 +82,10 @@ When a URL fetch is denied (403, access denied, bot block), retry with `tvly ext
 
 Use `tvly` for web search, not a built-in web search or fetch tool. Before running `tvly`, read the matching skill for the subcommand in use (`tavily-crawl`, `tavily-extract`, `tavily-map`, `tavily-research`, `tavily-search`) and follow its guidance on flags and output handling.
 
+### Document Reading and Editing
+
+Read a document with `npx -y @firecrawl/anydoc <file>`, which converts Office, OpenDocument, RTF, EPUB, CSV, and PDF to Markdown. Use `officecli` to edit or create `.docx`, `.xlsx`, and `.pptx`, or to read one when Markdown drops cell formulas, slide geometry, or styling. Neither does OCR; a scanned PDF needs Firecrawl Parse.
+
 ## Ordering Standards
 
 Sort entries alphabetically unless their order carries meaning (execution sequence, dependency order, priority). This applies to list items, configuration entries, package lists, dictionary keys, and similar collections.

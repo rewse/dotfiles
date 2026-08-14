@@ -52,6 +52,9 @@ install_skills_claude_only anthropics/skills pdf
 # Blader Humanizer
 install_skills blader/humanizer humanizer
 
+# Firecrawl anydoc
+install_skills firecrawl/anydoc convert-documents-to-markdown
+
 # Kepano Obsidian Skills
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
