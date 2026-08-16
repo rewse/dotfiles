@@ -76,7 +76,7 @@ On macOS, use `container` instead of `docker`. On Linux, use `docker`.
 
 ### DNS Lookups
 
-Read how a name resolves from outside over DoH, not with `dig` against an external resolver: `curl -s -H 'accept: application/dns-json' 'https://cloudflare-dns.com/dns-query?name=<name>&type=A'`. A gateway that filters DNS answers every port 53 packet itself, so switching resolvers changes nothing.
+Read how a name resolves from outside with `dig-doh <name> [type]`, not with `dig` against an external resolver. A gateway that filters DNS answers every port 53 packet itself, so switching resolvers changes nothing; the wrapper asks Cloudflare over DoH, which the redirect leaves alone.
 
 ### URL Fetch Retry
 
