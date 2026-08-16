@@ -76,7 +76,7 @@ On macOS, use `container` instead of `docker`. On Linux, use `docker`.
 
 ### DNS Lookups
 
-Read how a name resolves from outside a network over DoH, not with `dig` against an external resolver: `curl -s -H 'accept: application/dns-json' 'https://cloudflare-dns.com/dns-query?name=<name>&type=A'`. A gateway that filters DNS redirects every port 53 packet to its own resolver, so `dig @8.8.8.8` returns the internal answer while appearing to come from Google, and trying a different resolver changes nothing. Send a query to an unroutable address such as `192.0.2.1` to tell the two apart: an answer means the redirect is in place, a timeout means the queries leave.
+Read how a name resolves from outside over DoH, not with `dig` against an external resolver: `curl -s -H 'accept: application/dns-json' 'https://cloudflare-dns.com/dns-query?name=<name>&type=A'`. A gateway that filters DNS answers every port 53 packet itself, so switching resolvers changes nothing.
 
 ### URL Fetch Retry
 
