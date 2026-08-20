@@ -153,7 +153,7 @@ dot_kiro/steering/                 # For Kiro CLI (symlink to downloaded file)
 
 ## MCP Servers
 
-When adding or removing a server in `dot_mcporter/private_mcporter.json.tmpl`, also update `dot_agents/skills/mcporter/SKILL.md.tmpl` (both the `description` frontmatter and the server list in the body).
+When adding or removing a server in `dot_config/mcporter/private_mcporter.json.tmpl`, also update `dot_agents/skills/mcporter/SKILL.md.tmpl` (both the `description` frontmatter and the server list in the body).
 
 ## Skills (Shared Agent Skills)
 
