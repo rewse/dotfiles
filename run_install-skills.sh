@@ -37,6 +37,10 @@ install_skills_claude_only() {
 install_skills anthropics/skills \
   canvas-design doc-coauthoring frontend-design mcp-builder skill-creator
 
+# AWS AgentCore Web Search. The skill drives the agentcore-websearch CLI, which
+# ansible installs via uv; the gateway URL comes from AGENTCORE_GATEWAY_URL.
+install_skills aws-samples/sample-agentcore-websearch-agent-skill agentcore-websearch
+
 # hugohe3 PPT Master (paired with the ppt-master-aws wrapper skill).
 # Deps live in a dedicated uv venv so they stay out of the system python3;
 # the wrapper points ppt-master's scripts at it via PPT_MASTER_PYTHON.

@@ -10,3 +10,12 @@ export XDG_STATE_HOME="${HOME}/.local/state"
 {{- if eq .chezmoi.os "linux" }}
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 {{- end }}
+
+# Gateway that the agentcore-websearch CLI signs requests to with local AWS
+# credentials. Defined in .zshenv so the non-interactive shells an agent runs
+# commands in also see it; the CLI otherwise needs a .env in the working
+# directory. Reachability is gated by IAM, not by knowing the URL. Recreate it
+# with the CloudFormation template in
+# https://github.com/aws-samples/sample-agentcore-websearch-agent-skill and read
+# the new value from the stack's GatewayUrl output.
+export AGENTCORE_GATEWAY_URL="https://websearchgateway-ujegxqs0ed.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"

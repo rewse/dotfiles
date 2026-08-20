@@ -8,6 +8,14 @@ credential_process = isengardcli credentials --role Admin --awscli 070392599442
 credential_process = {{ .chezmoi.homeDir }}/.toolbox/bin/codex credential-process
 {{- end }}
 
+# Signs AgentCore Web Search gateway requests. Carries only
+# bedrock-agentcore:InvokeGateway on the one gateway, so the CLI never reaches the
+# web through an administrative identity, and hosts with no other AWS credentials
+# can still search.
+[profile agentcore-websearch]
+region = us-east-1
+output = yaml
+
 [profile bedrock]
 region = us-west-2
 output = yaml
