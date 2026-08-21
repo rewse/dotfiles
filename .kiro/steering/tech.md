@@ -15,6 +15,16 @@ The AWS resources these dotfiles depend on are deliberately not version-controll
 
 The AgentCore Web Search gateway itself is deployed from the CloudFormation template in [aws-samples/sample-agentcore-websearch-agent-skill](https://github.com/aws-samples/sample-agentcore-websearch-agent-skill), whose `GatewayUrl` output is exported as `AGENTCORE_GATEWAY_URL` in `dot_zshenv.tmpl`.
 
+## Configuration Files Outside chezmoi
+
+Do not manage `~/.claude/settings.json` or `~/.codex/config.toml` with chezmoi. A corporate management tool rewrites both in place, so ownership becomes a loop: an apply reverts the tool's edits, and the tool overwrites the rendered file on its next run.
+
+Their history is kept instead by `dot_local/bin/executable_track-config-drift`, which commits the live content into a bare repository at `~/.local/share/config-drift.git` whose work tree is `$HOME`. `private_Library/LaunchAgents/local.track-config-drift.plist.tmpl` runs it at load and hourly, and logs failures to `/tmp/track-config-drift.log`.
+
+- Track another file: add its `$HOME`-relative path to `FILES` in the script.
+- Read the history: `git -C "$HOME" --git-dir="$HOME/.local/share/config-drift.git" --work-tree="$HOME" -P log --patch`. Every command needs `-C "$HOME"`, because git resolves a pathspec against the current directory rather than the work tree.
+- Restoring an old revision restores content only. git records no mode beyond the execute bit, so `chmod 600 ~/.codex/config.toml` afterwards.
+
 ## Commit Message Standards
 
 ### Type Selection Rules
