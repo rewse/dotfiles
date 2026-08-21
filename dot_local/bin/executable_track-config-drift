@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# Commit the live content of configuration files that a corporate management tool
+# rewrites in place. chezmoi cannot own these: an apply reverts the tool's edits,
+# and the tool overwrites the rendered file on its next run. Recording each state
+# here keeps a history of what changed instead of a fight over the content.
+
+set -u
+
+REPO="${XDG_DATA_HOME:-$HOME/.local/share}/config-drift.git"
+
+# Tracked paths, relative to $HOME.
+FILES=(
+    .claude/settings.json
+    .codex/config.toml
+)
+
+drift() {
+    # -C matters as much as --work-tree: git resolves a pathspec against the
+    # current directory, so the paths below only match when it is $HOME.
+    git -C "$HOME" --git-dir="$REPO" --work-tree="$HOME" "$@"
+}
+
+if [ ! -d "$REPO" ]; then
+    git init --bare --quiet --initial-branch=main "$REPO"
+    # The work tree is the whole home directory, so an untracked-file scan would
+    # walk all of it on every command.
+    drift config status.showUntrackedFiles no
+fi
+
+for file in "${FILES[@]}"; do
+    if [ -f "$HOME/$file" ]; then
+        drift add --force -- "$file"
+    fi
+done
+
+drift diff --cached --quiet && exit 0
+
+changed="$(drift diff --cached --name-only | paste -sd' ' -)"
+
+# Commit through the global hooks rather than around them: --no-verify raises a
+# Code Defender bypass event that has to be justified, once per commit.
+drift commit --quiet --message "autocommit: ${changed}"
