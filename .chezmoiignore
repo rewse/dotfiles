@@ -19,6 +19,5 @@ Library
 .agents/commands/outlook-todo.md
 .agents/skills/github-push-via-fox
 .claude/skills/github-push-via-fox
-.codex/config.toml
 .kiro/skills/github-push-via-fox
 {{- end }}
