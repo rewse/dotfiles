@@ -25,6 +25,25 @@ Their history is kept instead by `dot_local/bin/executable_track-config-drift`, 
 - Read the history: `git -C "$HOME" --git-dir="$HOME/.local/share/config-drift.git" --work-tree="$HOME" -P log --patch`. Every command needs `-C "$HOME"`, because git resolves a pathspec against the current directory rather than the work tree.
 - Restoring an old revision restores content only. git records no mode beyond the execute bit, so `chmod 600 ~/.codex/config.toml` afterwards.
 
+### Model Settings in `~/.claude/settings.json`
+
+The `/model` list under Bedrock comes from `modelOverrides`, `enforceAvailableModels`, `model`, and `fallbackModel`. The ASBX toolbox wrapper writes those keys, along with `awsCredentialExport`, `env.AWS_REGION`, `includeCoAuthoredBy`, and `statusLine`, into `~/.claude/settings.json` when a session starts. It records each key it has already written in `~/.claude/.amzn/state/recommendation-snapshot.json` and never writes that key again, so a key removed after the fact stays removed and `/model` shows nothing.
+
+Recover the list by deleting `recommendation-snapshot.json` and starting a session; the wrapper re-injects every key and rewrites the snapshot. `claude post-install` does not do this — it only sets up builder-mcp and the IDE integration.
+
+### Files Owned by Their Tool
+
+These are managed by chezmoi, but the tool is the source of truth for the content. Take the live file with `chezmoi add` instead of correcting the source, or `chezmoi apply` fights the tool on every run.
+
+| Path | Tool | What it does |
+|---|---|---|
+| `.config/otty/config.toml` | Otty | Rewrites the whole file when settings change in the GUI, including which keys are commented out. |
+| `.kiro/agents/*.json` | Kiro CLI | Reformats the JSON to its own style and injects the `creds-agent` MCP server into every agent. |
+
+### `.aws/config` Has No Comments
+
+The codex toolbox wrapper rewrites `~/.aws/config` through an INI parser: it drops every comment and appends `[profile codex-DO-NOT-DELETE]` after the existing profiles. `dot_aws/private_config.tmpl` therefore carries no comments and keeps that profile last, so the wrapper's rewrite produces no diff. Rationale that would otherwise be a comment there belongs in this file.
+
 ## Commit Message Standards
 
 ### Type Selection Rules
