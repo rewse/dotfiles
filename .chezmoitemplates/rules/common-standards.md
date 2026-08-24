@@ -70,6 +70,10 @@ Always pipe output to `cat` or supply a flag like `--no-pager` when a CLI comman
 
 On macOS, use `mdfind` for file searches. Spotlight indexing makes broad paths like `mdfind -onlyin ~` fast and acceptable.
 
+### Text Search
+
+Prefer `rg` over `grep` when searching file contents. Fall back to `grep` when `rg` is unavailable.
+
 ### Container Runtime
 
 On macOS, use `container` instead of `docker`. On Linux, use `docker`.
