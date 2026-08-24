@@ -1,0 +1,10 @@
+---
+name: refactor-cleaner
+description: {{ includeTemplate "agents/description/refactor-cleaner.txt" . | trim }}
+allowedTools:
+  - read
+  - write
+  - shell
+---
+
+{{ template "agents/body/refactor-cleaner.md" . -}}

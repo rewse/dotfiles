@@ -1,0 +1,22 @@
+{
+  "name" : "planner",
+  "description" : {{ includeTemplate "agents/description/planner.txt" . | trim | toJson }},
+  "mcpServers" : {
+    "creds-agent" : {
+      "command" : "aim",
+      "args" : [ "mcp", "start-server", "local-creds-agent-mcp" ]
+    }
+  },
+  "tools" : [ "@builtin", "@creds-agent" ],
+  "allowedTools" : [ "fs_read", "@creds-agent" ],
+  "resources" : [ ],
+  "hooks" : [ ],
+  "useLegacyMcpJson" : false,
+  "prompt" : {{ includeTemplate "agents/body/planner.md" . | trim | toJson }},
+  "permissions" : {
+    "rules" : [ {
+      "capability" : "fs_read",
+      "effect" : "allow"
+    } ]
+  }
+}

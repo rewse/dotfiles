@@ -1,0 +1,8 @@
+---
+name: build-error-resolver
+description: {{ includeTemplate "agents/description/build-error-resolver.txt" . | trim }}
+tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+model: sonnet
+---
+
+{{ template "agents/body/build-error-resolver.md" . -}}

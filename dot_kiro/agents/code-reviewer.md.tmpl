@@ -1,0 +1,9 @@
+---
+name: code-reviewer
+description: {{ includeTemplate "agents/description/code-reviewer.txt" . | trim }}
+allowedTools:
+  - read
+  - shell
+---
+
+{{ template "agents/body/code-reviewer.md" . -}}

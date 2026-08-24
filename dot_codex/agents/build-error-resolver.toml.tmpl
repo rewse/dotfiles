@@ -1,0 +1,4 @@
+name = "build-error-resolver"
+description = {{ includeTemplate "agents/description/build-error-resolver.txt" . | trim | toJson }}
+sandbox_mode = "workspace-write"
+developer_instructions = {{ includeTemplate "agents/body/build-error-resolver.md" . | trim | toJson }}

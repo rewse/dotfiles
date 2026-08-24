@@ -1,0 +1,4 @@
+name = "refactor-cleaner"
+description = {{ includeTemplate "agents/description/refactor-cleaner.txt" . | trim | toJson }}
+sandbox_mode = "workspace-write"
+developer_instructions = {{ includeTemplate "agents/body/refactor-cleaner.md" . | trim | toJson }}

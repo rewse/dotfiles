@@ -1,0 +1,8 @@
+---
+name: python-reviewer
+description: {{ includeTemplate "agents/description/python-reviewer.txt" . | trim }}
+tools: ["Read", "Grep", "Glob", "Bash"]
+model: sonnet
+---
+
+{{ template "agents/body/python-reviewer.md" . -}}

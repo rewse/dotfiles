@@ -1,0 +1,28 @@
+{
+  "name" : "build-error-resolver",
+  "description" : {{ includeTemplate "agents/description/build-error-resolver.txt" . | trim | toJson }},
+  "mcpServers" : {
+    "creds-agent" : {
+      "command" : "aim",
+      "args" : [ "mcp", "start-server", "local-creds-agent-mcp" ]
+    }
+  },
+  "tools" : [ "@builtin", "@creds-agent" ],
+  "allowedTools" : [ "fs_read", "fs_write", "shell", "@creds-agent" ],
+  "resources" : [ ],
+  "hooks" : [ ],
+  "useLegacyMcpJson" : false,
+  "prompt" : {{ includeTemplate "agents/body/build-error-resolver.md" . | trim | toJson }},
+  "permissions" : {
+    "rules" : [ {
+      "capability" : "fs_read",
+      "effect" : "allow"
+    }, {
+      "capability" : "fs_write",
+      "effect" : "allow"
+    }, {
+      "capability" : "shell",
+      "effect" : "allow"
+    } ]
+  }
+}

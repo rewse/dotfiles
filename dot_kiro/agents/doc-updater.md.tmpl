@@ -1,0 +1,9 @@
+---
+name: doc-updater
+description: {{ includeTemplate "agents/description/doc-updater.txt" . | trim }}
+allowedTools:
+  - read
+  - write
+---
+
+{{ template "agents/body/doc-updater.md" . -}}

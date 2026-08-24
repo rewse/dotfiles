@@ -1,0 +1,8 @@
+---
+name: planner
+description: {{ includeTemplate "agents/description/planner.txt" . | trim }}
+tools: ["Read", "Grep", "Glob"]
+model: opus
+---
+
+{{ template "agents/body/planner.md" . -}}

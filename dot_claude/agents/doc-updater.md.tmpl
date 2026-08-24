@@ -1,0 +1,8 @@
+---
+name: doc-updater
+description: {{ includeTemplate "agents/description/doc-updater.txt" . | trim }}
+tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+model: haiku
+---
+
+{{ template "agents/body/doc-updater.md" . -}}

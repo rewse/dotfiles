@@ -1,0 +1,9 @@
+---
+name: python-reviewer
+description: {{ includeTemplate "agents/description/python-reviewer.txt" . | trim }}
+allowedTools:
+  - read
+  - shell
+---
+
+{{ template "agents/body/python-reviewer.md" . -}}

@@ -1,0 +1,8 @@
+---
+name: planner
+description: {{ includeTemplate "agents/description/planner.txt" . | trim }}
+allowedTools:
+  - read
+---
+
+{{ template "agents/body/planner.md" . -}}

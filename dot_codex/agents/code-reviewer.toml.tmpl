@@ -1,0 +1,4 @@
+name = "code-reviewer"
+description = {{ includeTemplate "agents/description/code-reviewer.txt" . | trim | toJson }}
+sandbox_mode = "read-only"
+developer_instructions = {{ includeTemplate "agents/body/code-reviewer.md" . | trim | toJson }}

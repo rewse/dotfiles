@@ -1,0 +1,25 @@
+{
+  "name" : "doc-updater",
+  "description" : {{ includeTemplate "agents/description/doc-updater.txt" . | trim | toJson }},
+  "mcpServers" : {
+    "creds-agent" : {
+      "command" : "aim",
+      "args" : [ "mcp", "start-server", "local-creds-agent-mcp" ]
+    }
+  },
+  "tools" : [ "@builtin", "@creds-agent" ],
+  "allowedTools" : [ "fs_read", "fs_write", "@creds-agent" ],
+  "resources" : [ ],
+  "hooks" : [ ],
+  "useLegacyMcpJson" : false,
+  "prompt" : {{ includeTemplate "agents/body/doc-updater.md" . | trim | toJson }},
+  "permissions" : {
+    "rules" : [ {
+      "capability" : "fs_read",
+      "effect" : "allow"
+    }, {
+      "capability" : "fs_write",
+      "effect" : "allow"
+    } ]
+  }
+}

@@ -1,0 +1,10 @@
+---
+name: build-error-resolver
+description: {{ includeTemplate "agents/description/build-error-resolver.txt" . | trim }}
+allowedTools:
+  - read
+  - write
+  - shell
+---
+
+{{ template "agents/body/build-error-resolver.md" . -}}
