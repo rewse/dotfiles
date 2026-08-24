@@ -7,9 +7,9 @@ Use English for publicly accessible documents and Japanese for user-facing inter
 - Chat communication: Japanese
 - Code comment: English
 - Commit message: English
+- Planning (Spec) file: Japanese
 - Skill file: English
-- Spec file: Japanese
-- Steering file: English
+- Rule (Steering) file: English
 - Variable name / Function names: English
 
 The language of `README.md` is undefined. Always ask the user what language to use before creating a `README.md`.
@@ -45,11 +45,6 @@ If you notice that the code or text you wrote has been unexpectedly changed, acc
 Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
 
 Choose the type by the intent of the change, not by the mechanism. Deleting a file or updating a dependency is not `chore:` by default: use `fix:` for a bug or vulnerability, `refactor:` for restructuring working code, `docs:` when the file is documentation, `feat:` when a user-facing capability is removed, and `chore:` only for maintenance that fits none of these.
-
-## Spec File Standards
-
-- Use plain form (常体) for spec files
-- Prefer Mermaid for architecture diagrams
 
 ## CLI Command Standards
 
@@ -100,7 +95,13 @@ Read a document with `npx -y @firecrawl/anydoc <file>`, which converts Office, O
 
 Sort entries alphabetically unless their order carries meaning (execution sequence, dependency order, priority). This applies to list items, configuration entries, package lists, dictionary keys, and similar collections.
 
-## Rule Authoring Standards
+## Planning File Standards
+
+- Store requirements, design, and implementation plans under `.kiro/specs/<feature-name>/` as `requirements.md`, `design.md`, and `tasks.md`, respectively.
+- Use Japanese plain form (常体)
+- Prefer Mermaid for architecture diagrams
+
+## Rule (Steering) Authoring Standards
 
 Lead with the instruction or prohibition in rule files. Add rationale only when it clarifies the scope of a rule or forecloses a plausible wrong workaround.
 
