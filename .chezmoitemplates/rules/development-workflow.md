@@ -1,6 +1,6 @@
 # Development Workflow
 
-Apply this workflow when implementing a feature or making a non-trivial change to a code project. Skip it for single-file edits, configuration changes, and questions.
+Apply this workflow when a change is high-risk, crosses subsystem boundaries, or requires architectural decisions. Skip it for bounded changes that stay within one subsystem, affect about five or fewer files, have clear acceptance criteria, and can be verified with focused tests in one pass. File count is a heuristic; always use the full workflow for authentication, secrets, data migrations, public APIs, or infrastructure.
 
 ## 1. Research Before Implementing
 
@@ -12,9 +12,11 @@ Search for an existing implementation before writing new code, in this order:
 
 Prefer adopting or porting a proven approach over writing net-new code when it meets the requirement.
 
-## 2. Plan
+## 2. Clarify and Plan
 
-Use the **planner** agent when the change spans multiple files or phases. Plan it yourself when you can plan it in a handful of tool calls. Write planning docs to disk only when the user asks for them.
+Use **brainstorming** when the goal is understood but the solution needs collaborative design. Use **grill-me** to stress-test a concrete plan, decision, or idea. Do not run overlapping discovery workflows by default; choose the one that matches the work.
+
+After the requirements and design are settled, use the **planner** agent when implementation spans multiple files or phases. Plan directly when it can be done in a handful of tool calls. Write planning documents only when the user asks for them or the selected workflow explicitly requires durable artifacts.
 
 ## 3. Test First
 

@@ -63,6 +63,10 @@ install_skills firecrawl/anydoc convert-documents-to-markdown
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
 
+# Matt Pocock Skills
+install_skills mattpocock/skills \
+  grill-me grilling
+
 # Obra Superpowers
 install_skills obra/superpowers \
   brainstorming writing-plans
