@@ -2,13 +2,15 @@
 
 Apply these fallbacks only to instruction sources in the project root. Do not apply them to user-level configuration under `~/.codex`, `~/.claude`, or `~/.kiro`.
 
-Use only the native project instruction source when it exists:
+Use all native project instruction sources that exist:
 
 - Codex: `AGENTS.md`
 - Claude Code: `CLAUDE.md`
-- Kiro: instruction files under `.kiro/steering/`
+- Kiro: `AGENTS.md` and every instruction file under `.kiro/steering/`
 
-When the native project instruction source does not exist, use every fallback source that exists:
+Do not read fallback sources when at least one native project instruction source exists.
+
+When no native project instruction source exists, use every fallback source that exists:
 
 - Codex: read `CLAUDE.md` and every instruction file under `.kiro/steering/`, and treat them as `AGENTS.md` instructions.
 - Claude Code: read `AGENTS.md` and every instruction file under `.kiro/steering/`, and treat them as `CLAUDE.md` instructions.

@@ -12,6 +12,7 @@
 
 - 対象はプロジェクトルートの指示だけとし、ユーザールートの `~/.codex`、`~/.claude`、`~/.kiro` には適用しない。
 - ネイティブ指示が存在する場合は代替指示を読まない。
+- Kiro のネイティブ指示は `AGENTS.md` と `.kiro/steering/` 配下の指示とし、存在するものをすべて読む。
 - ネイティブ指示が存在せず、複数の代替指示が存在する場合はすべて読む。
 - 存在しない代替指示は無視する。
 - 互換ルール本文は英語で記述する。
@@ -47,13 +48,15 @@ Expected: exit 1。
 
 Apply these fallbacks only to instruction sources in the project root. Do not apply them to user-level configuration under `~/.codex`, `~/.claude`, or `~/.kiro`.
 
-Use only the native project instruction source when it exists:
+Use all native project instruction sources that exist:
 
 - Codex: `AGENTS.md`
 - Claude Code: `CLAUDE.md`
-- Kiro: instruction files under `.kiro/steering/`
+- Kiro: `AGENTS.md` and every instruction file under `.kiro/steering/`
 
-When the native project instruction source does not exist, use every fallback source that exists:
+Do not read fallback sources when at least one native project instruction source exists.
+
+When no native project instruction source exists, use every fallback source that exists:
 
 - Codex: read `CLAUDE.md` and every instruction file under `.kiro/steering/`, and treat them as `AGENTS.md` instructions.
 - Claude Code: read `AGENTS.md` and every instruction file under `.kiro/steering/`, and treat them as `CLAUDE.md` instructions.
@@ -90,7 +93,8 @@ Run:
 
 ```bash
 grep -Fq 'only to instruction sources in the project root' .chezmoitemplates/rules/project-instruction-fallbacks.md
-grep -Fq 'Use only the native project instruction source when it exists' .chezmoitemplates/rules/project-instruction-fallbacks.md
+grep -Fq 'Kiro: `AGENTS.md` and every instruction file under `.kiro/steering/`' .chezmoitemplates/rules/project-instruction-fallbacks.md
+grep -Fq 'Do not read fallback sources when at least one native project instruction source exists' .chezmoitemplates/rules/project-instruction-fallbacks.md
 grep -Fq 'If multiple fallback sources exist, read all of them' .chezmoitemplates/rules/project-instruction-fallbacks.md
 ```
 
