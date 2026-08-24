@@ -1,4 +1,8 @@
-{{ template "rules/common-standards.md" . }}
-
-{{ template "rules/chat-tone.md" . }}
-{{ template "rules/development-workflow.md" . }}
+{{- $publicRulesPattern := joinPath .chezmoi.sourceDir ".chezmoitemplates" "rules" "*.md" -}}
+{{- range glob $publicRulesPattern -}}
+{{ include . }}
+{{- end }}
+{{- $internalRulesPattern := joinPath .chezmoi.homeDir "git" "dotfiles-internal" ".chezmoitemplates" "rules" "*.md" -}}
+{{- range glob $internalRulesPattern -}}
+{{ include . }}
+{{- end }}
