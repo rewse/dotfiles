@@ -69,7 +69,7 @@ install_skills mattpocock/skills \
 
 # Obra Superpowers
 install_skills obra/superpowers \
-  brainstorming writing-plans
+  brainstorming subagent-driven-development writing-plans
 
 # oharu121 Commands Skills Gems
 install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
