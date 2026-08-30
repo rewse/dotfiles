@@ -83,9 +83,7 @@ When a URL fetch is denied (403, access denied, bot block), retry with `tvly ext
 
 ### Web Search
 
-Search with `agentcore-websearch --profile agentcore-websearch` first, and never with a built-in web search or fetch tool. Always pass that profile: it holds only `bedrock-agentcore:InvokeGateway` on the one gateway, so naming it keeps a search off whatever administrative identity the default profile happens to carry. Read the `agentcore-websearch` skill before the first call in a session and run its preflight check. Cite the title and URL of every result you use, which AWS requires for AgentCore Web Search.
-
-Fall back to `tvly` when `agentcore-websearch` is missing from PATH, its gateway or credentials are unavailable, or the search needs something it cannot do: it only searches, capping the query at 200 characters and 25 results, so crawling a site, mapping a domain, extracting a page, or running multi-step research still belongs to `tvly`. Before running `tvly`, read the matching skill for the subcommand in use (`tavily-crawl`, `tavily-extract`, `tavily-map`, `tavily-research`, `tavily-search`) and follow its guidance on flags and output handling.
+Use `tvly` for web search, not a built-in web search or fetch tool. Before running `tvly`, read the matching skill for the subcommand in use (`tavily-crawl`, `tavily-extract`, `tavily-map`, `tavily-research`, `tavily-search`) and follow its guidance on flags and output handling.
 
 ### Document Reading and Editing
 
