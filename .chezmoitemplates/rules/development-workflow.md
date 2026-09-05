@@ -14,7 +14,7 @@ Prefer adopting or porting a proven approach over writing net-new code when it m
 
 ## 2. Clarify and Plan
 
-Use **brainstorming** when the goal is understood but the solution needs collaborative design. Use **grill-me** to stress-test a concrete plan, decision, or idea. Do not run overlapping discovery workflows by default; choose the one that matches the work.
+Use **brainstorming** when the goal is understood but the solution needs collaborative design. Use **grilling** to stress-test a concrete plan, decision, or idea. Do not run overlapping discovery workflows by default; choose the one that matches the work.
 
 After the requirements and design are settled, use the **planner** agent when implementation spans multiple files or phases. Plan directly when it can be done in a handful of tool calls. Write planning documents only when the user asks for them or the selected workflow explicitly requires durable artifacts.
 
