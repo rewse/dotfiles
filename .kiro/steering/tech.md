@@ -5,13 +5,19 @@
 - **chezmoi**: Dotfiles management tool with templating capabilities
 - **1Password CLI**: Secure secret management
 
+## 1Password Items
+
+Name items in the `chezmoi` vault as `System - Consumer` when both parts meaningfully identify the credential. Keep the complete product name as the System. Use a meaningful username or service account as the Consumer when one exists; do not use access key IDs, client IDs, UUIDs, MAC addresses, or other machine identifiers. Omit the Consumer instead of adding a generic purpose that does not distinguish the item, as in `Zabbix MCP Server`. Omit the System when it would only be a generic category rather than a specific product or service, as in `Tats Shibata` or `id_rsa`. Keep credentials for different systems in separate items.
+
+Use item IDs rather than item titles in committed Secret References so renaming an item does not break templates.
+
 ## AWS Resources
 
 The AWS resources these dotfiles depend on are deliberately not version-controlled in this repository, which holds only files chezmoi deploys to `$HOME`. They live as CloudFormation stacks in account `070392599442`. Recover a template with `aws cloudformation get-template --stack-name <stack> --region <region> | cat`, and read `describe-stacks` for its parameters and outputs.
 
 | Stack | Region | Purpose |
 |---|---|---|
-| `agentcore-websearch-caller` | us-east-1 | IAM user `agentcore-websearch` and its managed policy, granting only `bedrock-agentcore:InvokeGateway` on the one Web Search gateway. Its access key lives in 1Password (`AgentCore Web Search - AWS IAM`) and is rendered into `dot_aws/private_credentials.tmpl`; `dot_aws/private_config.tmpl` defines the matching profile. |
+| `agentcore-websearch-caller` | us-east-1 | IAM user `agentcore-websearch` and its managed policy, granting only `bedrock-agentcore:InvokeGateway` on the one Web Search gateway. Its access key lives in 1Password (`AWS IAM - AgentCore Web Search`) and is rendered into `dot_aws/private_credentials.tmpl`; `dot_aws/private_config.tmpl` defines the matching profile. |
 
 The AgentCore Web Search gateway itself is deployed from the CloudFormation template in [aws-samples/sample-agentcore-websearch-agent-skill](https://github.com/aws-samples/sample-agentcore-websearch-agent-skill), whose `GatewayUrl` output is exported as `AGENTCORE_GATEWAY_URL` in `dot_zshenv.tmpl`.
 

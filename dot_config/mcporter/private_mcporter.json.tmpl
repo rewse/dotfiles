@@ -42,8 +42,8 @@
       ],
       "env": {
         "FASTMCP_LOG_LEVEL": "ERROR",
-        "HOMEASSISTANT_URL": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/url" }}",
-        "HOMEASSISTANT_TOKEN": "{{ onepasswordRead "op://chezmoi/Home Assistant - MCP Server/credential" }}"
+        "HOMEASSISTANT_URL": "{{ onepasswordRead "op://chezmoi/aghd2uptzcjbjfxgj56nd3xlmu/url" }}",
+        "HOMEASSISTANT_TOKEN": "{{ onepasswordRead "op://chezmoi/aghd2uptzcjbjfxgj56nd3xlmu/credential" }}"
       }
     },
     "ticktick": {
@@ -54,15 +54,15 @@
       "command": "uvx",
       "args": ["unifi-network-mcp@latest"],
       "env": {
-        "UNIFI_NETWORK_HOST": "{{ onepasswordRead "op://chezmoi/unifi-mcp/hostname" }}",
-        "UNIFI_NETWORK_USERNAME": "{{ onepasswordRead "op://chezmoi/unifi-mcp/username" }}",
-        "UNIFI_NETWORK_PASSWORD": "{{ onepasswordRead "op://chezmoi/unifi-mcp/credential" }}"
+        "UNIFI_NETWORK_HOST": "{{ onepasswordRead "op://chezmoi/epimjkq3c2rh3bctjnhmslp5ce/hostname" }}",
+        "UNIFI_NETWORK_USERNAME": "{{ onepasswordRead "op://chezmoi/epimjkq3c2rh3bctjnhmslp5ce/username" }}",
+        "UNIFI_NETWORK_PASSWORD": "{{ onepasswordRead "op://chezmoi/epimjkq3c2rh3bctjnhmslp5ce/credential" }}"
       }
     },
     "zabbix": {
       "url": "http://fox.rewse.jp:8081/mcp",
       "headers": {
-        "Authorization": "Bearer {{ onepasswordRead "op://chezmoi/Zabbix MCP Server/credential" }}"
+        "Authorization": "Bearer {{ onepasswordRead "op://chezmoi/qqxykwkik2v7foe3gmlkef2sme/credential" }}"
       }
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
     },
