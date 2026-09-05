@@ -87,7 +87,12 @@
                                     "modifiers": { "optional": ["any"] }
                                 },
                                 "parameters": { "basic.to_if_held_down_threshold_milliseconds": 100 },
-                                "to": [{ "key_code": "left_control", "lazy": true }],
+                                "to": [
+                                    {
+                                        "key_code": "left_control",
+                                        "lazy": true
+                                    }
+                                ],
                                 "to_if_alone": [{ "key_code": "tab" }],
                                 "to_if_held_down": [{ "key_code": "left_control" }],
                                 "type": "basic"
@@ -410,6 +415,15 @@
                             "to": [{ "key_code": "escape" }]
                         }
                     ]
+                },
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "is_pointing_device": true,
+                        "product_id": 1,
+                        "vendor_id": 57624
+                    },
+                    "ignore": false
                 }
             ],
             "name": "Default profile",
