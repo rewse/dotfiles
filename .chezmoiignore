@@ -25,5 +25,6 @@ Library
 
 {{- if ne .chezmoi.hostname "youth" }}
 .local/bin/cleanup-local-cache-fallbacks
+.local/bin/container
 Library/LaunchAgents/local.cleanup-local-cache-fallbacks.plist
 {{- end }}

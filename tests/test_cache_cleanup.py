@@ -292,15 +292,19 @@ class LocalCacheCleanupTest(unittest.TestCase):
         self.assertIn("/usr/bin/id -u", template)
         self.assertIn("sha256sum", template)
 
-    def test_cleanup_is_ignored_on_every_non_target_host(self) -> None:
+    def test_youth_only_tools_are_ignored_on_every_non_target_host(self) -> None:
         youth = self.render(IGNORE, "youth")
         business = self.render(IGNORE, "7cf34ded5d65")
         other = self.render(IGNORE, "other")
 
-        path = ".local/bin/cleanup-local-cache-fallbacks"
-        self.assertNotIn(path, youth)
-        self.assertIn(path, business)
-        self.assertIn(path, other)
+        for path in (
+            ".local/bin/cleanup-local-cache-fallbacks",
+            ".local/bin/container",
+        ):
+            with self.subTest(path=path):
+                self.assertNotIn(path, youth)
+                self.assertIn(path, business)
+                self.assertIn(path, other)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Keep Apple container's application data on ExternalHD. The upstream CLI does
+# not persist --app-root across system stops, so inject it on every default start.
+
+set -uo pipefail
+
+CACHE_ENV="{{ .chezmoi.homeDir }}/.config/environment/cache.sh"
+REAL_CONTAINER="/opt/homebrew/bin/container"
+
+if [ ! -x "${REAL_CONTAINER}" ]; then
+    echo "container: upstream CLI not found at ${REAL_CONTAINER}" >&2
+    exit 127
+fi
+
+if [ "${1:-}" = "system" ] && [ "${2:-}" = "start" ]; then
+    explicit_app_root=false
+    informational=false
+    for argument in "${@:3}"; do
+        case "${argument}" in
+          -a|--app-root|--app-root=*) explicit_app_root=true ;;
+          -h|--help|--version) informational=true ;;
+        esac
+    done
+
+    if [ "${explicit_app_root}" = false ] && [ "${informational}" = false ]; then
+        if [ -r "${CACHE_ENV}" ]; then
+            # shellcheck source=/dev/null
+            . "${CACHE_ENV}"
+        fi
+        if [ -z "${CONTAINER_APP_ROOT:-}" ] || [ ! -d "${CONTAINER_APP_ROOT}" ]; then
+            echo "container: ExternalHD is required for the default app root" >&2
+            echo "container: connect ExternalHD or pass --app-root explicitly" >&2
+            exit 1
+        fi
+
+        if status_output="$("${REAL_CONTAINER}" system status 2>/dev/null)"; then
+            current_app_root="$(
+                printf '%s\n' "${status_output}" |
+                  /usr/bin/awk '$1 == "appRoot" || $1 == "paths.appRoot" {$1=""; sub(/^ +/, ""); print}'
+            )"
+            expected_app_root="${CONTAINER_APP_ROOT%/}/"
+            if [ -z "${current_app_root}" ]; then
+                echo "container: unable to determine the running service app root" >&2
+                exit 1
+            fi
+            current_app_root="${current_app_root%/}/"
+            if [ "${current_app_root}" != "${expected_app_root}" ]; then
+                echo "container: service already uses ${current_app_root}" >&2
+                echo "container: stop it before switching to ${expected_app_root}" >&2
+                exit 1
+            fi
+        fi
+
+        exec "${REAL_CONTAINER}" "$@" --app-root "${CONTAINER_APP_ROOT}"
+    fi
+fi
+
+exec "${REAL_CONTAINER}" "$@"

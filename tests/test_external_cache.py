@@ -15,6 +15,7 @@ ZSHENV = REPO_ROOT / "dot_zshenv.tmpl"
 EXPECTED_UUID = "1C3ED642-8FFD-43BF-BF08-9CB49AF76676"
 
 EXPECTED_EXPORTS = {
+    'export CONTAINER_APP_ROOT="/Volumes/ExternalHD/Library/Application Support/com.apple.container"',
     'export HF_HUB_CACHE="/Volumes/ExternalHD/.cache/huggingface/hub"',
     'export HF_XET_CACHE="/Volumes/ExternalHD/.cache/huggingface/xet"',
     'export HOMEBREW_CACHE="/Volumes/ExternalHD/Library/Caches/Homebrew"',
@@ -86,6 +87,7 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
             environment = os.environ.copy()
             environment.update(
                 {
+                    "CONTAINER_APP_ROOT": "stale",
                     "HF_HUB_CACHE": "stale",
                     "HF_XET_CACHE": "stale",
                     "HOMEBREW_CACHE": "stale",
@@ -96,19 +98,21 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
                 }
             )
             command = (
-                '. "$1"; printf "%s\\n" "${HF_HUB_CACHE-unset}" '
-                '"${HF_XET_CACHE-unset}" "${HOMEBREW_CACHE-unset}" '
-                '"${NPM_CONFIG_CACHE-unset}" "${PLAYWRIGHT_BROWSERS_PATH-unset}" '
+                '. "$1"; printf "%s\\n" "${CONTAINER_APP_ROOT-unset}" '
+                '"${HF_HUB_CACHE-unset}" "${HF_XET_CACHE-unset}" '
+                '"${HOMEBREW_CACHE-unset}" "${NPM_CONFIG_CACHE-unset}" '
+                '"${PLAYWRIGHT_BROWSERS_PATH-unset}" '
                 '"${RESTIC_CACHE_DIR-unset}" "${UV_CACHE_DIR-unset}"'
             )
 
             for mounted, volume_uuid, expected in (
-                (False, EXPECTED_UUID, ["unset"] * 7),
-                (True, "unexpected", ["unset"] * 7),
+                (False, EXPECTED_UUID, ["unset"] * 8),
+                (True, "unexpected", ["unset"] * 8),
                 (
                     True,
                     EXPECTED_UUID,
                     [
+                        "/Volumes/ExternalHD/Library/Application Support/com.apple.container",
                         "/Volumes/ExternalHD/.cache/huggingface/hub",
                         "/Volumes/ExternalHD/.cache/huggingface/xet",
                         "/Volumes/ExternalHD/Library/Caches/Homebrew",
@@ -188,6 +192,7 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
                 ".cache/huggingface/xet",
                 ".cache/npm",
                 ".cache/uv",
+                "Library/Application Support/com.apple.container",
                 "Library/Caches/Homebrew",
                 "Library/Caches/ms-playwright",
                 "Library/Caches/restic",
