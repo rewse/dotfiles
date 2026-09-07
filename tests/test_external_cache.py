@@ -15,7 +15,11 @@ ZSHENV = REPO_ROOT / "dot_zshenv.tmpl"
 EXPECTED_UUID = "1C3ED642-8FFD-43BF-BF08-9CB49AF76676"
 
 EXPECTED_EXPORTS = {
+    'export HF_HUB_CACHE="/Volumes/ExternalHD/.cache/huggingface/hub"',
+    'export HF_XET_CACHE="/Volumes/ExternalHD/.cache/huggingface/xet"',
     'export HOMEBREW_CACHE="/Volumes/ExternalHD/Library/Caches/Homebrew"',
+    'export NPM_CONFIG_CACHE="/Volumes/ExternalHD/.cache/npm"',
+    'export PLAYWRIGHT_BROWSERS_PATH="/Volumes/ExternalHD/Library/Caches/ms-playwright"',
     'export RESTIC_CACHE_DIR="/Volumes/ExternalHD/Library/Caches/restic"',
     'export UV_CACHE_DIR="/Volumes/ExternalHD/.cache/uv"',
 }
@@ -82,24 +86,34 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
             environment = os.environ.copy()
             environment.update(
                 {
+                    "HF_HUB_CACHE": "stale",
+                    "HF_XET_CACHE": "stale",
                     "HOMEBREW_CACHE": "stale",
+                    "NPM_CONFIG_CACHE": "stale",
+                    "PLAYWRIGHT_BROWSERS_PATH": "stale",
                     "RESTIC_CACHE_DIR": "stale",
                     "UV_CACHE_DIR": "stale",
                 }
             )
             command = (
-                '. "$1"; printf "%s\\n" "${HOMEBREW_CACHE-unset}" '
+                '. "$1"; printf "%s\\n" "${HF_HUB_CACHE-unset}" '
+                '"${HF_XET_CACHE-unset}" "${HOMEBREW_CACHE-unset}" '
+                '"${NPM_CONFIG_CACHE-unset}" "${PLAYWRIGHT_BROWSERS_PATH-unset}" '
                 '"${RESTIC_CACHE_DIR-unset}" "${UV_CACHE_DIR-unset}"'
             )
 
             for mounted, volume_uuid, expected in (
-                (False, EXPECTED_UUID, ["unset", "unset", "unset"]),
-                (True, "unexpected", ["unset", "unset", "unset"]),
+                (False, EXPECTED_UUID, ["unset"] * 7),
+                (True, "unexpected", ["unset"] * 7),
                 (
                     True,
                     EXPECTED_UUID,
                     [
+                        "/Volumes/ExternalHD/.cache/huggingface/hub",
+                        "/Volumes/ExternalHD/.cache/huggingface/xet",
                         "/Volumes/ExternalHD/Library/Caches/Homebrew",
+                        "/Volumes/ExternalHD/.cache/npm",
+                        "/Volumes/ExternalHD/Library/Caches/ms-playwright",
                         "/Volumes/ExternalHD/Library/Caches/restic",
                         "/Volumes/ExternalHD/.cache/uv",
                     ],
@@ -170,8 +184,12 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
             mounted = subprocess.run([str(script)], capture_output=True, check=False, text=True)
             self.assertEqual(mounted.returncode, 0, mounted.stdout + mounted.stderr)
             for relative_path in (
+                ".cache/huggingface/hub",
+                ".cache/huggingface/xet",
+                ".cache/npm",
                 ".cache/uv",
                 "Library/Caches/Homebrew",
+                "Library/Caches/ms-playwright",
                 "Library/Caches/restic",
             ):
                 path = volume / relative_path

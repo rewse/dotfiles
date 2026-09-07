@@ -2,7 +2,7 @@
 
 set -eu
 
-{{- if (eq .chezmoi.hostname "youth") }}
+{{- if eq .chezmoi.hostname "youth" }}
 external_cache_uuid="1C3ED642-8FFD-43BF-BF08-9CB49AF76676"
 external_cache_volume="/Volumes/ExternalHD"
 case "$(/sbin/mount)" in
@@ -24,12 +24,15 @@ if [ "${mounted_cache_uuid}" != "${external_cache_uuid}" ]; then
     exit 1
 fi
 
-# ExternalHD currently uses noowners, so these mode bits are not a security
-# boundary between local accounts. Keep restrictive defaults in case ownership
-# is enabled later; this machine otherwise treats the volume as single-user.
+# Ownership is enabled on ExternalHD, so restrictive mode bits protect cache
+# and container state from other local accounts.
 umask 077
 mkdir -p \
+    "/Volumes/ExternalHD/.cache/huggingface/hub" \
+    "/Volumes/ExternalHD/.cache/huggingface/xet" \
+    "/Volumes/ExternalHD/.cache/npm" \
     "/Volumes/ExternalHD/.cache/uv" \
     "/Volumes/ExternalHD/Library/Caches/Homebrew" \
+    "/Volumes/ExternalHD/Library/Caches/ms-playwright" \
     "/Volumes/ExternalHD/Library/Caches/restic"
 {{- end }}

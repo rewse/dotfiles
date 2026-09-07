@@ -118,12 +118,24 @@ fi
 
 status=0
 cleanup_local_cache \
-  "${CACHE_HOME}/Library/Caches/Homebrew" \
-  "${EXTERNAL_VOLUME}/Library/Caches/Homebrew" || status=1
+  "${CACHE_HOME}/.cache/huggingface/hub" \
+  "${EXTERNAL_VOLUME}/.cache/huggingface/hub" || status=1
 cleanup_local_cache \
-  "${CACHE_HOME}/Library/Caches/restic" \
-  "${EXTERNAL_VOLUME}/Library/Caches/restic" || status=1
+  "${CACHE_HOME}/.cache/huggingface/xet" \
+  "${EXTERNAL_VOLUME}/.cache/huggingface/xet" || status=1
+cleanup_local_cache \
+  "${CACHE_HOME}/.cache/npm" \
+  "${EXTERNAL_VOLUME}/.cache/npm" || status=1
 cleanup_local_cache \
   "${CACHE_HOME}/.cache/uv" \
   "${EXTERNAL_VOLUME}/.cache/uv" || status=1
+cleanup_local_cache \
+  "${CACHE_HOME}/Library/Caches/Homebrew" \
+  "${EXTERNAL_VOLUME}/Library/Caches/Homebrew" || status=1
+cleanup_local_cache \
+  "${CACHE_HOME}/Library/Caches/ms-playwright" \
+  "${EXTERNAL_VOLUME}/Library/Caches/ms-playwright" || status=1
+cleanup_local_cache \
+  "${CACHE_HOME}/Library/Caches/restic" \
+  "${EXTERNAL_VOLUME}/Library/Caches/restic" || status=1
 exit "${status}"

@@ -1,4 +1,4 @@
-{{- if and (eq .chezmoi.hostname "youth") -}}
+{{- if eq .chezmoi.hostname "youth" -}}
 #!/bin/sh
 # Source hashes make chezmoi rerun this script when the job definition changes.
 # cleanup: {{ include "dot_local/bin/executable_cleanup-local-cache-fallbacks.tmpl" | sha256sum }}

@@ -88,17 +88,26 @@ class LocalCacheCleanupTest(unittest.TestCase):
 
         local_caches = {
             "homebrew": home / "Library" / "Caches" / "Homebrew",
+            "huggingface_hub": home / ".cache" / "huggingface" / "hub",
+            "huggingface_xet": home / ".cache" / "huggingface" / "xet",
+            "npm": home / ".cache" / "npm",
+            "playwright": home / "Library" / "Caches" / "ms-playwright",
             "restic": home / "Library" / "Caches" / "restic",
             "uv": home / ".cache" / "uv",
         }
         external_caches = {
             "homebrew": volume / "Library" / "Caches" / "Homebrew",
+            "huggingface_hub": volume / ".cache" / "huggingface" / "hub",
+            "huggingface_xet": volume / ".cache" / "huggingface" / "xet",
+            "npm": volume / ".cache" / "npm",
+            "playwright": volume / "Library" / "Caches" / "ms-playwright",
             "restic": volume / "Library" / "Caches" / "restic",
             "uv": volume / ".cache" / "uv",
         }
         for cache in local_caches.values():
             cache.mkdir(parents=True)
             (cache / "fallback-entry").write_text("cache")
+        (home / ".cache" / "huggingface" / "token").write_text("keep-local")
         for name, cache in external_caches.items():
             if name == missing_destination or name == symlink_destination:
                 continue
@@ -256,6 +265,10 @@ class LocalCacheCleanupTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue(all(not path.exists() for path in local_caches.values()))
+        self.assertEqual(
+            (local_caches["huggingface_hub"].parent / "token").read_text(),
+            "keep-local",
+        )
         self.assertTrue(
             all((path / "external-entry").exists() for path in external_caches.values())
         )
@@ -284,10 +297,10 @@ class LocalCacheCleanupTest(unittest.TestCase):
         business = self.render(IGNORE, "7cf34ded5d65")
         other = self.render(IGNORE, "other")
 
-        cleanup_path = ".local/bin/cleanup-local-cache-fallbacks"
-        self.assertNotIn(cleanup_path, youth)
-        self.assertIn(cleanup_path, business)
-        self.assertIn(cleanup_path, other)
+        path = ".local/bin/cleanup-local-cache-fallbacks"
+        self.assertNotIn(path, youth)
+        self.assertIn(path, business)
+        self.assertIn(path, other)
 
 
 if __name__ == "__main__":

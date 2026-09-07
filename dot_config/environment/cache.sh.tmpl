@@ -1,6 +1,7 @@
-{{- if (eq .chezmoi.hostname "youth") -}}
+{{- if eq .chezmoi.hostname "youth" -}}
 # Shared by zsh and launchd bash jobs to keep cache paths in one place.
-unset HOMEBREW_CACHE RESTIC_CACHE_DIR UV_CACHE_DIR
+unset HF_HUB_CACHE HF_XET_CACHE HOMEBREW_CACHE NPM_CONFIG_CACHE
+unset NPM_CONFIG_CACHE PLAYWRIGHT_BROWSERS_PATH RESTIC_CACHE_DIR UV_CACHE_DIR
 external_cache_uuid="1C3ED642-8FFD-43BF-BF08-9CB49AF76676"
 external_cache_volume="/Volumes/ExternalHD"
 case "$(/sbin/mount)" in
@@ -9,7 +10,11 @@ case "$(/sbin/mount)" in
         /usr/sbin/diskutil info -plist "${external_cache_volume}" |
           /usr/bin/plutil -extract VolumeUUID raw -o - -
       )" && [ "${mounted_cache_uuid}" = "${external_cache_uuid}" ]; then
+        export HF_HUB_CACHE="/Volumes/ExternalHD/.cache/huggingface/hub"
+        export HF_XET_CACHE="/Volumes/ExternalHD/.cache/huggingface/xet"
         export HOMEBREW_CACHE="/Volumes/ExternalHD/Library/Caches/Homebrew"
+        export NPM_CONFIG_CACHE="/Volumes/ExternalHD/.cache/npm"
+        export PLAYWRIGHT_BROWSERS_PATH="/Volumes/ExternalHD/Library/Caches/ms-playwright"
         export RESTIC_CACHE_DIR="/Volumes/ExternalHD/Library/Caches/restic"
         export UV_CACHE_DIR="/Volumes/ExternalHD/.cache/uv"
     fi
