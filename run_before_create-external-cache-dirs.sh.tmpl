@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -eu
+
+{{- if (eq .chezmoi.hostname "youth") }}
+external_cache_uuid="1C3ED642-8FFD-43BF-BF08-9CB49AF76676"
+external_cache_volume="/Volumes/ExternalHD"
+case "$(/sbin/mount)" in
+  *" on ${external_cache_volume} ("*) ;;
+  *)
+    echo "ExternalHD is not mounted; cannot create external cache directories" >&2
+    exit 1
+    ;;
+esac
+mounted_cache_uuid="$(
+    /usr/sbin/diskutil info -plist "${external_cache_volume}" |
+      /usr/bin/plutil -extract VolumeUUID raw -o - -
+)" || {
+    echo "Cannot read ExternalHD UUID; refusing cache directory creation" >&2
+    exit 1
+}
+if [ "${mounted_cache_uuid}" != "${external_cache_uuid}" ]; then
+    echo "ExternalHD UUID mismatch; refusing cache directory creation" >&2
+    exit 1
+fi
+
+# ExternalHD currently uses noowners, so these mode bits are not a security
+# boundary between local accounts. Keep restrictive defaults in case ownership
+# is enabled later; this machine otherwise treats the volume as single-user.
+umask 077
+mkdir -p \
+    "/Volumes/ExternalHD/.cache/uv" \
+    "/Volumes/ExternalHD/Library/Caches/Homebrew" \
+    "/Volumes/ExternalHD/Library/Caches/restic"
+{{- end }}

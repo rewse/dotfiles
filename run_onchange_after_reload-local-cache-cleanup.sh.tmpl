@@ -1,0 +1,18 @@
+{{- if and (eq .chezmoi.hostname "youth") -}}
+#!/bin/sh
+# Source hashes make chezmoi rerun this script when the job definition changes.
+# cleanup: {{ include "dot_local/bin/executable_cleanup-local-cache-fallbacks.tmpl" | sha256sum }}
+# plist: {{ include "private_Library/LaunchAgents/local.cleanup-local-cache-fallbacks.plist.tmpl" | sha256sum }}
+
+set -eu
+
+domain="gui/$(/usr/bin/id -u)"
+label="local.cleanup-local-cache-fallbacks"
+plist="{{ .chezmoi.homeDir }}/Library/LaunchAgents/${label}.plist"
+
+/bin/launchctl bootout "${domain}/${label}" 2>/dev/null || true
+/bin/launchctl bootstrap "${domain}" "${plist}"
+{{- else -}}
+#!/bin/sh
+# This LaunchAgent is only installed on youth.
+{{- end }}

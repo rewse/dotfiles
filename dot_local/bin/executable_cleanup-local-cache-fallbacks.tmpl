@@ -1,0 +1,129 @@
+#!/bin/bash
+#
+# Remove local caches that are only fallbacks for times when ExternalHD is not
+# mounted. Each cache is deleted only when its external destination exists and no
+# process has an open file below the local path. The external destination is
+# validation-only and is never deleted.
+
+set -uo pipefail
+
+CACHE_HOME="{{ .chezmoi.homeDir }}"
+EXPECTED_VOLUME_UUID="1C3ED642-8FFD-43BF-BF08-9CB49AF76676"
+EXTERNAL_VOLUME="/Volumes/ExternalHD"
+LOG_FILE="{{ .chezmoi.homeDir }}/Library/Logs/local-cache-cleanup.log"
+
+log() {
+    echo "$(/bin/date '+%Y-%m-%d %H:%M:%S') $*"
+}
+
+rotate_log() {
+    [ -f "${LOG_FILE}" ] || return 0
+    [ "$(/usr/bin/stat -f %z "${LOG_FILE}")" -lt 5242880 ] && return 0
+    /bin/cp "${LOG_FILE}" "${LOG_FILE}.1"
+    : > "${LOG_FILE}"
+}
+
+validate_external_volume() {
+    local filesystem_type mount_point volume_info volume_uuid
+
+    case "$(/sbin/mount)" in
+      *" on ${EXTERNAL_VOLUME} ("*) ;;
+      *) return 1 ;;
+    esac
+    volume_info="$(/usr/sbin/diskutil info -plist "${EXTERNAL_VOLUME}")" || return 1
+    volume_uuid="$(
+        /usr/bin/plutil -extract VolumeUUID raw -o - - <<< "${volume_info}"
+    )" || return 1
+    filesystem_type="$(
+        /usr/bin/plutil -extract FilesystemType raw -o - - <<< "${volume_info}"
+    )" || return 1
+    mount_point="$(
+        /usr/bin/plutil -extract MountPoint raw -o - - <<< "${volume_info}"
+    )" || return 1
+
+    [ "${volume_uuid}" = "${EXPECTED_VOLUME_UUID}" ] &&
+      [ "${filesystem_type}" = "apfs" ] &&
+      [ "${mount_point}" = "${EXTERNAL_VOLUME}" ]
+}
+
+path_is_below_trusted_root_without_symlinks() {
+    local current="$2"
+    local root="$1"
+
+    case "${current}" in
+      "${root}"/*) ;;
+      *) return 1 ;;
+    esac
+    [ ! -L "${root}" ] || return 1
+    while [ "${current}" != "${root}" ]; do
+        [ ! -L "${current}" ] || return 1
+        current="${current%/*}"
+    done
+}
+
+cleanup_local_cache() {
+    local external_cache="$2"
+    local local_cache="$1"
+    local open_files
+
+    # external_cache is checked for safety and availability but is never removed.
+    [ -e "${local_cache}" ] || return 0
+    if ! path_is_below_trusted_root_without_symlinks "${CACHE_HOME}" "${local_cache}"; then
+        log "Refused ${local_cache}: local path or parent is a symlink"
+        return 1
+    fi
+    if ! path_is_below_trusted_root_without_symlinks "${EXTERNAL_VOLUME}" "${external_cache}"; then
+        log "Refused ${local_cache}: external destination or parent is a symlink"
+        return 1
+    fi
+    if [ ! -d "${external_cache}" ] || [ ! -w "${external_cache}" ]; then
+        log "Skipped ${local_cache}: external destination missing or not writable"
+        return 0
+    fi
+    if ! open_files="$(/usr/sbin/lsof -Fn 2>&1)"; then
+        log "Deferred ${local_cache}: unable to verify open files"
+        return 1
+    fi
+    if [[ "${open_files}" == *"n${local_cache}"* ]]; then
+        log "Deferred ${local_cache}: cache is in use"
+        return 0
+    fi
+
+    # Revalidate immediately before deletion to narrow the mount/destination race.
+    if ! validate_external_volume ||
+      ! path_is_below_trusted_root_without_symlinks "${CACHE_HOME}" "${local_cache}" ||
+      ! path_is_below_trusted_root_without_symlinks "${EXTERNAL_VOLUME}" "${external_cache}" ||
+      [ ! -d "${external_cache}" ] || [ ! -w "${external_cache}" ]; then
+        log "Deferred ${local_cache}: safety conditions changed before deletion"
+        return 1
+    fi
+
+    if /bin/rm -rf -- "${local_cache}"; then
+        log "Removed local fallback cache ${local_cache}"
+    else
+        log "Failed to remove local fallback cache ${local_cache}"
+        return 1
+    fi
+}
+
+rotate_log
+case "$(/sbin/mount)" in
+  *" on ${EXTERNAL_VOLUME} ("*) ;;
+  *) exit 0 ;;
+esac
+if ! validate_external_volume; then
+    log "ExternalHD identity mismatch; refusing local cache cleanup"
+    exit 1
+fi
+
+status=0
+cleanup_local_cache \
+  "${CACHE_HOME}/Library/Caches/Homebrew" \
+  "${EXTERNAL_VOLUME}/Library/Caches/Homebrew" || status=1
+cleanup_local_cache \
+  "${CACHE_HOME}/Library/Caches/restic" \
+  "${EXTERNAL_VOLUME}/Library/Caches/restic" || status=1
+cleanup_local_cache \
+  "${CACHE_HOME}/.cache/uv" \
+  "${EXTERNAL_VOLUME}/.cache/uv" || status=1
+exit "${status}"

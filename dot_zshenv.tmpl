@@ -11,6 +11,12 @@ export XDG_STATE_HOME="${HOME}/.local/state"
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 {{- end }}
 
+# Large caches stored outside the system volume.
+cache_environment="${XDG_CONFIG_HOME}/environment/cache.sh"
+if [[ -r "${cache_environment}" ]]; then
+  source "${cache_environment}"
+fi
+unset cache_environment
 # Gateway that the agentcore-websearch CLI signs requests to with local AWS
 # credentials. Defined in .zshenv so the non-interactive shells an agent runs
 # commands in also see it; the CLI otherwise needs a .env in the working

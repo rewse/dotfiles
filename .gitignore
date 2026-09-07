@@ -4,6 +4,9 @@
 *.swo
 *~
 
+# Python
+*.py[cod]
+__pycache__/
 # OS
 .DS_Store
 Thumbs.db

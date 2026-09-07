@@ -1,5 +1,6 @@
 LICENSE
 README.md
+tests
 
 {{- if eq .chezmoi.os "darwin" }}
 .ssh/id_rsa
@@ -20,4 +21,9 @@ Library
 .agents/skills/github-push-via-fox
 .claude/skills/github-push-via-fox
 .kiro/skills/github-push-via-fox
+{{- end }}
+
+{{- if ne .chezmoi.hostname "youth" }}
+.local/bin/cleanup-local-cache-fallbacks
+Library/LaunchAgents/local.cleanup-local-cache-fallbacks.plist
 {{- end }}
