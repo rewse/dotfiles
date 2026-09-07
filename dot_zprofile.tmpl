@@ -55,19 +55,21 @@ export GITLAB_TOKEN="{{ onepasswordRead "op://chezmoi/jkabbr5qyohfo2osy3ffbe7guu
 # >>>
 # <<< Path Configuration
 
+typeset -U path
+
 # Local bin
 if [[ -d "${HOME}/bin" ]]; then
-  export PATH="${HOME}/bin:${PATH}"
+  path=("${HOME}/bin" $path)
 fi
 
 if [[ -d "${HOME}/.local/bin" ]]; then
-  export PATH="${HOME}/.local/bin:${PATH}"
+  path=("${HOME}/.local/bin" $path)
 fi
 
 {{ if eq .chezmoi.os "darwin" }}
 # .NET tools
 if [[ -d "${DOTNET_CLI_HOME}/tools" ]]; then
-  export PATH="${PATH}:${DOTNET_CLI_HOME}/tools"
+  path+=("${DOTNET_CLI_HOME}/tools")
 fi
 
 # Homebrew
@@ -75,7 +77,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # LM Studio CLI
 if [[ -d "${HOME}/.lmstudio/bin" ]]; then
-  export PATH="${PATH}:${HOME}/.lmstudio/bin"
+  path+=("${HOME}/.lmstudio/bin")
 fi
 
 # Node
@@ -85,19 +87,19 @@ fi
 
 # Obsidian
 if [[ -d "/Applications/Obsidian.app/Contents/MacOS" ]]; then
-  export PATH="${PATH}:/Applications/Obsidian.app/Contents/MacOS"
+  path+=("/Applications/Obsidian.app/Contents/MacOS")
 fi
 {{- end }}
 
 {{ if eq .chezmoi.hostname "7cf34ded5d65" }}
 # AIM
 if [[ -d "${HOME}/.aim/mcp-servers" ]]; then
-  export PATH="${HOME}/.aim/mcp-servers:$PATH"
+  path=("${HOME}/.aim/mcp-servers" $path)
 fi
 
 # Toolbox
 if [[ -d "${HOME}/.toolbox/bin" ]]; then
-  export PATH="${HOME}/.toolbox/bin:${PATH}"
+  path=("${HOME}/.toolbox/bin" $path)
 fi
 {{- end }}
 
@@ -112,6 +114,13 @@ fi
 {{- else if eq .chezmoi.os "linux" }}
 if [[ -f "${HOME}/.local/share/kiro-cli/shell/zprofile.post.zsh" ]]; then
   builtin source "${HOME}/.local/share/kiro-cli/shell/zprofile.post.zsh"
+fi
+{{- end }}
+
+{{ if eq .chezmoi.hostname "youth" -}}
+# Kiro's post hook can prepend Homebrew again; managed wrappers must stay first.
+if [[ -d "${HOME}/.local/bin" ]]; then
+  path=("${HOME}/.local/bin" $path)
 fi
 {{- end }}
 
