@@ -1,27 +1,99 @@
 # XDG Base Directory specification
-# Defined in .zshenv because these are the foundation every zsh instance relies
-# on, including non-login and non-interactive shells (zsh -c, scripts) that read
-# neither .zprofile nor .zshrc. Tools such as npm and python may be launched from
-# those shells and expect these variables to be set.
-export XDG_CONFIG_HOME="${HOME}/.config"
+# Shared by login, interactive, and non-interactive zsh instances.
 export XDG_CACHE_HOME="${HOME}/.cache"
+export XDG_CONFIG_HOME="${HOME}/.config"
 export XDG_DATA_HOME="${HOME}/.local/share"
 export XDG_STATE_HOME="${HOME}/.local/state"
 {{- if eq .chezmoi.os "linux" }}
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 {{- end }}
 
-# Large caches stored outside the system volume.
+# Shell defaults
+export EDITOR="vim"
+export LANG="en_US.UTF-8"
+export PAGER="less"
+
+# Tool environment
+
+# AgentCore Web Search gateway; access is controlled by IAM.
+export AGENTCORE_GATEWAY_URL="https://websearchgateway-ujegxqs0ed.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"
+
+# XDG-compliant locations for tools that default to $HOME
+export ANSIBLE_HOME="${XDG_DATA_HOME}/ansible"
+export DOTNET_CLI_HOME="${XDG_DATA_HOME}/dotnet"
+export INPUTRC="${XDG_CONFIG_HOME}/readline/inputrc"
+export IPYTHONDIR="${XDG_CONFIG_HOME}/ipython"
+export JUPYTER_CONFIG_DIR="${XDG_CONFIG_HOME}/jupyter"
+export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME}/npm/npmrc"
+
+# Node
+{{- if eq .chezmoi.os "darwin" }}
+if [[ -d "/opt/homebrew/lib/node_modules" ]]; then
+  export NODE_PATH="/opt/homebrew/lib/node_modules"
+fi
+{{- end }}
+
+# External cache environment
 cache_environment="${XDG_CONFIG_HOME}/environment/cache.sh"
 if [[ -r "${cache_environment}" ]]; then
   source "${cache_environment}"
 fi
 unset cache_environment
-# Gateway that the agentcore-websearch CLI signs requests to with local AWS
-# credentials. Defined in .zshenv so the non-interactive shells an agent runs
-# commands in also see it; the CLI otherwise needs a .env in the working
-# directory. Reachability is gated by IAM, not by knowing the URL. Recreate it
-# with the CloudFormation template in
-# https://github.com/aws-samples/sample-agentcore-websearch-agent-skill and read
-# the new value from the stack's GatewayUrl output.
-export AGENTCORE_GATEWAY_URL="https://websearchgateway-ujegxqs0ed.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"
+
+# Path configuration
+# Later host-specific prepends take precedence.
+typeset -U path
+
+# Local bin
+if [[ -d "${HOME}/bin" ]]; then
+  path=("${HOME}/bin" $path)
+fi
+
+if [[ -d "${HOME}/.local/bin" ]]; then
+  path=("${HOME}/.local/bin" $path)
+fi
+
+{{ if eq .chezmoi.os "darwin" -}}
+# .NET tools
+if [[ -d "${DOTNET_CLI_HOME}/tools" ]]; then
+  path+=("${DOTNET_CLI_HOME}/tools")
+fi
+
+# Homebrew
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# LM Studio CLI
+if [[ -d "${HOME}/.lmstudio/bin" ]]; then
+  path+=("${HOME}/.lmstudio/bin")
+fi
+
+# Obsidian
+if [[ -d "/Applications/Obsidian.app/Contents/MacOS" ]]; then
+  path+=("/Applications/Obsidian.app/Contents/MacOS")
+fi
+{{- end }}
+
+{{ if eq .chezmoi.hostname "7cf34ded5d65" -}}
+# AIM
+if [[ -d "${HOME}/.aim/mcp-servers" ]]; then
+  path=("${HOME}/.aim/mcp-servers" $path)
+fi
+
+# Toolbox
+if [[ -d "${HOME}/.toolbox/bin" ]]; then
+  path=("${HOME}/.toolbox/bin" $path)
+fi
+{{- end }}
+
+# Pager selection
+{{- if eq .chezmoi.os "darwin" }}
+if command -v bat &> /dev/null; then
+  export PAGER="bat"
+fi
+{{- else if eq .chezmoi.os "linux" }}
+if command -v batcat &> /dev/null; then
+  export PAGER="batcat"
+elif command -v bat &> /dev/null; then
+  export PAGER="bat"
+fi
+{{- end }}

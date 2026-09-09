@@ -12,6 +12,20 @@ fi
 {{- end }}
 
 # >>>
+# <<< Environment Variables
+
+# GitLab
+export GITLAB_TOKEN="{{ onepasswordRead "op://chezmoi/jkabbr5qyohfo2osy3ffbe7guu/credential" }}"
+
+# >>>
+# <<< Shell Options
+
+setopt AUTO_CD               # Change directory by typing directory name
+setopt AUTO_PUSHD            # Push directory to stack on cd
+setopt CORRECT               # Correct command spelling
+setopt PUSHD_IGNORE_DUPS     # Ignore duplicate directories in stack
+
+# >>>
 # <<< History Configuration
 
 HISTFILE="${XDG_STATE_HOME}/zsh/history"
@@ -22,29 +36,7 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 
 # >>>
-# <<< Shell Options
-
-setopt AUTO_CD               # Change directory by typing directory name
-setopt AUTO_PUSHD            # Push directory to stack on cd
-setopt PUSHD_IGNORE_DUPS     # Ignore duplicate directories in stack
-setopt CORRECT               # Correct command spelling
-
-# >>>
-# <<< Terminal Directory Notification (OSC 7)
-
-_notify_terminal_cwd() {
-  printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
-}
-chpwd_functions+=(_notify_terminal_cwd)
-precmd_functions+=(_notify_terminal_cwd)
-
-# >>>
-# <<< Prompt Configuration
-
-PS1='%n@%m:%1~%# '
-
-# >>>
-# <<< Plugins
+# <<< Completion and Plugins
 
 {{ if eq .chezmoi.os "darwin" }}
 # Add Homebrew's site-functions to fpath
@@ -107,7 +99,26 @@ bindkey -M vicmd "H" beginning-of-line
 bindkey -M vicmd "L" end-of-line
 
 # >>>
+# <<< Prompt Configuration
+
+PS1='%n@%m:%1~%# '
+
+# >>>
+# <<< Terminal Integration
+
+_notify_terminal_cwd() {
+  printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
+}
+chpwd_functions+=(_notify_terminal_cwd)
+precmd_functions+=(_notify_terminal_cwd)
+
+# >>>
 # <<< Aliases
+
+{{- if eq .chezmoi.os "linux" -}}
+# 1Password CLI
+alias opsignin='eval $(op signin)'
+{{- end }}
 
 # bat aliases
 {{- if eq .chezmoi.os "darwin" }}
@@ -123,62 +134,7 @@ elif command -v bat &> /dev/null; then
 fi
 {{- end }}
 
-# ls aliases
-{{- if eq .chezmoi.os "darwin" }}
-alias ls="gls -F --color=auto"
-alias ll="gls -lF --color=auto"
-alias la="gls -aF --color=auto"
-alias lal="gls -alF --color=auto"
-{{- else if eq .chezmoi.os "linux" }}
-alias ls="ls -F --color=auto"
-alias ll="ls -lF --color=auto"
-alias la="ls -aF --color=auto"
-alias lal="ls -alF --color=auto"
-{{- end }}
-
-# Safe operations
-alias cp="cp -i"
-alias ln="ln -i"
-alias mv="mv -i"
-alias rm="rm -i"
-
-# Navigation
-alias ..="cd .."
-alias ...="cd ../.."
-alias d="dirs -v"
-
-# Disk usage
-alias df="df -h"
-alias du="du -h"
-
-# Grep with color
-alias grep="grep --color=auto"
-
-# History
-alias h="history"
-alias hg="history | grep"
-
-# Editor
-alias vi="vim"
-alias vw="vim -R"
-alias zprofile="${EDITOR} ~/.zprofile"
-alias zshrc="${EDITOR} ~/.zshrc"
-
-{{ if eq .chezmoi.os "darwin" }}
-# GNU Coreutils
-alias date="gdate"
-alias readlink="greadlink"
-alias realpath="grealpath"
-alias sed="gsed"
-alias timeout="gtimeout"
-{{- end }}
-
-{{ if eq .chezmoi.os "linux" }}
-# 1Password CLI
-alias opsignin='eval $(op signin)'
-{{- end }}
-
-{{ if eq .chezmoi.hostname "7cf34ded5d65" }}
+{{ if eq .chezmoi.hostname "7cf34ded5d65" -}}
 # chezmoi
 alias chezmoiaddinternal="chezmoi add --source=$HOME/Documents/git/dotfiles-internal"
 alias chezmoiapplyinternal="chezmoi apply --source=$HOME/Documents/git/dotfiles-internal"
@@ -192,16 +148,65 @@ alias clr="claude --resume"
 alias co="codex"
 alias cor="codex resume"
 
+# Disk usage
+alias df="df -h"
+alias du="du -h"
+
+# Editor
+alias vi="vim"
+alias vw="vim -R"
+alias zprofile="${EDITOR} ~/.zprofile"
+alias zshrc="${EDITOR} ~/.zshrc"
+
+{{ if eq .chezmoi.os "darwin" -}}
+# GNU Coreutils
+alias date="gdate"
+alias readlink="greadlink"
+alias realpath="grealpath"
+alias sed="gsed"
+alias timeout="gtimeout"
+{{- end }}
+
+# Grep with color
+alias grep="grep --color=auto"
+
+# History
+alias h="history"
+alias hg="history | grep"
+
 # Kiro CLI
 alias k="kiro-cli chat"
 alias ka="kiro-cli chat --trust-all-tools"
 alias kar="kiro-cli chat --trust-all-tools --resume"
 alias kr="kiro-cli chat --resume"
 
+# ls aliases
+{{- if eq .chezmoi.os "darwin" }}
+alias la="gls -aF --color=auto"
+alias lal="gls -alF --color=auto"
+alias ll="gls -lF --color=auto"
+alias ls="gls -F --color=auto"
+{{- else if eq .chezmoi.os "linux" }}
+alias la="ls -aF --color=auto"
+alias lal="ls -alF --color=auto"
+alias ll="ls -lF --color=auto"
+alias ls="ls -F --color=auto"
+{{- end }}
+
+# Navigation
+alias ..="cd .."
+alias ...="cd ../.."
+alias d="dirs -v"
+
+# Safe operations
+alias cp="cp -i"
+alias ln="ln -i"
+alias mv="mv -i"
+alias rm="rm -i"
+
 # >>>
 # <<< Safe-chain Initialization
 
-# Safe-chain Zsh initialization script
 if [[ -f "${HOME}/.safe-chain/scripts/init-posix.sh" ]]; then
   builtin source "${HOME}/.safe-chain/scripts/init-posix.sh"
 fi
@@ -232,8 +237,7 @@ fi
 # >>>
 
 # >>> otty shell integration >>>
-# Added by Otty — toggle in Settings > Shell > Shell Integration.
-# Inert unless launched by Otty (it sets $OTTY_SHELL_INTEGRATION).
+# Active only when Otty provides its integration directory.
 if [ -n "$OTTY_SHELL_INTEGRATION" ] && [ -r "$OTTY_SHELL_INTEGRATION/otty-integration.zsh" ]; then
   . "$OTTY_SHELL_INTEGRATION/otty-integration.zsh"
 fi
