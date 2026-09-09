@@ -119,6 +119,7 @@ class ZshStartupTest(unittest.TestCase):
         template = ZSHENV.read_text()
 
         for line in (
+            'path=("/usr/local/bin" $path)',
             'path=("${HOME}/bin" $path)',
             'path=("${HOME}/.local/bin" $path)',
             'path+=("${DOTNET_CLI_HOME}/tools")',

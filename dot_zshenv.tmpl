@@ -44,7 +44,12 @@ unset cache_environment
 # Later host-specific prepends take precedence.
 typeset -U path
 
-# Local bin
+# System local bin
+if [[ -d "/usr/local/bin" ]]; then
+  path=("/usr/local/bin" $path)
+fi
+
+# User bin
 if [[ -d "${HOME}/bin" ]]; then
   path=("${HOME}/bin" $path)
 fi
