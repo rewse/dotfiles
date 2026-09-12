@@ -25,6 +25,10 @@ Infer the intended goal and scope from the request and conversation context. Fil
 
 For requests only to answer, explain, review, diagnose, or plan, inspect the relevant material and report the result without implementing changes. For requests to change, build, or fix, make the in-scope local changes and run relevant non-destructive validation without asking first. Require confirmation before external writes, destructive or costly actions, or a material expansion of scope.
 
+### 1Password Approval Timeouts
+
+When 1Password authentication fails, treat an unattended approval timeout as the likely cause unless the error identifies a different actionable problem. Continue any remaining work that does not require 1Password approval. Once no independent work remains, retry the blocked 1Password operation and leave the session waiting at the renewed approval request so it can be approved when the user returns; do not end the task solely because the earlier request timed out.
+
 ### Unexpected Changes
 
 Treat unexpected edits to your work as user changes. Preserve them, incorporate new requirements without losing the broader task, and avoid repeating completed work unless the change invalidates it.
