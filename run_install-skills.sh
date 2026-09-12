@@ -3,20 +3,22 @@
 
 set -uo pipefail
 
-AGENTS="--agent claude-code --agent codex --agent kiro-cli"
-AGENTS_NO_CLAUDE="--agent codex --agent kiro-cli"
+AGENTS=(--agent claude-code --agent codex --agent kiro-cli)
 
 SKILLS_DIR="$HOME/.agents/skills"
-CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+failures=0
+
+record_failure() {
+  echo "Failed to $1" >&2
+  failures=$((failures + 1))
+}
 
 install_skills() {
   local repo="$1"
   shift
   for skill in "$@"; do
-    if [ -d "$SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g < /dev/null || true
-    else
-      skills add "$repo" --skill "$skill" -g $AGENTS -y || true
+    if ! skills add "$repo" --skill "$skill" -g "${AGENTS[@]}" -y < /dev/null; then
+      record_failure "update skill: $skill"
     fi
   done
 }
@@ -25,10 +27,8 @@ install_skills_claude_only() {
   local repo="$1"
   shift
   for skill in "$@"; do
-    if [ -d "$CLAUDE_SKILLS_DIR/$skill" ]; then
-      skills update "$skill" -g < /dev/null || true
-    else
-      skills add "$repo" --skill "$skill" -g --agent claude-code -y || true
+    if ! skills add "$repo" --skill "$skill" -g --agent claude-code -y < /dev/null; then
+      record_failure "update Claude Code skill: $skill"
     fi
   done
 }
@@ -47,9 +47,15 @@ install_skills aws-samples/sample-agentcore-websearch-agent-skill agentcore-webs
 # --upgrade on every apply keeps the pinned-range deps current.
 install_skills hugohe3/ppt-master ppt-master
 PPT_MASTER_VENV="${XDG_DATA_HOME:-$HOME/.local/share}/ppt-master/venv"
-[ -d "$PPT_MASTER_VENV" ] || uv venv "$PPT_MASTER_VENV" --python 3.12
-uv pip install --python "$PPT_MASTER_VENV/bin/python" --upgrade \
-  -r "$SKILLS_DIR/ppt-master/requirements.txt"
+if [ ! -d "$PPT_MASTER_VENV" ]; then
+  uv venv "$PPT_MASTER_VENV" --python 3.12 || record_failure "create ppt-master virtual environment"
+fi
+if [ -f "$SKILLS_DIR/ppt-master/requirements.txt" ]; then
+  uv pip install --python "$PPT_MASTER_VENV/bin/python" --upgrade \
+    -r "$SKILLS_DIR/ppt-master/requirements.txt" || record_failure "update ppt-master dependencies"
+else
+  record_failure "find ppt-master requirements"
+fi
 
 install_skills_claude_only anthropics/skills pdf
 
@@ -97,8 +103,15 @@ install_skills xdevplatform/xurl xurl
 # stay valid. Installing here (rather than `chezmoi add`) keeps the skills in
 # sync with the officecli binary on every apply.
 if command -v officecli >/dev/null 2>&1; then
-  officecli skills codex < /dev/null || true
+  officecli skills codex < /dev/null || record_failure "update OfficeCLI skill"
   for skill in pptx word excel; do
-    officecli skills install "$skill" codex < /dev/null || true
+    officecli skills install "$skill" codex < /dev/null || record_failure "update OfficeCLI $skill skill"
   done
+else
+  record_failure "find officecli"
+fi
+
+if [ "$failures" -ne 0 ]; then
+  echo "$failures skill installation step(s) failed" >&2
+  exit 1
 fi
