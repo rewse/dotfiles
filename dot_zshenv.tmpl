@@ -49,6 +49,11 @@ if [[ -d "/usr/local/bin" ]]; then
   path=("/usr/local/bin" $path)
 fi
 
+# Nix
+if [[ -d "/nix/var/nix/profiles/default/bin" ]]; then
+  path=("/nix/var/nix/profiles/default/bin" $path)
+fi
+
 # User bin
 if [[ -d "${HOME}/bin" ]]; then
   path=("${HOME}/bin" $path)
