@@ -1,5 +1,9 @@
 {{- $publicRulesPattern := joinPath .chezmoi.sourceDir ".chezmoitemplates" "rules" "*.md" -}}
-{{- range glob $publicRulesPattern -}}
+# Internal Website Access
+
+When accessing Amazon internal websites through a browser, load and follow the `browser-automation` skill and connect to the user's running Google Chrome over CDP. Do not use Codex's built-in browser, because internal access depends on extensions installed in the user's Chrome profile. This restriction does not apply to dedicated MCP or API access.
+
+{{ range glob $publicRulesPattern -}}
 {{ include . }}
 {{- end }}
 {{- $internalRulesPattern := joinPath .chezmoi.homeDir "git" "dotfiles-internal" ".chezmoitemplates" "rules" "*.md" -}}
