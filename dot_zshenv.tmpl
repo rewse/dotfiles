@@ -89,6 +89,11 @@ if [[ -d "${HOME}/.aim/mcp-servers" ]]; then
   path=("${HOME}/.aim/mcp-servers" $path)
 fi
 
+# MeetNote
+if [[ -d "/Applications/MeetNote.app/Contents/MacOS" ]]; then
+  path=("/Applications/MeetNote.app/Contents/MacOS" $path)
+fi
+
 # Toolbox
 if [[ -d "${HOME}/.toolbox/bin" ]]; then
   path=("${HOME}/.toolbox/bin" $path)
