@@ -1,0 +1,24 @@
+#!/bin/bash
+# Register enforce-uv as a Claude Code PreToolUse hook. Corporate tools and
+# Otty rewrite this file, so patch it in place instead of owning the whole
+# file, and pass the file through byte for byte once the hook is present.
+
+set -euo pipefail
+
+hook_command='{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh'
+
+# Keep a trailing newline, if any, so an unchanged file stays byte-identical.
+current=$(cat; printf x)
+current=${current%x}
+
+if [[ -n "$current" ]] &&
+   jq -e --arg command "$hook_command" \
+     'any(.hooks.PreToolUse[]?.hooks[]?; .command == $command)' \
+     <<<"$current" >/dev/null; then
+  printf '%s' "$current"
+  exit 0
+fi
+
+jq --indent 2 --arg command "$hook_command" \
+  '.hooks.PreToolUse += [{matcher: "Bash", hooks: [{type: "command", command: $command}]}]' \
+  <<<"${current:-{\}}"

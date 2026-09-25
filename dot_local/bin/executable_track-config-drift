@@ -13,6 +13,7 @@ REPO="${XDG_DATA_HOME:-$HOME/.local/share}/config-drift.git"
 FILES=(
     .claude/settings.json
     .codex/config.toml
+    .codex/hooks.json
 )
 
 drift() {

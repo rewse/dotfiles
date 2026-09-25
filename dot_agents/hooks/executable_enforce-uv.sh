@@ -1,6 +1,6 @@
 #!/bin/bash
 # enforce-uv: Block pip/venv/virtualenv commands and suggest uv instead.
-# Used as a preToolUse hook for both Kiro CLI and Claude Code.
+# Used as a preToolUse hook for Claude Code, Codex, and Kiro CLI.
 
 set -euo pipefail
 
