@@ -1,2 +1,1 @@
 # False positives: example URIs/credentials in external docs
-dot_kiro/skills/agent-browser/SKILL.md
