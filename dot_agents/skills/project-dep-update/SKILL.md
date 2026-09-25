@@ -32,7 +32,7 @@ Update the following projects in `~/git` according to the procedure:
 1. Run `uv lock --upgrade --dry-run` to display packages to be updated
 2. Run `uv lock --upgrade` to update dependencies
 3. Review the updates
-4. Read `.kiro/steering/tech.md` in the project and run tests if available
+4. Run tests if available
 5. Commit the changes
 
 ## 5. npm Project
@@ -40,7 +40,7 @@ Update the following projects in `~/git` according to the procedure:
 1. Run `npm outdated` to display packages to be updated
 2. Run `npm update` to update dependencies
 3. Run `npm outdated` again to verify the updates
-4. Read `.kiro/steering/tech.md` in the project and run tests if available
+4. Run tests if available
 5. Commit the changes
 
 ## 6. git push
