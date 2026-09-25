@@ -35,7 +35,7 @@ install_skills_claude_only() {
 
 # Anthropic Skills
 install_skills anthropics/skills \
-  canvas-design doc-coauthoring frontend-design mcp-builder skill-creator
+  canvas-design doc-coauthoring frontend-design mcp-builder
 
 # AWS AgentCore Web Search. The skill drives the agentcore-websearch CLI, which
 # ansible installs via uv; the gateway URL comes from AGENTCORE_GATEWAY_URL.
@@ -69,12 +69,12 @@ install_skills firecrawl/anydoc convert-documents-to-markdown
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
 
-# Matt Pocock Skills
-install_skills mattpocock/skills grilling
-
-# Obra Superpowers
-install_skills obra/superpowers \
-  brainstorming subagent-driven-development writing-plans
+# Obra Superpowers. Install every skill so new upstream skills arrive on the
+# next apply; the skills cross-reference each other, so a partial set leaves
+# dangling references. diagnosing-superpowers only debugs the plugin itself.
+install_skills obra/superpowers '*'
+skills remove -g -y diagnosing-superpowers < /dev/null ||
+  record_failure "remove skill: diagnosing-superpowers"
 
 # oharu121 Commands Skills Gems
 install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
