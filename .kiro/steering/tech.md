@@ -13,10 +13,8 @@ Keep this file limited to repository-specific constraints that cannot be inferre
 
 | Asset | Source and distribution |
 |---|---|
-| Custom commands | Author in `dot_agents/commands/`. The existing directory symlinks expose them to Claude, Codex, and Kiro; do not add per-command symlinks. Include `description` frontmatter and `argument-hint` only when the command takes arguments. |
 | Custom rules | Author in `.chezmoitemplates/rules/`, render through `dot_agents/rules/`, symlink into Claude and Kiro, and include in `dot_codex/AGENTS.md.tmpl`. |
-| Custom skills | Author in `dot_agents/skills/<name>/SKILL.md` and add directory symlinks for Claude and Kiro. Codex discovers `$HOME/.agents/skills` directly, so do not add skills to `dot_codex/AGENTS.md.tmpl`. The `description` frontmatter must name every intended trigger context. |
-| External commands | Configure selected files in `dot_agents/.chezmoiexternal.yaml`; they deploy under `commands/<source>/` and use namespaced command names. |
+| Custom skills | Write user-invoked workflows as skills too, not as commands. Author in `dot_agents/skills/<name>/SKILL.md` and add directory symlinks for Claude and Kiro. Codex discovers `$HOME/.agents/skills` directly, so do not add skills to `dot_codex/AGENTS.md.tmpl`. The `description` frontmatter must name every intended trigger context. |
 | External rules | Configure files in `dot_agents/.chezmoiexternal.yaml`, then symlink them into Claude and Kiro and include them in `dot_codex/AGENTS.md.tmpl`. |
 | External skills | Add `install_skills <owner/repo> <skill>` to `run_install-skills.sh`. Put any idempotent post-install patch immediately after its install call. |
 
