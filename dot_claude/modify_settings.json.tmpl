@@ -1,24 +1,33 @@
 #!/bin/bash
-# Register enforce-uv as a Claude Code PreToolUse hook. Corporate tools and
-# Otty rewrite this file, so patch it in place instead of owning the whole
-# file, and pass the file through byte for byte once the hook is present.
+# Register this repository's Claude Code hooks. Corporate tools and Otty
+# rewrite this file, so patch it in place instead of owning the whole file,
+# and pass the file through byte for byte once every hook is present.
 
 set -euo pipefail
 
-hook_command='{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh'
+enforce_uv='{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh'
+japanese_guard='{{ .chezmoi.homeDir }}/.agents/hooks/japanese-guard.py'
 
 # Keep a trailing newline, if any, so an unchanged file stays byte-identical.
 current=$(cat; printf x)
 current=${current%x}
 
 if [[ -n "$current" ]] &&
-   jq -e --arg command "$hook_command" \
-     'any(.hooks.PreToolUse[]?.hooks[]?; .command == $command)' \
-     <<<"$current" >/dev/null; then
+   jq -e --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" '
+     any(.hooks.PreToolUse[]?.hooks[]?; .command == $enforce_uv) and
+     any(.hooks.Stop[]?.hooks[]?; .command == $japanese_guard)
+   ' <<<"$current" >/dev/null; then
   printf '%s' "$current"
   exit 0
 fi
 
-jq --indent 2 --arg command "$hook_command" \
-  '.hooks.PreToolUse += [{matcher: "Bash", hooks: [{type: "command", command: $command}]}]' \
-  <<<"${current:-{\}}"
+jq --indent 2 --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" '
+  def has_hook(event; command):
+    any(.hooks[event][]?.hooks[]?; .command == command);
+  if has_hook("PreToolUse"; $enforce_uv) then . else
+    .hooks.PreToolUse += [{matcher: "Bash", hooks: [{type: "command", command: $enforce_uv}]}]
+  end
+  | if has_hook("Stop"; $japanese_guard) then . else
+    .hooks.Stop += [{hooks: [{type: "command", command: $japanese_guard}]}]
+  end
+' <<<"${current:-{\}}"

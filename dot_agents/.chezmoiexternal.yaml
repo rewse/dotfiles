@@ -1,5 +1,14 @@
 # External agent resources managed by chezmoi
 
+## Hooks
+
+# Claude Code Japanese Guard (https://github.com/minorun365/claude-code-japanese-guard)
+hooks/japanese-guard.py:
+  type: file
+  url: https://raw.githubusercontent.com/minorun365/claude-code-japanese-guard/main/hooks/japanese-guard.py
+  executable: true
+  refreshPeriod: 168h
+
 ## Skills not compatible with npx skills
 
 # initMAX Zabbix AI Skills (https://github.com/initMAX/zabbix-ai-skills)
