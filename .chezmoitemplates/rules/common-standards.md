@@ -23,7 +23,7 @@ Infer the intended goal and scope from the request and conversation context. Fil
 
 ### Action and Approval Boundaries
 
-For requests only to answer, explain, review, diagnose, or plan, inspect the relevant material and report the result without implementing changes. For requests to change, build, or fix, make the in-scope local changes and run relevant non-destructive validation without asking first. Require confirmation before external writes, destructive or costly actions, or a material expansion of scope.
+For requests only to answer, explain, review, diagnose, or plan, inspect the relevant material and report the result without implementing changes. Require confirmation before external writes, destructive or costly actions, or a material expansion of scope.
 
 ### 1Password Approval Timeouts
 
