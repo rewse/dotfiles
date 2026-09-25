@@ -151,7 +151,7 @@ Run:
 
 ```bash
 git -P diff --check
-git -P diff -- run_install-skills.sh docs/superpowers/specs/2026-09-12-update-installed-skills-design.md docs/superpowers/plans/2026-09-12-update-installed-skills.md 
+git -P diff -- run_install-skills.sh docs/superpowers/specs/2026-09-12-update-installed-skills-design.md docs/superpowers/plans/2026-09-12-update-installed-skills.md
 git -P status --short
 ```
 
