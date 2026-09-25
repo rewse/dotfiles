@@ -22,7 +22,7 @@
 
 **Files:**
 - Modify: `run_install-skills.sh`
-- Reference: `.kiro/specs/update-installed-skills/design.md`
+- Reference: `docs/superpowers/specs/2026-09-12-update-installed-skills-design.md`
 
 **Interfaces:**
 - Consumes: `install_skills <owner/repo> <skill>...` と `install_skills_claude_only <owner/repo> <skill>...`
@@ -151,7 +151,7 @@ Run:
 
 ```bash
 git -P diff --check
-git -P diff -- run_install-skills.sh .kiro/specs/update-installed-skills/
+git -P diff -- run_install-skills.sh docs/superpowers/specs/2026-09-12-update-installed-skills-design.md docs/superpowers/plans/2026-09-12-update-installed-skills.md 
 git -P status --short
 ```
 

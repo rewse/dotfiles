@@ -255,7 +255,7 @@ Expected: 設計書、計画書、共通description 6件、共通本文6件、Cl
 - [ ] **Step 6: レビュー承認後にコミットする**
 
 ```bash
-git -P add -- .kiro/specs/codex-shared-agents .chezmoitemplates/agents dot_claude/agents dot_kiro/agents dot_codex/agents
+git -P add -- docs/superpowers/specs/2026-08-24-codex-shared-agents-design.md docs/superpowers/plans/2026-08-24-codex-shared-agents.md .chezmoitemplates/agents dot_claude/agents dot_kiro/agents dot_codex/agents
 git -P commit -m "feat(agents): share agent prompts across clients"
 ```
 

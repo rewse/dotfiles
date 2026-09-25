@@ -186,8 +186,8 @@ Expected: exit 0。
 ### Task 4: 全差分をレビューする
 
 **Files:**
-- Verify: `.kiro/specs/xdg-git-hooks/design.md`
-- Verify: `.kiro/specs/xdg-git-hooks/tasks.md`
+- Verify: `docs/superpowers/specs/2026-08-24-xdg-git-hooks-design.md`
+- Verify: `docs/superpowers/plans/2026-08-24-xdg-git-hooks.md`
 - Verify: `dot_config/git/config.tmpl`
 - Verify: `dot_config/git/hooks/executable_pre-commit`
 - Verify deleted: `dot_git-hooks/executable_pre-commit`
@@ -216,6 +216,6 @@ Expected: 設計書、計画書、Git config、hook の移動だけが差分に�
 - [ ] **Step 3: レビュー承認後にコミットする**
 
 ```bash
-git -P add -- .kiro/specs/xdg-git-hooks/design.md .kiro/specs/xdg-git-hooks/tasks.md dot_config/git/config.tmpl dot_config/git/hooks/executable_pre-commit dot_git-hooks/executable_pre-commit
+git -P add -- docs/superpowers/specs/2026-08-24-xdg-git-hooks-design.md docs/superpowers/plans/2026-08-24-xdg-git-hooks.md dot_config/git/config.tmpl dot_config/git/hooks/executable_pre-commit dot_git-hooks/executable_pre-commit
 git -P commit -m "fix(git): move global hooks to XDG config"
 ```
