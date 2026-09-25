@@ -1,8 +1,9 @@
 ---
-description: Update dependencies for the personal projects in ~/git, then push and verify GitHub Actions.
+name: project-dep-update
+description: Update dependencies for the user's personal projects in ~/git, including OSV-Scanner, uv, and npm dependencies, then push the changes and verify GitHub Actions. Use when the user asks to update, refresh, or maintain dependencies across these personal projects or invokes project-dep-update directly.
 ---
 
-# Project Dependency Update Prompt
+# Project Dependency Update
 
 Update the following projects in `~/git` according to the procedure:
 
@@ -44,7 +45,7 @@ Update the following projects in `~/git` according to the procedure:
 
 ## 6. git push
 
-Execute this step after completing step 3 or 4 for all projects:
+Execute this step after completing step 4 or 5 for all projects:
 
 1. Run `git push` in all projects to push the changes
 2. Wait 1 minute
@@ -52,6 +53,6 @@ Execute this step after completing step 3 or 4 for all projects:
 
 ## Notes
 
-- You MUST handle breaking changes appropriately
-- You MUST follow Conventional Commits (e.g., `chore: update dependencies`)
-- If tests fail, you MUST explain the error and ask whether it's acceptable to ignore the error
+- When an update introduces a breaking change, adapt the code to it before committing
+- Follow Conventional Commits (e.g., `chore: update dependencies`)
+- If tests fail, explain the error and ask whether it's acceptable to ignore it

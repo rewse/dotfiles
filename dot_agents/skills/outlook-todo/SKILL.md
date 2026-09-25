@@ -1,17 +1,17 @@
 ---
-description: Create a Microsoft To-Do (Outlook ToDo) task from a TickTick quick-add one-liner.
-argument-hint: "<task in TickTick quick-add syntax, e.g. Review Q3 report ^Work #finance !high tomorrow 5pm>"
+name: outlook-todo
+description: Create a Microsoft To-Do (Outlook To Do) task from a one-liner in TickTick quick-add syntax, such as "Review Q3 report ^Work #finance !high tomorrow 5pm". Use when the user asks to add a task, to-do, or reminder to Microsoft To-Do or Outlook, or invokes outlook-todo directly.
 ---
 
 # outlook-todo
 
-Parse a TickTick quick-add one-liner from `$ARGUMENTS` and create a Microsoft To-Do task via the `aws-outlook-mcp` MCP server (called through `mcporter`).
+Parse the user's one-liner in TickTick quick-add syntax and create a Microsoft To-Do task via the `aws-outlook-mcp` MCP server (called through `mcporter`).
 
-If `$ARGUMENTS` is empty, ask the user for the one-liner and stop.
+If the user gave no task text, ask for the one-liner and stop.
 
 ## Parse the TickTick quick-add syntax
 
-Extract these tokens from `$ARGUMENTS`. Each token may appear anywhere in the line; remove matched tokens from the text, and the remaining words become the task title.
+Extract these tokens from the one-liner. Each token may appear anywhere in the line; remove matched tokens from the text, and the remaining words become the task title.
 
 - `^list` — target list. Resolve to a Microsoft To-Do `listId` (see below).
 - `!priority` — `!high`, `!medium`, `!low`, or `!none`. Map to To-Do `importance`:
@@ -29,7 +29,7 @@ Set `title` to the leftover text after removing all tokens above. Rewrite it in 
 
 ### Person names → alias hashtag
 
-When a person's name appears in `$ARGUMENTS`, resolve their Amazon alias via Phonetool:
+When a person's name appears in the one-liner, resolve their Amazon alias via Phonetool:
 
 ```bash
 mcporter call builder-mcp.InternalSearch query="<person name>" domain=PHONETOOL 2>&1 | cat

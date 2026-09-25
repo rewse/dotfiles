@@ -17,10 +17,12 @@ Library
 
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}
 .local/bin/check-midway-key
-.agents/commands/outlook-todo.md
 .agents/skills/github-push-via-fox
+.agents/skills/outlook-todo
 .claude/skills/github-push-via-fox
+.claude/skills/outlook-todo
 .kiro/skills/github-push-via-fox
+.kiro/skills/outlook-todo
 {{- end }}
 
 {{- if ne .chezmoi.hostname "youth" }}
