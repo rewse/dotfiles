@@ -84,8 +84,11 @@ chezmoi update
 .
 ├── .chezmoitemplates/            # Shared templates (can be included from other templates)
 │   └── rules/                    # Shared AI agent rule templates
-├── dot_agents/                   # Shared AI agent configurations (rules, skills)
+├── AGENTS.md                     # Repository rules for AI agents (not deployed)
+├── docs/superpowers/             # Design specs and implementation plans (not deployed)
+├── dot_agents/                   # Shared AI agent configurations (hooks, rules, skills)
 │   ├── .chezmoiexternal.yaml     # External skill sources not compatible with npx skills
+│   ├── hooks/                    # Hook scripts shared by Claude Code, Codex, and Kiro
 │   ├── rules/                    # Shared AI agent rule templates
 │   └── skills/                   # Custom skills for AI agents
 ├── dot_claude/                   # Claude Code settings and configurations

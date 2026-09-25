@@ -1,5 +1,7 @@
+AGENTS.md
 LICENSE
 README.md
+docs
 tests
 
 {{- if eq .chezmoi.os "darwin" }}
