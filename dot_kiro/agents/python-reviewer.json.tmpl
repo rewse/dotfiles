@@ -1,6 +1,6 @@
 {
   "name" : "python-reviewer",
-  "description" : {{ includeTemplate "agents/description/python-reviewer.txt" . | trim | toJson }},
+  "description" : {{ includeTemplate "agents/description/python-reviewer.txt" . | trim | toJson | replace "\\u003c" "<" | replace "\\u003e" ">" | replace "\\u0026" "&" }},
   "mcpServers" : {
     "creds-agent" : {
       "command" : "aim",
@@ -12,7 +12,7 @@
   "resources" : [ ],
   "hooks" : [ ],
   "useLegacyMcpJson" : false,
-  "prompt" : {{ includeTemplate "agents/body/python-reviewer.md" . | trim | toJson }},
+  "prompt" : {{ includeTemplate "agents/body/python-reviewer.md" . | trim | toJson | replace "\\u003c" "<" | replace "\\u003e" ">" | replace "\\u0026" "&" }},
   "permissions" : {
     "rules" : [ {
       "capability" : "fs_read",

@@ -1,6 +1,6 @@
 {
   "name" : "refactor-cleaner",
-  "description" : {{ includeTemplate "agents/description/refactor-cleaner.txt" . | trim | toJson }},
+  "description" : {{ includeTemplate "agents/description/refactor-cleaner.txt" . | trim | toJson | replace "\\u003c" "<" | replace "\\u003e" ">" | replace "\\u0026" "&" }},
   "mcpServers" : {
     "creds-agent" : {
       "command" : "aim",
@@ -12,7 +12,7 @@
   "resources" : [ ],
   "hooks" : [ ],
   "useLegacyMcpJson" : false,
-  "prompt" : {{ includeTemplate "agents/body/refactor-cleaner.md" . | trim | toJson }},
+  "prompt" : {{ includeTemplate "agents/body/refactor-cleaner.md" . | trim | toJson | replace "\\u003c" "<" | replace "\\u003e" ">" | replace "\\u0026" "&" }},
   "permissions" : {
     "rules" : [ {
       "capability" : "fs_read",

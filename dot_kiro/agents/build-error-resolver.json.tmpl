@@ -1,6 +1,6 @@
 {
   "name" : "build-error-resolver",
-  "description" : {{ includeTemplate "agents/description/build-error-resolver.txt" . | trim | toJson }},
+  "description" : {{ includeTemplate "agents/description/build-error-resolver.txt" . | trim | toJson | replace "\\u003c" "<" | replace "\\u003e" ">" | replace "\\u0026" "&" }},
   "mcpServers" : {
     "creds-agent" : {
       "command" : "aim",
@@ -12,7 +12,7 @@
   "resources" : [ ],
   "hooks" : [ ],
   "useLegacyMcpJson" : false,
-  "prompt" : {{ includeTemplate "agents/body/build-error-resolver.md" . | trim | toJson }},
+  "prompt" : {{ includeTemplate "agents/body/build-error-resolver.md" . | trim | toJson | replace "\\u003c" "<" | replace "\\u003e" ">" | replace "\\u0026" "&" }},
   "permissions" : {
     "rules" : [ {
       "capability" : "fs_read",
