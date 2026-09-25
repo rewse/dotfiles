@@ -130,8 +130,9 @@ Choose the type by the intent of the change, not by the mechanism. Deleting a fi
 
 ## Planning File Standards
 
-- Store requirements, design, and implementation plans under `.kiro/specs/<feature-name>/` as `requirements.md`, `design.md`, and `tasks.md`, respectively.
+- Store design specs under `docs/superpowers/specs/` and implementation plans under `docs/superpowers/plans/`, named with a `YYYY-MM-DD-` date prefix.
 - Use Japanese plain form (常体).
+- Commit a spec or plan after saving it, without asking first.
 - Prefer Mermaid for architecture diagrams.
 
 ## Rule Authoring Standards
