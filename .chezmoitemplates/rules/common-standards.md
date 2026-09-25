@@ -101,6 +101,10 @@ Read a document with `npx -y @firecrawl/anydoc <file>`, which converts Office, O
 
 On macOS, use `mdfind` for file searches. Spotlight indexing makes broad paths like `mdfind -onlyin ~` fast and acceptable.
 
+### Interactive File Aliases
+
+The shell aliases `cp`, `ln`, `mv`, and `rm` to their `-i` forms, so a non-interactive call prompts before overwriting or deleting, reads no answer, and silently leaves the target unchanged. Run them as `command cp`, `command ln`, `command mv`, and `command rm` to bypass the alias; adding `-f` is not enough, because `cp -i -f` still prompts in this shell.
+
 ### Pager Prevention
 
 When a CLI command might invoke a pager, pipe its output to `cat` or supply a flag such as `--no-pager`; an interactive pager hangs the process indefinitely.
