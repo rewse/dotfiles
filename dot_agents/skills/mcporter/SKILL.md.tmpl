@@ -1,7 +1,7 @@
 ---
 name: mcporter
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
-description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks, query Zabbix or UniFi, or work with Amazon internal systems — Amazon Quick (QuickSight) dashboards and datasets, AtoZ HR data, the AWS Agent Registry Hub catalog of shared MCP servers, skills, and agents registered across AWS, AWS Insights customer intelligence and business metrics, builder tools (code reviews, pipelines, ticketing, Brazil, Apollo), Emburse Enterprise (Chrome River) expense reports and receipts, GitLab (gitlab.aws.dev), Highspot/KnowledgeMine, Outlook mail and calendar, Pippin design docs, Quip and Microsoft Loop, Salesforce/CRM (Sentral), SharePoint and OneDrive, Slack, SpecReq Sales/Enterprise Support requests, and the Specialist Super Agent for AWS technical expertise — even if they don't mention "mcporter" explicitly.
+description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks, query Zabbix or UniFi, or work with Amazon internal systems — Amazon Quick (QuickSight) dashboards and datasets, AtoZ HR data, the AWS Agent Registry Hub catalog of shared MCP servers, skills, and agents registered across AWS, AWS Insights customer intelligence and business metrics, builder tools (code reviews, pipelines, ticketing, Brazil, Apollo), Chorus documents and spreadsheets, Emburse Enterprise (Chrome River) expense reports and receipts, GitLab (gitlab.aws.dev), Highspot/KnowledgeMine, Outlook mail and calendar, Pippin design docs, Quip and Microsoft Loop, Salesforce/CRM (Sentral), SharePoint and OneDrive, Slack, SpecReq Sales/Enterprise Support requests, and the Specialist Super Agent for AWS technical expertise — even if they don't mention "mcporter" explicitly.
 {{- else }}
 description: Interact with external services using mcporter CLI, which connects to MCP servers. Use when the user wants to automate a browser via Chrome DevTools, create or view draw.io diagrams, control Home Assistant devices and automations, manage TickTick tasks and projects, query Zabbix monitoring, or manage a UniFi network — even if they don't mention "mcporter" explicitly.
 {{- end }}
@@ -42,6 +42,7 @@ The following is for reference only. Trust the output of `mcporter list` for the
 - `aws-insights-mcp` — AWS Insights customer intelligence and business metrics: customer deep dives (revenue, pipeline, engagements, SIFT), performance metrics (trends, rankings, segments, regions), specialist/partner data, text-to-SQL against foundational datasets, and QuickSight dashboard discovery and Q&A
 - `aws-outlook-mcp` — Outlook email (read, search, send, reply, draft, attachments) and calendar (view, create, book rooms, check availability)
 - `builder-mcp` — Internal dev tools: code reviews, pipelines, ticketing, oncall, Brazil builds, Apollo deployments, Quip, internal search, SAS risks, internal websites, acronym lookup, Mechanic tools, remote test runs, and workspace/Git info
+- `chorus-mcp` — Chorus documents and spreadsheets: read, search, write, and comment on docs, and organize docs and folders (rename, move, archive, restore, templates)
 - `emburse-mcp` — Emburse Enterprise (Chrome River) expense management: expense reports (list, get, create draft, delete), expense line items (add, update, delete), expense types and entry-form field discovery, receipt attachment, comments, and card-feed transactions. Authenticates via Midway/AEA
 - `hs-kmine-mcp` — Proxy for AWS Highspot and KnowledgeMine: natural-language content search and LLM-powered instant answers across the Highspot/KnowledgeMine library, with optional spot ID filtering and personalized results
 - `loop-mcp` — Microsoft Loop page reading: fetch and extract content from Loop pages as markdown, supporting both Loop app URLs (loop.cloud.microsoft) and SharePoint-hosted Loop URLs
@@ -57,7 +58,7 @@ Run `--help` to check the latest usage and available options, then decide how to
 
 ```bash
 mcporter --help 2>&1 | cat
-mcporter list <server> --schema 2>&1 | grep -B20 -A20 "<keyword1>" | grep -B20 -A20 "<keyword2>" | cat
+mcporter list <server> --schema 2>&1 | rg -B20 -A20 "<keyword1>" | rg -B20 -A20 "<keyword2>"
 mcporter call <server>.<tool> [key=value ...] 2>&1 | cat
 ```
 
@@ -65,7 +66,7 @@ mcporter call <server>.<tool> [key=value ...] 2>&1 | cat
 
 - Always pipe output to `cat` to prevent pager from hanging the AI process
 - Run searches across multiple servers in parallel
-- When looking up tools with `--schema`, chain multiple `grep` commands to AND-search by keywords (e.g., `grep -B20 -A20 "room" | grep -B20 -A20 "booking"`). A single keyword often matches too many tools and wastes context
+- When looking up tools with `--schema`, chain multiple `rg` commands to AND-search by keywords (e.g., `rg -B20 -A20 "room" | rg -B20 -A20 "booking"`). A single keyword often matches too many tools and wastes context
 - When creating `ticktick` tasks, omit `startDate` and `dueDate` time components unless the user explicitly specifies a time. Use date-only values (e.g., `2026-06-08`) to avoid unnecessary reminders.
 - When creating tasks in `ticktick` or `aws-outlook-mcp`, write titles in English using imperative mood (e.g., "Review PR feedback", "Submit expense report").
 - `unifi-network` uses a two-step workflow: call `unifi_tool_index` to discover tools, then `unifi_execute` to run them. Use parentheses syntax: `mcporter call 'unifi-network.unifi_execute(tool: "unifi_list_clients")'`
