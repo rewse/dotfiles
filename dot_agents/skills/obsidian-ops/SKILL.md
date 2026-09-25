@@ -1,6 +1,6 @@
 ---
 name: obsidian-ops
-description: Guide for operating Obsidian vault using the `obsidian` command. Use when the user wants to read, search, create, or manage notes in Obsidian. Trigger when the user mentions "obsidian", "vault", "note", "handover", "ノート", "メモ", "引継書", "Obsidian に書いて", "ノートを作って", "メモを残して", "ノートを探して", "ノートを読んで", or any task involving reading, writing, searching, or organizing notes. Even if the user doesn't explicitly say "Obsidian", trigger this skill when they ask to "write a memo", "save this as a note", "look up my notes", "記録しておいて", "あとで見返せるようにして", "ナレッジベースに追加", "これメモして", "保存しておいて", "引き継ぎ資料作って", or similar note-taking requests. Also trigger when the user wants to preserve information for later reference, document something important, organize their thoughts in a structured way, or search through their personal knowledge base.
+description: Guide for operating the Obsidian vault using the `obsidian` command. Use when the user wants to read, search, create, append to, or organize notes, memos, or handover documents (ノート, メモ, 引継書), or to save information to or look it up in their personal knowledge base for later reference, even if they don't say "Obsidian".
 ---
 
 # Obsidian Operation Guide
@@ -14,21 +14,17 @@ This skill provides the workflow and rules for interacting with an Obsidian vaul
 - Default vault path: `$HOME/Obsidian/vault`
   - The vault might be outside the workspace. Prefer the `obsidian` command to file tools (`read`, `write`, etc.) that might not have access it.
 
-## IMPORTANT: First Command Rule
+## First Command
 
-Run `obsidian help` before the first `obsidian` command in every session. This ensures you have the latest command syntax and available operations - the CLI may have been updated since the skill was written, and this prevents using outdated or incorrect commands.
+Run `obsidian help` once per session before the first `obsidian` command. The CLI changes between versions, so the syntax below may be out of date.
 
 ## Typical Workflows
 
 ### Read Existing Note (Unique Name)
 
-**Pre-check**: Confirm `obsidian help` has been executed in this session
-
 1. `obsidian read file=<name>`
 
 ### Read Existing Note (Search Required)
-
-**Pre-check**: Confirm `obsidian help` has been executed in this session
 
 1. `obsidian search query=<text>` - Full-text search
 2. If no results or too many results, try narrowing:
@@ -44,8 +40,6 @@ Input: "前に書いたAWSの設定に関するノートを探して"
 3. `obsidian read path="3 Notes/AWS Site-to-Site VPN Troubleshooting 2026-02-27.md"`
 
 ### Create New Note
-
-**Pre-check**: Confirm `obsidian help` has been executed in this session
 
 1. `obsidian files folder="8 Templates"` - List templates
 2. `obsidian read file=<template-name>` - Choose the best suitable template

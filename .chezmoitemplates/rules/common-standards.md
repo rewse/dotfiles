@@ -39,7 +39,7 @@ Run the smallest meaningful checks appropriate to the work. Broaden or repeat va
 
 ### Progress and Results
 
-Report results rather than narrating routine actions. Give an interim update only when something important is found or the direction changes. Lead the final response with the conclusion, followed by the necessary evidence, any material caveat, and the next action when one exists. Omit introductions, repetition, generic reassurance, and optional background.
+Give an interim update when something important is found or the direction changes. Lead the final response with the conclusion, followed by the necessary evidence, any material caveat, and the next action when one exists. Omit introductions, repetition, generic reassurance, and optional background.
 
 ### Corrections
 

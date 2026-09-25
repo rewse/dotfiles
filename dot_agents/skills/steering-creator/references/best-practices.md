@@ -72,12 +72,7 @@ Pick one term for each concept and use it everywhere. Inconsistency forces the A
 
 ### Choosing between natural language and RFC 2119 style
 
-Both approaches work. Choose based on the density of rules:
-
-- Few rules (under 10): Natural language reads better and conveys reasoning naturally
-- Many rules (10+): RFC 2119 keywords (MUST, SHOULD, MAY) help the AI quickly parse priority levels
-
-When using RFC 2119 style, maintain a clear hierarchy:
+Default to natural language at normal volume with the reason beside each rule. Current models follow instructions closely and literally, so capitalized keywords and emphasis over-apply: an emphasized rule gets enforced in situations it was never meant for. Use RFC 2119 keywords (MUST, SHOULD, MAY) only when the file needs explicit priority levels, and then keep a clear hierarchy:
 - MUST / MUST NOT: Non-negotiable rules. Violations are always wrong.
 - SHOULD / SHOULD NOT: Strong recommendations. Exceptions exist but need justification.
 - MAY: Acceptable options. The AI can choose based on context.
@@ -130,7 +125,7 @@ Rules and examples for topic 1.
 
 ### Keep files concise
 
-Every line competes for the AI's attention. Shorter files are more likely to be fully processed and followed. If a file grows large, consider whether it's covering too many domains or including unnecessary detail. There's no hard limit, but if you find yourself scrolling through a steering file, it's probably trying to do too much.
+Length itself is not the problem; outdated or redundant instructions are. Cut rules the AI already follows by default, but keep context only the author knows (audience, environment facts, constraints and their reasons), because a file stripped of context produces generic output. If a file grows large, check whether it covers too many domains.
 
 ### Avoid time-sensitive content
 

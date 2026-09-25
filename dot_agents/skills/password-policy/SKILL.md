@@ -33,32 +33,9 @@ Password strength requirements vary based on risk level and authentication facto
 
 ## Workflow
 
-When a user asks about password requirements:
+The recommendation depends on the Authentication Assurance Level (AAL1: single-factor, AAL2: multi-factor, AAL3: multi-factor with a phishing-resistant authenticator), so establish the facts that determine it: the account or service type, whether it supports MFA, whether the environment is regulated, any requirements the provider imposes, and, for activation secrets, whether input is numeric-only. Ask only for what the request leaves open.
 
-1. **Understand the context**: Ask clarifying questions to determine:
-   - What type of account or service is this for?
-   - Does it support multi-factor authentication?
-   - Is it a high-security or regulated environment?
-   - Are there any specific requirements from the service provider?
-   - For activation secrets: Is it numeric-only or does it accept alphanumeric input?
-
-2. **Determine AAL level**: Based on the context, identify the appropriate Authentication Assurance Level
-   - AAL1: Single-factor authentication
-   - AAL2: Multi-factor authentication
-   - AAL3: High-security with phishing-resistant authenticator
-
-3. **Consult references**:
-   - references/nist-requirements.md for NIST guidelines
-   - references/entropy-calculation.md for entropy calculations
-
-4. **Compare options** based on:
-   - NIST minimum length requirements
-   - Entropy strength (bits)
-   - Usability (memorability, typing ease, auto-fill availability)
-
-5. **Recommend 1Password settings**: Use references/1password-options.md to suggest specific configuration
-
-6. **Explain rationale**: Provide entropy comparison, NIST compliance status, and usability considerations
+Base the comparison on NIST minimum length, entropy in bits, and usability (memorability, typing ease, auto-fill availability), using references/nist-requirements.md and references/entropy-calculation.md. Recommend concrete 1Password settings from references/1password-options.md, and give the entropy comparison, NIST compliance status, and usability trade-off behind the choice.
 
 ## Common Scenarios
 
@@ -91,7 +68,6 @@ When a user asks about password requirements:
 
 **Recommendation**: Use Smart Password for convenience, or Memorable Password (5 words) if you need to type it occasionally.
 
-**Example**: "For your blog account, I recommend Smart Password (67-68 bits entropy) or a Memorable Password with 5 words (70.5 bits). Both exceed NIST's 15-character minimum and provide strong security."
 
 ### Multi-Factor Authentication (AAL2)
 **Use case**: Financial services, email, work accounts, accounts with personal information
@@ -122,7 +98,6 @@ When a user asks about password requirements:
 
 **Recommendation**: Use Smart Password for best balance, or Memorable Password (4 words) if you need to type it on multiple devices.
 
-**Example**: "For your bank account with 2FA, I recommend Smart Password (67-68 bits) or a Memorable Password with 4 words (56.4 bits). With MFA enabled, even 4 words provides adequate security while being easier to type on your phone."
 
 ### High-Security Authentication (AAL3)
 **Use case**: Government systems, high-value financial accounts, enterprise systems
@@ -153,7 +128,6 @@ When a user asks about password requirements:
 
 **Recommendation**: Use Smart Password or Random Password (16+ chars) for maximum security. Use Memorable Password (6 words) only if you must type it frequently without auto-fill.
 
-**Example**: "For your enterprise VPN with hardware token, I recommend Smart Password (67-68 bits) or Random Password with 16 characters (104.8 bits). If you need to type it on secure terminals without auto-fill, use a Memorable Password with 6 words (84.6 bits + separators)."
 
 ### Activation Secrets (PINs for multi-factor authenticators)
 **Use case**: Unlocking hardware tokens, activating authenticators
@@ -182,7 +156,6 @@ When a user asks about password requirements:
 
 The physical possession of the hardware token provides the primary security factor.
 
-**Example**: "For your YubiKey PIN, I recommend a 6-8 digit PIN Code (19.9-26.6 bits) if it's numeric-only. If it accepts letters, use a Memorable Password with 2-3 words (28.2-42.3 bits) for better security while staying easy to memorize."
 
 ## References
 
