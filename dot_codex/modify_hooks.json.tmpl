@@ -21,4 +21,4 @@ fi
 
 jq --indent 2 --arg command "$hook_command" \
   '.hooks.PreToolUse += [{matcher: "^Bash$", hooks: [{type: "command", command: $command}]}]' \
-  <<<"${current:-{\}}"
+  <<<"${current:-"{}"}"

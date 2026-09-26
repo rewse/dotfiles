@@ -30,4 +30,4 @@ jq --indent 2 --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_gua
   | if has_hook("Stop"; $japanese_guard) then . else
     .hooks.Stop += [{hooks: [{type: "command", command: $japanese_guard}]}]
   end
-' <<<"${current:-{\}}"
+' <<<"${current:-"{}"}"
