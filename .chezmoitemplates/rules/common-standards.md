@@ -132,6 +132,10 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 
 Choose the type by the intent of the change, not by the mechanism. Deleting a file or updating a dependency is not `chore:` by default: use `fix:` for a bug or vulnerability, `refactor:` for restructuring working code, `docs:` when the file is documentation, `feat:` when a user-facing capability is removed, and `chore:` only for maintenance that fits none of these.
 
+## Project Instruction File Standards
+
+Do not create `CLAUDE.md` unless the user asks for one. Claude Code reads `AGENTS.md` directly, so put project instructions in `AGENTS.md` and do not add a `CLAUDE.md` that only imports it.
+
 ## Planning File Standards
 
 - Store design specs under `docs/superpowers/specs/` and implementation plans under `docs/superpowers/plans/`, named with a `YYYY-MM-DD-` date prefix.
