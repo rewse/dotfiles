@@ -1,0 +1,4 @@
+# Deleted files whose history holds placeholder credentials (user:pass@host)
+# that TruffleHog cannot verify and reports as unknown.
+^dot_agents/commands/update-docs\.md$
+^dot_kiro/skills/agent-browser/SKILL\.md$

@@ -24,4 +24,4 @@ jobs:
           head: main
           # Keep in step with the action version above; Dependabot does not update this input.
           version: 3.97.6@sha256:cc1a591e83fec7bf56f64c15beaaa5d8e3d179a4165a03a087d07165296ef7df
-          extra_args: --exclude-detectors=lob --results=verified,unknown
+          extra_args: --exclude-detectors=lob --exclude-paths=.trufflehog-exclude-paths.txt --results=verified,unknown

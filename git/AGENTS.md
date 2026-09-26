@@ -14,7 +14,7 @@ Keep `.github` consistent across the `rewse/*` repositories cloned here. A repos
 - Pin every `uses:`, including reusable workflows, to a full commit SHA followed by `# vX.Y.Z`. Do not reference tags or branches, because a tag can be moved to malicious code; Dependabot keeps the pins current.
 - Set top-level `permissions` to `contents: read` and grant anything more on the job that needs it.
 - Set `persist-credentials: false` on `actions/checkout`, give every job a `name`, use Node.js 24 unless a dependency's `engines` rules it out, and read the Python version from `.python-version`.
-- Run `gitleaks.yml` on push, pull request, and a weekly schedule, and `trufflehog.yml` as a weekly sweep, in every repository. Add `--exclude-detectors=<detector>` only in a repository where that detector reported a false positive.
+- Run `gitleaks.yml` on push, pull request, and a weekly schedule, and `trufflehog.yml` as a weekly sweep, in every repository. Exclude a detector (`--exclude-detectors`) or a path (`--exclude-paths`) only in a repository where it reported a false positive, and state the reason in a comment.
 - Add `dependency-scan.yml` to every repository with a lockfile: install dependencies through Aikido Safe Chain and call the OSV-Scanner reusable workflow. Pass `upload-sarif: false` in a private repository, since Code Scanning there requires GitHub Code Security.
 - Give each repository's scheduled workflows their own cron minutes so they do not run at the same time.
 - Name a workflow file after the tool it runs or the job it does (`gitleaks.yml`, `dependency-scan.yml`, `release.yml`), use the `.yml` extension, and never rename `release.yml`, because PyPI and npm Trusted Publishing are bound to that file name.
