@@ -34,9 +34,9 @@ Prefer a skill to an always-loaded rule for task-specific reference material. Wh
 ## Managed files
 
 - Keep `AGENTS.md` and `docs` listed in `.chezmoiignore` so chezmoi does not deploy them to the home directory.
-- Do not manage the whole of `~/.claude/settings.json` or `~/.codex/config.toml` with chezmoi because corporate tools rewrite them. `dot_claude/modify_settings.json.tmpl` only adds this repository's hooks and passes the file through unchanged once they are present; add Claude Code hooks there. `dot_local/bin/executable_track-config-drift` records the history of both files in `~/.local/share/config-drift.git`; add any new path to its `FILES` list.
+- Do not manage the whole of `~/.claude/settings.json` or `~/.codex/config.toml` with chezmoi because corporate tools rewrite them. `dot_claude/modify_private_settings.json.tmpl` only adds this repository's hooks and passes the file through unchanged once they are present; add Claude Code hooks there. `dot_local/bin/executable_track-config-drift` records the history of both files in `~/.local/share/config-drift.git`; add any new path to its `FILES` list.
 - Treat the live `~/.config/otty/config.toml` as canonical even though chezmoi tracks it, and import tool changes with `chezmoi add` instead of correcting the source by hand. `~/.kiro/agents/default.json` renders from a template, so port Kiro's rewrites into `dot_kiro/agents/default.json.tmpl` instead.
-- Otty also writes `~/.codex/hooks.json`, so `dot_codex/modify_hooks.json.tmpl` only adds this repository's hooks and passes the file through unchanged once they are present. Add Codex hooks there rather than managing the whole file.
+- Otty also writes `~/.codex/hooks.json`, so `dot_codex/modify_private_hooks.json.tmpl` only adds this repository's hooks and passes the file through unchanged once they are present. Add Codex hooks there rather than managing the whole file.
 - Keep `dot_aws/private_config.tmpl` comment-free and keep `[profile codex-DO-NOT-DELETE]` last because the Codex wrapper rewrites the file through an INI parser.
 - If Claude's Bedrock `/model` list disappears, delete `~/.claude/.amzn/state/recommendation-snapshot.json` and start a session. `claude post-install` does not restore the list.
 
