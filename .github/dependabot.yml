@@ -1,0 +1,12 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 4  # zizmor: ignore[dependabot-cooldown] matches the 96-hour minimum package age
+    groups:
+      github-actions:
+        patterns: ["*"]
