@@ -121,7 +121,7 @@ cliff.toml を移しても、配布物は変わらない。textlint の 2 つは
 
 ### chezmoi での管理
 
-`chezmoi add` で `~/git/AGENTS.md` を source の `git/AGENTS.md` に取り込む。`~/git/CLAUDE.md` は `@AGENTS.md` を読み込むだけのファイルで、Claude Code は `AGENTS.md` を直接読むため不要になっている。取り込まずに削除する。`~/git` は Mac にしかないため、`.chezmoiignore` の darwin 以外のブロックに `git` を足す。rewse/dotfiles は public なので、`~/git/AGENTS.md` に書く内容も公開される。
+`chezmoi add` で `~/git/AGENTS.md` を source の `git/AGENTS.md` に取り込む。`~/git/CLAUDE.md` は `@AGENTS.md` を読み込むだけのファイルで、Claude Code は `AGENTS.md` を直接読むため不要になっている。取り込まずに削除する。同じく読み込むだけか空の、未追跡の `chezmoi/CLAUDE.md`、`textlint-config-rewse/CLAUDE.md`、`textlint-rule-ja-space-around-phrase/CLAUDE.md` も削除する。`~/git` は Mac にしかないため、`.chezmoiignore` の darwin 以外のブロックに `git` を足す。rewse/dotfiles は public なので、`~/git/AGENTS.md` に書く内容も公開される。
 
 ### 追記する節
 
