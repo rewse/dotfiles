@@ -1,1 +1,5 @@
 exclude-newer = "4 days"
+
+# Own package, released and adopted immediately.
+[exclude-newer-package]
+enecoq-data-fetcher = false
