@@ -14,6 +14,7 @@ tests
 .config/karabiner
 .kiro/hooks
 .kiro/skills/obsidian-ops
+git
 Library
 {{- end }}
 
