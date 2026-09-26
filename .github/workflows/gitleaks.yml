@@ -4,7 +4,7 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: "37 19 * * 3"  # Every Thursday at 04:37 JST (19:37 UTC Wed)
+    - cron: "13 19 * * 3"  # Every Thursday at 04:13 JST (19:13 UTC Wed)
 
 permissions:
   contents: read
@@ -13,6 +13,10 @@ jobs:
   scan:
     name: Secret Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # gitleaks-action lists the pull request commits through the API.
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
