@@ -109,8 +109,14 @@ zenn-content の記事は、意味を変えずに直す。zenn は GitHub から
 リポジトリごとに次の順でコミットする。修正を先に入れ、ワークフローが初めて走るときから成功するようにする。該当する変更がないコミットは作らない。
 
 1. `style:` ruff format による整形だけ
-2. `fix:` か `refactor:` lint と型の指摘の修正と、basedpyright の設定。zenn-content の記事は `docs:`
+2. `fix:` か `refactor:` lint と型の指摘の修正と、basedpyright の設定
 3. `ci:` `.pre-commit-config.yaml`、`lint.yml`、`test.yml`、dependabot.yml、dependency-scan からのテストの移動
+
+各リポジトリの AGENTS.md にコミットの決まりがあれば、それを優先する。
+
+- enecoq-data-fetcher: 本文に何をなぜ変えたかを書き、モジュール名（`authenticator`、`cli` など）をスコープにする。モジュールをまたぐ修正は、モジュールごとにコミットを分ける
+- chezmoi: `dot_*` と `private_dot_*` のファイルに `docs:` を使わない
+- zenn-content: 記事の修正は記事ごとにコミットし、スコープを `article:<slug>` にする。型は変更の性質で選ぶ。誤りの修正は `fix`、意味を変えない読みやすさのための書き換えは `refactor`、表記の統一は `style` とする。本文には理由を書き、文言の変更は日本語の語をそのまま引用する。この AGENTS.md の型に `ci` はないため、CI の設定は「configuration updates」に当たる `chore:` にする
 
 ## `~/git/AGENTS.md`
 
