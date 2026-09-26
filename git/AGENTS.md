@@ -1,6 +1,6 @@
 # Repository Location
 
-Before starting a git-related task, check whether the target repository is already cloned under `/Users/shibtats/git`. Reuse the existing clone when it is present. When it is not, clone it into `/Users/shibtats/git` and work there. Do not clone into any other directory.
+Before starting a git-related task, check whether the target repository is already cloned under `~/git`. Reuse the existing clone when it is present. When it is not, clone it into `~/git` and work there. Do not clone into any other directory.
 
 # Updating Before Working
 
