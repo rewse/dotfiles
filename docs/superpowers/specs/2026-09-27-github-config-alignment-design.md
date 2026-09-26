@@ -121,7 +121,7 @@ cliff.toml を移しても、配布物は変わらない。textlint の 2 つは
 
 ### chezmoi での管理
 
-`chezmoi add` で `~/git/AGENTS.md` と `~/git/CLAUDE.md` を source の `git/AGENTS.md` と `git/CLAUDE.md` に取り込む。`~/git` は Mac にしかないため、`.chezmoiignore` の darwin 以外のブロックに `git` を足す。rewse/dotfiles は public なので、`~/git/AGENTS.md` に書く内容も公開される。
+`chezmoi add` で `~/git/AGENTS.md` を source の `git/AGENTS.md` に取り込む。`~/git/CLAUDE.md` は `@AGENTS.md` を読み込むだけのファイルで、Claude Code は `AGENTS.md` を直接読むため不要になっている。取り込まずに削除する。`~/git` は Mac にしかないため、`.chezmoiignore` の darwin 以外のブロックに `git` を足す。rewse/dotfiles は public なので、`~/git/AGENTS.md` に書く内容も公開される。
 
 ### 追記する節
 
@@ -145,7 +145,7 @@ Keep `.github` consistent across the `rewse/*` repositories cloned here. A repos
 
 ## 展開の順番
 
-1. chezmoi: この spec をコミットし、`~/git/AGENTS.md` と `~/git/CLAUDE.md` の取り込みと、自身の `.github` の変更を行う
+1. chezmoi: この spec をコミットし、`~/git/AGENTS.md` の取り込み、`~/git/CLAUDE.md` の削除、自身の `.github` の変更を行う
 2. 残りの 8 リポジトリ: 1 リポジトリにつき 1 コミット（`ci:`）とする。ansible-playbooks は未コミットの変更で `git pull` が止まっているため、作業の前に扱いをユーザーに確かめる
 3. 手元の検証: 全ワークフローに `actionlint` と `zizmor` をかける
 4. push: 外部への書き込みなので、全リポジトリ分をまとめてユーザーの確認を取ってから行う
