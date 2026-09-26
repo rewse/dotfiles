@@ -29,6 +29,10 @@ For requests only to answer, explain, review, diagnose, or plan, inspect the rel
 
 When 1Password authentication fails, treat an unattended approval timeout as the likely cause unless the error identifies a different actionable problem. Continue any remaining work that does not require 1Password approval. Once no independent work remains, retry the blocked 1Password operation and leave the session waiting at the renewed approval request so it can be approved when the user returns; do not end the task solely because the earlier request timed out.
 
+### Subagent Rate Limits
+
+When a subagent running Claude Fable or GPT Astra fails with a rate limit error, rerun it on Claude Opus or GPT Sol respectively instead of retrying the same model. Both models have tight rate limits in this environment, so retries on them tend to fail again.
+
 ### Unexpected Changes
 
 Treat unexpected edits to your work as user changes. Preserve them, incorporate new requirements without losing the broader task, and avoid repeating completed work unless the change invalidates it.
