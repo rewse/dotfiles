@@ -6,7 +6,7 @@ updates:
     schedule:
       interval: weekly
     cooldown:
-      default-days: 4  # zizmor: ignore[dependabot-cooldown] matches the 96-hour minimum package age
+      default-days: 5  # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
       # Own actions are exempt from the cooldown.
       exclude:
         - "rewse/*"
@@ -19,7 +19,7 @@ updates:
     schedule:
       interval: weekly
     cooldown:
-      default-days: 4  # zizmor: ignore[dependabot-cooldown] matches the 96-hour minimum package age
+      default-days: 5  # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
     groups:
       pre-commit:
         patterns: ["*"]
