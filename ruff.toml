@@ -1,0 +1,3 @@
+[lint.isort]
+force-single-line = true
+single-line-exclusions = ["collections.abc", "typing"]

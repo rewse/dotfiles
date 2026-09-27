@@ -3,6 +3,7 @@ LICENSE
 README.md
 docs
 pyrightconfig.json
+ruff.toml
 tests
 
 {{- if eq .chezmoi.os "darwin" }}
