@@ -3,7 +3,14 @@
 
 set -uo pipefail
 
-AGENTS=(--agent claude-code --agent codex --agent kiro-cli)
+AGENTS=(--agent codex --agent kiro-cli)
+# Claude Code is installed only on the business Mac; elsewhere a claude-code
+# target would recreate ~/.claude, which .chezmoiignore leaves unmanaged there.
+has_claude=false
+if command -v claude >/dev/null 2>&1; then
+  has_claude=true
+  AGENTS+=(--agent claude-code)
+fi
 
 SKILLS_DIR="$HOME/.agents/skills"
 failures=0
@@ -26,6 +33,7 @@ install_skills() {
 install_skills_claude_only() {
   local repo="$1"
   shift
+  "$has_claude" || return 0
   for skill in "$@"; do
     if ! skills add "$repo" --skill "$skill" -g --agent claude-code -y < /dev/null; then
       record_failure "update Claude Code skill: $skill"
