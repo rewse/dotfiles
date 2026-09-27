@@ -17,17 +17,20 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
 
 
 def fetch_html(url):
-    req = urllib.request.Request(url, headers={
-        "User-Agent": USER_AGENT,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-    })
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        },
+    )
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode("utf-8", errors="replace")
 
 
 def parse_reddit_url(url):
-    match = re.search(r'reddit\.com/r/([^/]+)/comments/([^/]+)', url)
+    match = re.search(r"reddit\.com/r/([^/]+)/comments/([^/]+)", url)
     if match:
         return match.group(1), match.group(2)
     return None, None
@@ -144,13 +147,17 @@ def user_posts(username, limit=25):
         item_id = fullname.split("_", 1)[-1] if "_" in fullname else ""
         title_el = thing.select_one("a.title")
         body_el = thing.select_one(".usertext-body .md")
-        posts.append({
-            "id": item_id,
-            "title": title_el.get_text() if title_el else (body_el.get_text()[:100].strip() if body_el else ""),
-            "subreddit": thing.get("data-subreddit", ""),
-            "score": int(thing.get("data-score", 0)),
-            "url": f"https://old.reddit.com{thing.get('data-permalink', '')}",
-        })
+        posts.append(
+            {
+                "id": item_id,
+                "title": title_el.get_text()
+                if title_el
+                else (body_el.get_text()[:100].strip() if body_el else ""),
+                "subreddit": thing.get("data-subreddit", ""),
+                "score": int(thing.get("data-score", 0)),
+                "url": f"https://old.reddit.com{thing.get('data-permalink', '')}",
+            }
+        )
     return posts
 
 

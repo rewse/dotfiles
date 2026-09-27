@@ -48,25 +48,31 @@ class ContainerWrapperTest(unittest.TestCase):
         cache_environment.parent.mkdir(parents=True)
         if external_root == "":
             external_root = str(
-                root / "ExternalHD" / "Library" / "Application Support" / "com.apple.container"
+                root
+                / "ExternalHD"
+                / "Library"
+                / "Application Support"
+                / "com.apple.container"
             )
             pathlib.Path(external_root).mkdir(parents=True)
         if external_root is None:
             cache_environment.write_text("unset CONTAINER_APP_ROOT\n")
         else:
-            cache_environment.write_text(f'export CONTAINER_APP_ROOT="{external_root}"\n')
+            cache_environment.write_text(
+                f'export CONTAINER_APP_ROOT="{external_root}"\n'
+            )
 
         calls = root / "calls"
         real_container = root / "real-container"
         self.write_executable(
             real_container,
             "#!/bin/sh\n"
-            "if [ \"${1:-}\" = system ] && [ \"${2:-}\" = status ]; then\n"
-            "  [ -n \"${RUNNING_APP_ROOT:-}\" ] || exit 1\n"
-            "  printf 'FIELD VALUE\\n%s %s\\n' \"$STATUS_FIELD\" \"$RUNNING_APP_ROOT\"\n"
+            'if [ "${1:-}" = system ] && [ "${2:-}" = status ]; then\n'
+            '  [ -n "${RUNNING_APP_ROOT:-}" ] || exit 1\n'
+            '  printf \'FIELD VALUE\\n%s %s\\n\' "$STATUS_FIELD" "$RUNNING_APP_ROOT"\n'
             "  exit 0\n"
             "fi\n"
-            "printf '%s\\000' \"$@\" >> \"$CONTAINER_CALLS\"\n",
+            'printf \'%s\\000\' "$@" >> "$CONTAINER_CALLS"\n',
         )
         wrapper = root / "container"
         rendered = self.render(WRAPPER)
@@ -91,7 +97,9 @@ class ContainerWrapperTest(unittest.TestCase):
         )
         actual = []
         if calls.exists():
-            actual = [value.decode() for value in calls.read_bytes().split(b"\0") if value]
+            actual = [
+                value.decode() for value in calls.read_bytes().split(b"\0") if value
+            ]
         return result, actual
 
     def test_injects_external_app_root_for_default_start(self) -> None:
@@ -143,14 +151,19 @@ class ContainerWrapperTest(unittest.TestCase):
                         running_app_root=f"{app_root}/",
                         status_field=field,
                     )
-                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(
+                        result.returncode, 0, result.stdout + result.stderr
+                    )
                     self.assertEqual(arguments[-2:], ["--app-root", str(app_root)])
 
     def test_running_service_rejects_mismatch_or_missing_field(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             app_root = pathlib.Path(temporary_directory) / "app-root"
             app_root.mkdir()
-            for field, message in (("appRoot", "already uses"), ("unknown", "determine")):
+            for field, message in (
+                ("appRoot", "already uses"),
+                ("unknown", "determine"),
+            ):
                 with self.subTest(field=field):
                     result, arguments = self.run_wrapper(
                         ["system", "start"],

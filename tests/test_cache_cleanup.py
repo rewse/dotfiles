@@ -10,10 +10,7 @@ import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CLEANUP = (
-    REPO_ROOT
-    / "dot_local"
-    / "bin"
-    / "executable_cleanup-local-cache-fallbacks.tmpl"
+    REPO_ROOT / "dot_local" / "bin" / "executable_cleanup-local-cache-fallbacks.tmpl"
 )
 IGNORE = REPO_ROOT / ".chezmoiignore"
 PLIST = (
@@ -116,7 +113,9 @@ class LocalCacheCleanupTest(unittest.TestCase):
         if symlink_destination is not None:
             redirected_destination = root / "redirected-destination"
             redirected_destination.mkdir()
-            external_caches[symlink_destination].parent.mkdir(parents=True, exist_ok=True)
+            external_caches[symlink_destination].parent.mkdir(
+                parents=True, exist_ok=True
+            )
             external_caches[symlink_destination].symlink_to(
                 redirected_destination,
                 target_is_directory=True,
@@ -129,9 +128,9 @@ class LocalCacheCleanupTest(unittest.TestCase):
                 commands / "mount",
                 "#!/bin/sh\n"
                 f"counter={mount_counter!s}\n"
-                "count=$(cat \"$counter\" 2>/dev/null || echo 0)\n"
+                'count=$(cat "$counter" 2>/dev/null || echo 0)\n'
                 "count=$((count + 1))\n"
-                "echo \"$count\" > \"$counter\"\n"
+                'echo "$count" > "$counter"\n'
                 f"[ \"$count\" -le 2 ] && printf '%s' '{mount_output}'\n",
             )
         else:
@@ -145,7 +144,7 @@ class LocalCacheCleanupTest(unittest.TestCase):
             commands / "plutil",
             "#!/bin/sh\n"
             "cat >/dev/null\n"
-            "case \"$*\" in\n"
+            'case "$*" in\n'
             f"  *VolumeUUID*) printf '%s\\n' '{volume_uuid}' ;;\n"
             f"  *FilesystemType*) printf '%s\\n' '{filesystem_type}' ;;\n"
             f"  *MountPoint*) printf '%s\\n' '{volume}' ;;\n"
@@ -162,7 +161,7 @@ class LocalCacheCleanupTest(unittest.TestCase):
         if rm_failure:
             self.write_executable(commands / "rm", "#!/bin/sh\nexit 1\n")
         else:
-            self.write_executable(commands / "rm", "#!/bin/sh\nexec /bin/rm \"$@\"\n")
+            self.write_executable(commands / "rm", '#!/bin/sh\nexec /bin/rm "$@"\n')
 
         script = root / "cleanup"
         rewritten = self.render(CLEANUP)

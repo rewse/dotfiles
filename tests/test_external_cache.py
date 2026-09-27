@@ -47,7 +47,9 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
     def write_mount_command(
         self, path: pathlib.Path, mount_point: pathlib.Path | None
     ) -> None:
-        output = "" if mount_point is None else f"/dev/mock on {mount_point} (apfs, local)\n"
+        output = (
+            "" if mount_point is None else f"/dev/mock on {mount_point} (apfs, local)\n"
+        )
         self.write_executable(path, f"#!/bin/sh\nprintf '%s' '{output}'\n")
 
     def write_identity_commands(
@@ -59,9 +61,7 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
         self.write_executable(diskutil, "#!/bin/sh\necho '<plist/>'\n")
         self.write_executable(
             plutil,
-            "#!/bin/sh\n"
-            "cat >/dev/null\n"
-            f"printf '%s\\n' '{volume_uuid}'\n",
+            f"#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' '{volume_uuid}'\n",
         )
 
     def test_cache_environment_exports_approved_paths(self) -> None:
@@ -141,13 +141,15 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
                         env=environment,
                         text=True,
                     )
-                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(
+                        result.returncode, 0, result.stdout + result.stderr
+                    )
                     self.assertEqual(result.stdout.splitlines(), expected)
 
     def test_zshenv_sources_cache_environment(self) -> None:
         template = ZSHENV.read_text()
 
-        self.assertIn('${XDG_CONFIG_HOME}/environment/cache.sh', template)
+        self.assertIn("${XDG_CONFIG_HOME}/environment/cache.sh", template)
         self.assertIn('source "${cache_environment}"', template)
 
     def test_run_before_requires_identity_and_sets_restrictive_mode_bits(self) -> None:
@@ -172,7 +174,9 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
 
             self.write_mount_command(mount_command, None)
             self.write_identity_commands(diskutil, plutil, EXPECTED_UUID)
-            unmounted = subprocess.run([str(script)], capture_output=True, check=False, text=True)
+            unmounted = subprocess.run(
+                [str(script)], capture_output=True, check=False, text=True
+            )
             self.assertNotEqual(unmounted.returncode, 0)
             self.assertFalse((volume / ".cache" / "uv").exists())
 
@@ -185,7 +189,9 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
             self.assertFalse((volume / ".cache" / "uv").exists())
 
             self.write_identity_commands(diskutil, plutil, EXPECTED_UUID)
-            mounted = subprocess.run([str(script)], capture_output=True, check=False, text=True)
+            mounted = subprocess.run(
+                [str(script)], capture_output=True, check=False, text=True
+            )
             self.assertEqual(mounted.returncode, 0, mounted.stdout + mounted.stderr)
             for relative_path in (
                 ".cache/huggingface/hub",
