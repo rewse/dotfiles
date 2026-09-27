@@ -1,3 +1,8 @@
+[lint]
+# chezmoi sets the executable bit from the executable_ prefix, so source files
+# with a shebang are committed without it.
+ignore = ["EXE001"]
+
 [lint.isort]
 force-single-line = true
 single-line-exclusions = ["collections.abc", "typing"]

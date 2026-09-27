@@ -24,6 +24,8 @@ MARKER_DIR = Path(tempfile.gettempdir()) / "japanese-guard-kiro"
 
 def load_guard():
     spec = importlib.util.spec_from_file_location("japanese_guard", GUARD_PATH)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {GUARD_PATH}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -45,7 +47,12 @@ def main():
     MARKER_DIR.mkdir(mode=0o700, exist_ok=True)
     marker.touch()
     quoted = "- " + response.splitlines()[0][:80]
-    print(json.dumps({"decision": "block", "reason": guard.REASON.format(quoted=quoted)}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"decision": "block", "reason": guard.REASON.format(quoted=quoted)},
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":
