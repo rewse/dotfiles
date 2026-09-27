@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
+    rev: 805f85e558841bf4d852335e036b33d2b26be1cc  # frozen: v1.7.12.25
+    hooks:
+      - id: actionlint
+        exclude: \.tmpl$
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 12e63946db2c5cfcc9030fac21c3883ba88c6ed8  # frozen: 0.38.0
+    hooks:
+      - id: check-dependabot
+        exclude: \.tmpl$
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: fa412071e4f5d44d44f9e365f4676f9df92456a2  # frozen: v1.30.1
+    hooks:
+      - id: zizmor
+        exclude: \.tmpl$
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        exclude: \.tmpl$
+        exclude_types: [zsh]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 2eeb5678de71a00c0902cbda7105d328432f72cb  # frozen: v0.16.8
+    hooks:
+      - id: ruff-check
+        exclude: \.tmpl$
+        types_or: [python, pyi]
+      - id: ruff-format
+        exclude: \.tmpl$
+        types_or: [python, pyi]
+  - repo: https://github.com/DetachHead/basedpyright-pre-commit-mirror
+    rev: 706e6acebe9e88c2c28d1527d3085a14b11794c4  # frozen: 1.40.1
+    hooks:
+      - id: basedpyright
+        exclude: \.tmpl$
+        additional_dependencies: [beautifulsoup4]

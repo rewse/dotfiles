@@ -10,3 +10,13 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 4  # zizmor: ignore[dependabot-cooldown] matches the 96-hour minimum package age
+    groups:
+      pre-commit:
+        patterns: ["*"]

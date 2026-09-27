@@ -2,6 +2,7 @@ AGENTS.md
 LICENSE
 README.md
 docs
+pyrightconfig.json
 tests
 
 {{- if eq .chezmoi.os "darwin" }}

@@ -1,0 +1,38 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+
+      - name: Setup Aikido Safe Chain
+        uses: rewse/actions/setup-safe-chain@499465b2ad235c5fa2c412f922ad3bf0aff73163  # v1.0.0
+
+      # uvx runs through the Safe Chain shim, so hook environments are
+      # installed through Safe Chain too. pre-commit-uv builds them with uv,
+      # which finds the uv-managed Python that plain virtualenv cannot.
+      - name: Run pre-commit
+        env:
+          # zizmor runs its online audits, such as impostor-commit, with a token.
+          GH_TOKEN: ${{ github.token }}
+        run: uvx --with pre-commit-uv==4.3.0 pre-commit@4.6.2 run --all-files --show-diff-on-failure
