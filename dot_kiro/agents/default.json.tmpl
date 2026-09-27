@@ -67,6 +67,9 @@
     ],
     "stop": [
       {
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/japanese-guard-kiro.py"
+      },
+      {
         "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh idle"
       }
     ]
@@ -75,6 +78,11 @@
       {
         "matcher": "shell",
         "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/japanese-guard-kiro.py"
       }
     ]
 {{- end }}
