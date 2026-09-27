@@ -9,6 +9,12 @@ tests
 {{- if eq .chezmoi.os "darwin" }}
 .ssh/id_rsa
 .ssh/id_rsa.pub
+{{- /* chezmoi would replace a symlinked ~/git with a directory, so
+       run_after_sync-git-agents-md.sh writes into its target instead. */}}
+{{- $git := lstat (joinPath .chezmoi.homeDir "git") }}
+{{- if and $git (eq $git.type "symlink") }}
+git
+{{- end }}
 {{- else }}
 .agents/skills/obsidian-ops
 .claude/skills/obsidian-ops

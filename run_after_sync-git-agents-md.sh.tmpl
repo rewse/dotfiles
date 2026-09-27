@@ -1,0 +1,21 @@
+{{- $git := lstat (joinPath .chezmoi.homeDir "git") -}}
+{{- if and (eq .chezmoi.os "darwin") $git (eq $git.type "symlink") -}}
+#!/bin/sh
+# Copy git/AGENTS.md into the directory that the ~/git symlink points to.
+# .chezmoiignore skips ~/git in this case because chezmoi would otherwise
+# replace the symlink with a directory. Runs on every apply so the copy
+# catches up once an unmounted target volume becomes available.
+
+set -eu
+
+src="{{ joinPath .chezmoi.sourceDir "git/AGENTS.md" }}"
+
+if ! dest_dir=$(cd "{{ .chezmoi.homeDir }}/git" 2>/dev/null && pwd -P); then
+  echo "sync-git-agents-md: ~/git target is unavailable; skipping" >&2
+  exit 0
+fi
+
+if ! cmp -s "$src" "$dest_dir/AGENTS.md"; then
+  install -m 644 "$src" "$dest_dir/AGENTS.md"
+fi
+{{- end }}
