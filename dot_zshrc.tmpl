@@ -107,6 +107,9 @@ PS1='%n@%m:%1~%# '
 # <<< Terminal Integration
 
 _notify_terminal_cwd() {
+  # Only toward a terminal: a cd inside a command substitution, such as the one
+  # Safe Chain uses to find its directory, would otherwise capture the sequence.
+  [[ -t 1 ]] || return 0
   printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
 }
 chpwd_functions+=(_notify_terminal_cwd)
@@ -204,6 +207,7 @@ alias ln="ln -i"
 alias mv="mv -i"
 alias rm="rm -i"
 
+{{ if ne .chezmoi.os "darwin" -}}
 # >>>
 # <<< Safe-chain Initialization
 
@@ -211,6 +215,7 @@ if [[ -f "${HOME}/.safe-chain/scripts/init-posix.sh" ]]; then
   builtin source "${HOME}/.safe-chain/scripts/init-posix.sh"
 fi
 
+{{ end -}}
 # >>>
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 # <<< Midway Key Check
@@ -242,3 +247,10 @@ if [ -n "$OTTY_SHELL_INTEGRATION" ] && [ -r "$OTTY_SHELL_INTEGRATION/otty-integr
   . "$OTTY_SHELL_INTEGRATION/otty-integration.zsh"
 fi
 # <<< otty shell integration <<<
+{{- if eq .chezmoi.os "darwin" }}
+
+# Safe Chain, installed by Ansible on macOS. Its setup moves this exact line to
+# the end of the file on every new version, so keeping it last in the same form
+# leaves the file unchanged.
+source {{ .chezmoi.homeDir }}/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization script
+{{- end }}
