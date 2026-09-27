@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Regression tests for externally stored cache configuration."""
 
 import os
@@ -6,7 +5,6 @@ import pathlib
 import subprocess
 import tempfile
 import unittest
-
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CACHE_ENV = REPO_ROOT / "dot_config" / "environment" / "cache.sh.tmpl"

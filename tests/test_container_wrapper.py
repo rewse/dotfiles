@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Regression tests for the ExternalHD-backed Apple container wrapper."""
 
 import os
@@ -6,7 +5,6 @@ import pathlib
 import subprocess
 import tempfile
 import unittest
-
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 WRAPPER = REPO_ROOT / "dot_local" / "bin" / "executable_container.tmpl"

@@ -28,6 +28,6 @@ while IFS= read -r subcmd; do
     fi
     exit 2
   fi
-done <<< "$(echo "$COMMAND" | sed 's/[;&|]\{1,2\}/\n/g')"
+done <<< "${COMMAND//[;&|]/$'\n'}"
 
 exit 0

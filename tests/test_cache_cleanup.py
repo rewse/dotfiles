@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Regression tests for local fallback cache cleanup."""
 
 import os
@@ -6,7 +5,6 @@ import pathlib
 import subprocess
 import tempfile
 import unittest
-
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CLEANUP = (
@@ -196,12 +194,10 @@ class LocalCacheCleanupTest(unittest.TestCase):
     def test_refuses_cleanup_for_unexpected_volume_identity(self) -> None:
         for field in ("uuid", "filesystem"):
             with self.subTest(field=field):
-                arguments = (
-                    {"volume_uuid": "unexpected"}
-                    if field == "uuid"
-                    else {"filesystem_type": "hfs"}
-                )
-                result, local_caches, _ = self.run_cleanup(**arguments)
+                if field == "uuid":
+                    result, local_caches, _ = self.run_cleanup(volume_uuid="unexpected")
+                else:
+                    result, local_caches, _ = self.run_cleanup(filesystem_type="hfs")
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("identity mismatch", result.stdout + result.stderr)
                 self.assertTrue(all(path.exists() for path in local_caches.values()))

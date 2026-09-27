@@ -9,11 +9,23 @@
 import json
 import re
 import sys
-import urllib.request
 import urllib.parse
+import urllib.request
+
 from bs4 import BeautifulSoup
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+
+def attr_str(tag, key, default=""):
+    """Return a Tag attribute as a string.
+
+    bs4 types Tag.get() as str | list[str] | None because a handful of
+    attributes (class, rel, ...) can be multi-valued, but the data-* Reddit
+    attributes read here are always single strings.
+    """
+    value = tag.get(key, default)
+    return value if isinstance(value, str) else default
 
 
 def fetch_html(url):
@@ -76,7 +88,7 @@ def subreddit_posts(subreddit, limit=25, sort="hot"):
     things = soup.select("#siteTable > .thing[data-fullname^='t3_']")
     posts = []
     for thing in things[:limit]:
-        if "promoted" in thing.get("class", []):
+        if "promoted" in thing.get_attribute_list("class"):
             continue
         posts.append(parse_post_thing(thing))
         if len(posts) >= limit:
@@ -110,7 +122,7 @@ def post_details(post_id_or_url, subreddit=None):
             "title": title_el.get_text() if title_el else "",
             "selftext": body_el.get_text().strip() if body_el else "",
             "author": post_thing.get("data-author", ""),
-            "score": int(post_thing.get("data-score", 0)),
+            "score": int(attr_str(post_thing, "data-score", "0")),
         }
 
     # Parse comments
@@ -143,7 +155,7 @@ def user_posts(username, limit=25):
     things = soup.select("#siteTable > .thing[data-fullname]")
     posts = []
     for thing in things[:limit]:
-        fullname = thing.get("data-fullname", "")
+        fullname = attr_str(thing, "data-fullname")
         item_id = fullname.split("_", 1)[-1] if "_" in fullname else ""
         title_el = thing.select_one("a.title")
         body_el = thing.select_one(".usertext-body .md")
@@ -154,7 +166,7 @@ def user_posts(username, limit=25):
                 if title_el
                 else (body_el.get_text()[:100].strip() if body_el else ""),
                 "subreddit": thing.get("data-subreddit", ""),
-                "score": int(thing.get("data-score", 0)),
+                "score": int(attr_str(thing, "data-score", "0")),
                 "url": f"https://old.reddit.com{thing.get('data-permalink', '')}",
             }
         )
@@ -197,6 +209,6 @@ if __name__ == "__main__":
             sys.exit(1)
 
         print(json.dumps(result, indent=2, ensure_ascii=False))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  CLI entry point must report any failure as JSON instead of a traceback.
         print(json.dumps({"error": str(e)}, indent=2), file=sys.stderr)
         sys.exit(1)

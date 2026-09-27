@@ -16,7 +16,7 @@ if [ -z "$EXPIRY" ]; then
     exit 0
 fi
 
-EXPIRY_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$(echo $EXPIRY | cut -d' ' -f1)" +%s 2>/dev/null)
+EXPIRY_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$(echo "$EXPIRY" | cut -d' ' -f1)" +%s 2>/dev/null)
 NOW_EPOCH=$(date +%s)
 
 if [ "$EXPIRY_EPOCH" -lt "$NOW_EPOCH" ]; then

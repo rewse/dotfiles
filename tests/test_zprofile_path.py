@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
 """Regression tests for zsh startup-file responsibilities."""
 
 import pathlib
 import unittest
-
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ZPROFILE = REPO_ROOT / "dot_zprofile.tmpl"
