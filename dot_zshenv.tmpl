@@ -18,6 +18,10 @@ export PAGER="less"
 # AgentCore Web Search gateway; access is controlled by IAM.
 export AGENTCORE_GATEWAY_URL="https://websearchgateway-ujegxqs0ed.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"
 
+# TeslaMate Grafana; the token belongs to a Viewer-role service account.
+export TESLAMATE_GRAFANA_TOKEN="{{ onepasswordRead "op://chezmoi/qnyshfnurgx2p7bmhxemzpsq5u/credential" }}"
+export TESLAMATE_GRAFANA_URL="{{ onepasswordRead "op://chezmoi/qnyshfnurgx2p7bmhxemzpsq5u/hostname" }}"
+
 # XDG-compliant locations for tools that default to $HOME
 export ANSIBLE_HOME="${XDG_DATA_HOME}/ansible"
 export DOTNET_CLI_HOME="${XDG_DATA_HOME}/dotnet"
