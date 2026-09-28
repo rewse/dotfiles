@@ -298,4 +298,16 @@ Linux ホストで `cat /etc/os-release` が AL2 でないこと、`kiro-cli --h
 
 ## Task 1 の結果
 
-（Task 1 で記入する）
+2026-09-28、kiro-cli 2.24.1（KAS 0.66.8）で確認した。`kiro-cli update` は 2.24.1 が最新と返し、`kiro-cli chat --v3` がそのまま使える。KAS は `KIRO_HOME` を無視するので、確認は `/tmp` のワークスペース `.kiro/` と tmux 上の TUI で行った。`--no-interactive` は hooks を有効にせず、権限の ask をすべて deny にするので、確認には使えない。
+
+- V1: 設定キーは `chat.agentEngine`、値は `v3`（`v1`/`v2`/`v3`）。KAS は `chat.enableCheckpoint` を受け取るが、使う処理はない。そのほかの `chat.*` キーは TUI が v3 にも渡す。
+- V2: `~/.kiro/hooks/*.json` と `<workspace>/.kiro/hooks/*.json` を読む。TUI で `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PostToolUse`、`Stop` の発火を確認した。`AgentSpawn` は不正なトリガー名で、`agentSpawn` は `SessionStart` の別名。エージェント埋め込みの `hooks` も実行される。
+- V3: 共通のフィールドは `session_id`、`hook_event_name`、`cwd`。PreToolUse/PostToolUse はこれに `tool_name` と `tool_input` が加わり、シェルツール名は `execute_bash`、コマンドは `tool_input.command`（Claude と同じ位置）。Stop の入力に最終回答と再入フラグはない。Stop が block すると、続きのターンでは Stop が再発火しない（2回目の Stop は次のユーザーターンで発火する）。最終回答は Stop の発火前に `~/.kiro/sessions/<sha256(cwd)[:16]>/<session_id>/messages.jsonl` へ `{"payload":{"type":"assistant","operationType":"Say","content":...}}` として書かれる。`KIRO_SESSION_ID` は hook の環境変数として渡される。Stop の block は、exit 0 で stdout に `{"decision":"block","reason":...}` を出す形が効く。
+- V4: 確認プロンプトの「Always allow」は既定でセッションスコープ（メモリ内）に保存され、`~/.kiro/settings/permissions.yaml` は作られない。Tab でスコープを global に変えたときだけ、KAS が `permissions.yaml` に書き込む（ソースで確認）。
+- V5: `match` は全文一致の glob で、`*` は空白にも一致する。`cat` は `cat foo` に一致しない。`cat *` は `cat` 単体と `cat foo` の両方に一致する。複合コマンドは tree-sitter で分割して部分ごとに評価される。`cat a.txt && rm a.txt` は `cat *` だけが許可された状態で確認を求められた。
+- V6: capability 名は `all, builtin, filesystem, fs_read, fs_write, shell, web_fetch, web_search, mcp, subagent, skill, power, context, diagnostics, sandbox_network`。`delegate` は `subagent` に含まれる。knowledge と todo_list に対応する capability はない。
+- V7: MCP の `match` の書式は `<server>/<tool>`（例 `builder-mcp/ReadInternalWebsites`）で、`@` は付けない。
+- V8: `~` と `~/` は展開されるが、`$HOME` は展開されない。相対パターンはワークスペース相対で評価される。shell ツールは cwd の `.` に対して `fs_read` を要求し、`./**` だけでは `.` に一致しないので確認を求められた。`["." , "./**"]` を許可すると確認は出なくなった。
+- 追加 V9: エージェント JSON に `allowedTools` か `toolsSettings` があり、`permissions` がないと「needs upgrading」と判定され、組み込みの default に置き換わる。社内ツールがワークスペースのエージェント JSON に `creds-agent` の `mcpServers`、`tools`、`allowedTools` を自動で書き足す（`/tmp` のプローブで発生した）。
+- 追加 V10: KAS は `includeMcpJson` を使い、`useLegacyMcpJson` を読まない。
+- 追加: `~/.kiro/steering/*.md` はエージェントの `resources` に関係なく読み込まれる（`steering_inclusion` イベントで確認）。
