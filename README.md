@@ -95,6 +95,11 @@ chezmoi update
 ├── dot_codex/                    # Codex agent settings and configurations
 ├── dot_config/                   # XDG Base Directory compliant configurations
 ├── dot_kiro/                     # Kiro CLI settings and configurations
+│   ├── agents/                   # Default agent (main)
+│   ├── hooks/                    # v3 hook definitions and the Otty state script
+│   ├── settings/                 # CLI settings and tool permissions
+│   ├── skills/                   # Links to shared skills
+│   └── steering/                 # Links to shared rules
 ├── dot_vim/                      # Vim configurations
 ├── dot_*                         # Other dotfiles (zshrc, gitconfig, etc.)
 ├── private_*                     # Other private files
