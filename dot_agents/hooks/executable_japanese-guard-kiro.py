@@ -2,24 +2,24 @@
 """Kiro CLI stop hook that asks for a Japanese rewrite of an English answer.
 
 Reuses the detection logic and message of japanese-guard.py, the Claude Code
-hook installed next to this file. Kiro passes the final answer (the text after
-the last tool call) as assistant_response instead of a transcript path, and
-honors the same {"decision": "block", "reason": ...} output.
+hook installed next to this file, and honors the same
+{"decision": "block", "reason": ...} output.
 
-Kiro sends no stop_hook_active flag, so a per-session marker file limits the
-rewrite request to once per turn: the stop that follows a block always passes.
+Kiro passes only the session ID to Stop hooks, so the final answer (the text
+after the last tool call) is read from the session log at
+~/.kiro/sessions/<cwd hash>/<session_id>/messages.jsonl, which Kiro writes
+before running the hook. Kiro does not fire Stop again for the turn a block
+continues, so every Stop is checked.
 """
 
 import importlib.util
 import json
-import os
-import re
 import sys
-import tempfile
 from pathlib import Path
 
 GUARD_PATH = Path(__file__).with_name("japanese-guard.py")
-MARKER_DIR = Path(tempfile.gettempdir()) / "japanese-guard-kiro"
+SESSIONS_DIR = Path.home() / ".kiro" / "sessions"
+TURN_BOUNDARIES = {"tool_call", "tool_result", "user"}
 
 
 def load_guard():
@@ -31,21 +31,33 @@ def load_guard():
     return module
 
 
+def final_answer(session):
+    logs = sorted(SESSIONS_DIR.glob(f"*/{session}/messages.jsonl"))
+    if not logs:
+        return ""
+    parts = []
+    for line in logs[0].read_text().splitlines():
+        try:
+            payload = json.loads(line).get("payload") or {}
+        except json.JSONDecodeError:
+            continue
+        kind = payload.get("type")
+        if kind in TURN_BOUNDARIES:
+            parts = []
+        elif kind == "assistant" and payload.get("operationType") == "Say":
+            parts.append(payload.get("content") or "")
+    return "\n".join(parts).strip()
+
+
 def main():
     data = json.load(sys.stdin)
-    session = data.get("session_id") or os.environ.get("KIRO_SESSION_ID")
-    if not session:
+    session = data.get("session_id")
+    if not session or "/" in session:
         return
-    marker = MARKER_DIR / re.sub(r"[^\w-]", "_", session)
-    if marker.exists():
-        marker.unlink()
-        return
-    response = (data.get("assistant_response") or "").strip()
+    response = final_answer(session)
     guard = load_guard()
     if not guard.is_english(response):
         return
-    MARKER_DIR.mkdir(mode=0o700, exist_ok=True)
-    marker.touch()
     quoted = "- " + response.splitlines()[0][:80]
     print(
         json.dumps(

@@ -1,0 +1,22 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "enforce-uv",
+      "trigger": "PreToolUse",
+      "matcher": "^execute_bash$",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh"
+      }
+    },
+    {
+      "name": "japanese-guard",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/japanese-guard-kiro.py"
+      }
+    }
+  ]
+}

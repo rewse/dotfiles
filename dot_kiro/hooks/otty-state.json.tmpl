@@ -1,0 +1,45 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "otty-session-start",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh idle"
+      }
+    },
+    {
+      "name": "otty-prompt-submit",
+      "trigger": "UserPromptSubmit",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    },
+    {
+      "name": "otty-pre-tool-use",
+      "trigger": "PreToolUse",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    },
+    {
+      "name": "otty-post-tool-use",
+      "trigger": "PostToolUse",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    },
+    {
+      "name": "otty-stop",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh idle"
+      }
+    }
+  ]
+}
