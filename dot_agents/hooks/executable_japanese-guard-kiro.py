@@ -5,13 +5,15 @@ Reuses the detection logic and message of japanese-guard.py, the Claude Code
 hook installed next to this file, and honors the same
 {"decision": "block", "reason": ...} output.
 
-Kiro passes only the session ID to Stop hooks, so the final answer (the text
-after the last tool call) is read from the session log at
+Kiro passes no answer text to Stop hooks, so the final answer (the text after
+the last tool call) is read from the session log at
 ~/.kiro/sessions/<cwd hash>/<session_id>/messages.jsonl, which Kiro writes
-before running the hook. Kiro does not fire Stop again for the turn a block
+before running the hook. The cwd hash is the first 16 hex digits of the
+SHA-256 of the cwd that Kiro passes on stdin. Kiro does not fire Stop again for the turn a block
 continues, so every Stop is checked.
 """
 
+import hashlib
 import importlib.util
 import json
 import sys
@@ -31,12 +33,22 @@ def load_guard():
     return module
 
 
-def final_answer(session):
-    logs = sorted(SESSIONS_DIR.glob(f"*/{session}/messages.jsonl"))
-    if not logs:
+def session_log(session, cwd):
+    if cwd:
+        digest = hashlib.sha256(cwd.encode()).hexdigest()[:16]
+        log = SESSIONS_DIR / digest / session / "messages.jsonl"
+        if log.is_file():
+            return log
+    logs = SESSIONS_DIR.glob(f"*/{session}/messages.jsonl")
+    return max(logs, key=lambda path: path.stat().st_mtime, default=None)
+
+
+def final_answer(session, cwd):
+    log = session_log(session, cwd)
+    if log is None:
         return ""
     parts = []
-    for line in logs[0].read_text().splitlines():
+    for line in log.read_text().splitlines():
         try:
             payload = json.loads(line).get("payload") or {}
         except json.JSONDecodeError:
@@ -54,7 +66,7 @@ def main():
     session = data.get("session_id")
     if not session or "/" in session:
         return
-    response = final_answer(session)
+    response = final_answer(session, data.get("cwd"))
     guard = load_guard()
     if not guard.is_english(response):
         return

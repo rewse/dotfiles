@@ -81,7 +81,9 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_builder_mcp_rule_is_host_gated(self) -> None:
         gate = self.text.index(HOST_GATE)
         end = self.text.index("{{- end }}", gate)
-        self.assertIn('"builder-mcp/*"', self.text[gate:end])
+        # User scope applies to every agent, so only the read tool main uses.
+        self.assertIn('"builder-mcp/ReadInternalWebsites"', self.text[gate:end])
+        self.assertNotIn("builder-mcp/*", self.text)
         self.assertNotIn("builder-mcp", self.text[:gate] + self.text[end:])
 
 

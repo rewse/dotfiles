@@ -1,5 +1,6 @@
 """Regression tests for the Kiro CLI v3 hooks and the scripts they run."""
 
+import hashlib
 import json
 import os
 import pathlib
@@ -136,6 +137,16 @@ class JapaneseGuardKiroTest(unittest.TestCase):
         self.write_session(event({"type": "user", "content": "q"}), say("EN answer"))
         self.assertNotEqual(self.run_stop(), "")
         self.assertNotEqual(self.run_stop(), "")
+
+    def test_prefers_log_under_current_cwd_hash(self) -> None:
+        current = hashlib.sha256(b"/tmp/project").hexdigest()[:16]
+        stale = self.tmp / "home/.kiro/sessions/0000000000000000" / SESSION_ID
+        stale.mkdir(parents=True)
+        (stale / "messages.jsonl").write_text(say("EN stale answer") + "\n")
+        self.session_dir = self.tmp / "home/.kiro/sessions" / current / SESSION_ID
+        self.session_dir.mkdir(parents=True)
+        self.write_session(event({"type": "user", "content": "q"}), say("日本語の回答"))
+        self.assertEqual(self.run_stop(), "")
 
     def test_missing_session_passes(self) -> None:
         self.assertEqual(self.run_stop(session_id="sess_missing"), "")
