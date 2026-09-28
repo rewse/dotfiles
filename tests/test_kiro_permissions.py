@@ -52,7 +52,14 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_read_paths_include_cwd(self) -> None:
         self.assertEqual(
             self.rules()["fs_read"],
-            [".", "./**", "~/Desktop/**", "~/Downloads/**", "/private/tmp/**", "/tmp/**"],
+            [
+                ".",
+                "./**",
+                "~/Desktop/**",
+                "~/Downloads/**",
+                "/private/tmp/**",
+                "/tmp/**",
+            ],
         )
 
     def test_write_paths_are_limited(self) -> None:
@@ -60,6 +67,12 @@ class KiroPermissionsTest(unittest.TestCase):
             self.rules()["fs_write"],
             ["./**", "~/Desktop/**", "~/Downloads/**", "/private/tmp/**", "/tmp/**"],
         )
+
+    def test_tool_capabilities_are_allowed(self) -> None:
+        # v2 trusted these tools through allowedTools; v3 asks unless allowed.
+        for capability in ("skill", "subagent", "web_fetch", "web_search"):
+            with self.subTest(capability=capability):
+                self.assertIn(capability, self.rules())
 
     def test_rules_allow_only(self) -> None:
         self.assertNotIn("effect: ask", self.text)
