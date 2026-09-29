@@ -34,6 +34,22 @@
       }
     },
     {
+      "name": "otty-pre-task-exec",
+      "trigger": "PreTaskExec",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    },
+    {
+      "name": "otty-post-task-exec",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.kiro/hooks/otty-state.sh processing"
+      }
+    },
+    {
       "name": "otty-stop",
       "trigger": "Stop",
       "action": {

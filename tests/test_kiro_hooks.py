@@ -263,6 +263,8 @@ class KiroHookFilesTest(unittest.TestCase):
                 ("UserPromptSubmit", f"{state} processing"),
                 ("PreToolUse", f"{state} processing"),
                 ("PostToolUse", f"{state} processing"),
+                ("PreTaskExec", f"{state} processing"),
+                ("PostTaskExec", f"{state} processing"),
                 ("Stop", f"{state} idle"),
             ],
         )
