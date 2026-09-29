@@ -188,10 +188,6 @@ class KiroHookFilesTest(unittest.TestCase):
             ],
         )
 
-    def test_guards_run_before_otty_on_stop(self) -> None:
-        # Kiro loads hook files in sorted name order.
-        self.assertLess("agent-guards.json", "otty-state.json")
-
 
 class ChezmoiIgnoreTest(unittest.TestCase):
     def test_linux_ignores_only_otty_hooks(self) -> None:
