@@ -4,14 +4,17 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ENFORCE_UV = REPO_ROOT / "dot_agents/hooks/executable_enforce-uv.sh"
 JAPANESE_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_japanese-guard-kiro.py"
+OTTY_STATE = REPO_ROOT / "dot_kiro/hooks/executable_otty-state.sh"
 REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOOKS_DIR = REPO_ROOT / "dot_kiro/hooks"
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
@@ -268,6 +271,45 @@ class KiroHookFilesTest(unittest.TestCase):
                 ("Stop", f"{state} idle"),
             ],
         )
+
+
+class OttyStateTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.calls = self.tmp / "calls"
+        self.fake = self.tmp / "otty"
+        self.fake.write_text(f'#!/bin/sh\nprintf "%s\\n" "$@" >> {self.calls}\n')
+        self.fake.chmod(0o755)
+
+    def run_state(self, state: str) -> list[str]:
+        env = dict(os.environ, OTTY_CLI=str(self.fake), KIRO_SESSION_ID=SESSION_ID)
+        subprocess.run(["sh", str(OTTY_STATE), state], env=env, check=True)
+        for _ in range(50):
+            if self.calls.exists():
+                break
+            time.sleep(0.05)
+        return self.calls.read_text().splitlines()
+
+    def test_reports_state_as_custom_agent(self) -> None:
+        args = self.run_state("processing")
+        self.assertEqual(args[0], "state:kiro")
+        self.assertIn("state=processing", args)
+        self.assertIn(f"session-id={SESSION_ID}", args)
+        self.assertIn("label=Kiro", args)
+        self.assertTrue(any(re.fullmatch(r"agent-pid=\d+", arg) for arg in args))
+
+    def test_passes_only_key_value_params(self) -> None:
+        # otty state rejects anything after the kind that is not key=value.
+        for arg in self.run_state("idle")[1:]:
+            with self.subTest(arg=arg):
+                self.assertRegex(arg, r"^[a-z-]+=")
+
+    def test_maps_every_state_argument(self) -> None:
+        for state in ("awaiting", "idle", "processing"):
+            with self.subTest(state=state):
+                self.calls.unlink(missing_ok=True)
+                self.assertIn(f"state={state}", self.run_state(state))
 
 
 class ChezmoiIgnoreTest(unittest.TestCase):
