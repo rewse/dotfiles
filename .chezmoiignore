@@ -28,12 +28,13 @@ Library
 {{- end }}
 
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}
-{{- /* Claude Code runs only on the business Mac. */}}
+{{- /* Claude Code and Amazon-internal tooling run only on the business Mac. */}}
 .claude
 .claude.json
 .local/bin/check-midway-key
 .agents/skills/github-push-via-fox
 .agents/skills/outlook-todo
+.kiro/settings/amazon-internal.json
 .kiro/skills/github-push-via-fox
 .kiro/skills/outlook-todo
 {{- end }}
