@@ -16,6 +16,11 @@ class KiroAgentTest(unittest.TestCase):
         self.assertIn('"chat.defaultAgent": "main"', CLI.read_text())
         self.assertFalse((REPO_ROOT / "dot_kiro/agents/default.json.tmpl").exists())
 
+    def test_retired_default_agent_is_removed(self) -> None:
+        removed = (REPO_ROOT / ".chezmoiremove").read_text().splitlines()
+        self.assertIn(".kiro/agents/default.json", removed)
+        self.assertIn(".kiro/agents/default.json.bak", removed)
+
     def test_default_agent_has_no_v2_fields(self) -> None:
         agent = AGENT.read_text()
         for key in (

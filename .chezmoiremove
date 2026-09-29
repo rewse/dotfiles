@@ -1,0 +1,3 @@
+# Kiro CLI v3 never loads a user agent named "default"; the agent is main.json.
+.kiro/agents/default.json
+.kiro/agents/default.json.bak
