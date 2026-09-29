@@ -45,6 +45,36 @@ class KiroPermissionsTest(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertRegex(value, r"^[a-z][\w-]*\*?( [\w./@:*-]+)*$")
 
+    def test_mcporter_read_tools_are_allowed(self) -> None:
+        shell = self.matches("shell")
+        for pattern in (
+            "mcporter call builder-mcp.Get*",
+            "mcporter call builder-mcp.ReadInternalWebsites*",
+            "mcporter call slack-mcp.get_*",
+            "mcporter call slack-mcp.search*",
+            "mcporter resource *",
+        ):
+            with self.subTest(pattern=pattern):
+                self.assertTrue(
+                    any(pattern.startswith(p[:-1]) for p in shell if p.endswith("*"))
+                )
+
+    def test_mcporter_call_patterns_pin_server_and_read_verb(self) -> None:
+        # A glob * spans spaces, so the selector before it must fix both the
+        # server and a read verb; otherwise arguments could smuggle a write tool.
+        writes = {"create", "delete", "post", "send", "set", "update", "write"}
+        calls = [p for p in self.matches("shell") if p.startswith("mcporter call ")]
+        self.assertGreater(len(calls), 50)
+        for pattern in calls:
+            with self.subTest(pattern=pattern):
+                selector = pattern.removeprefix("mcporter call ")
+                self.assertRegex(selector, r"^[a-z0-9-]+\.[A-Za-z0-9_-]+\*$")
+                words = {
+                    w.lower()
+                    for w in re.findall(r"[A-Z]?[a-z0-9]+", selector.split(".", 1)[1])
+                }
+                self.assertFalse(words & writes)
+
     def test_shell_patterns_are_sorted(self) -> None:
         for rule in self.rules_for("shell"):
             self.assertEqual(rule["match"], sorted(rule["match"]))
@@ -70,6 +100,7 @@ class KiroPermissionsTest(unittest.TestCase):
             "chezmoi *",
             "env *",
             "mcporter *",
+            "mcporter call *",
             "open *",
             "sed *",
             "tar *",
@@ -137,7 +168,7 @@ class KiroPermissionsTest(unittest.TestCase):
         # User scope applies to every agent, so only the read tool main uses.
         self.assertIn('"builder-mcp/ReadInternalWebsites"', self.text[gate:end])
         self.assertNotIn("builder-mcp/*", self.text)
-        self.assertNotIn("builder-mcp", self.text[:gate] + self.text[end:])
+        self.assertNotIn("builder-mcp/", self.text[:gate] + self.text[end:])
 
 
 if __name__ == "__main__":
