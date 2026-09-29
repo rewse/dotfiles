@@ -4,7 +4,6 @@ import hashlib
 import json
 import os
 import pathlib
-import re
 import shutil
 import subprocess
 import tempfile
@@ -279,37 +278,49 @@ class OttyStateTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp)
         self.calls = self.tmp / "calls"
         self.fake = self.tmp / "otty"
-        self.fake.write_text(f'#!/bin/sh\nprintf "%s\\n" "$@" >> {self.calls}\n')
+        self.fake.write_text(
+            "#!/bin/sh\n"
+            f'echo "$*" >> {self.calls}\n'
+            'if [ "$1 $2" = "pane show" ]; then\n'
+            '  printf \'{"data": {"id": "p_%s", "tab_id": "t_from_%s"}}\\n\' "$3" "$3"\n'
+            "fi\n"
+        )
         self.fake.chmod(0o755)
 
-    def run_state(self, state: str) -> list[str]:
-        env = dict(os.environ, OTTY_CLI=str(self.fake), KIRO_SESSION_ID=SESSION_ID)
+    def run_state(self, state: str, pane_id: str | None = "abc_1") -> list[str]:
+        env = dict(os.environ, OTTY_CLI=str(self.fake))
+        env.pop("OTTY_PANE_ID", None)
+        if pane_id is not None:
+            env["OTTY_PANE_ID"] = pane_id
         subprocess.run(["sh", str(OTTY_STATE), state], env=env, check=True)
         for _ in range(50):
-            if self.calls.exists():
+            if self.calls.exists() and "tab badge" in self.calls.read_text():
                 break
             time.sleep(0.05)
-        return self.calls.read_text().splitlines()
+        return self.calls.read_text().splitlines() if self.calls.exists() else []
 
-    def test_reports_state_as_custom_agent(self) -> None:
-        args = self.run_state("processing")
-        self.assertEqual(args[0], "state:kiro")
-        self.assertIn("state=processing", args)
-        self.assertIn(f"session-id={SESSION_ID}", args)
-        self.assertIn("label=Kiro", args)
-        self.assertTrue(any(re.fullmatch(r"agent-pid=\d+", arg) for arg in args))
+    def test_badges_the_tab_of_its_own_pane(self) -> None:
+        # The hook runs in a sandbox that cannot inspect processes, so the pane
+        # comes from OTTY_PANE_ID rather than from focus or an agent pid.
+        calls = self.run_state("processing")
+        self.assertEqual(calls[0], "pane show abc_1 --json")
+        self.assertIn("tab badge --tab t_from_abc_1 --kind running -q", calls)
 
-    def test_passes_only_key_value_params(self) -> None:
-        # otty state rejects anything after the kind that is not key=value.
-        for arg in self.run_state("idle")[1:]:
-            with self.subTest(arg=arg):
-                self.assertRegex(arg, r"^[a-z-]+=")
-
-    def test_maps_every_state_argument(self) -> None:
-        for state in ("awaiting", "idle", "processing"):
+    def test_maps_states_to_badge_kinds(self) -> None:
+        for state, kind in (
+            ("awaiting", "awaiting-input"),
+            ("idle", "finished"),
+            ("processing", "running"),
+        ):
             with self.subTest(state=state):
                 self.calls.unlink(missing_ok=True)
-                self.assertIn(f"state={state}", self.run_state(state))
+                self.assertIn(
+                    f"tab badge --tab t_from_abc_1 --kind {kind} -q",
+                    self.run_state(state),
+                )
+
+    def test_does_nothing_outside_otty(self) -> None:
+        self.assertEqual(self.run_state("idle", pane_id=None), [])
 
 
 class ChezmoiIgnoreTest(unittest.TestCase):
