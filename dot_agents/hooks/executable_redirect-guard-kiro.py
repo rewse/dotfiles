@@ -25,7 +25,12 @@ REDIRECT_CHARS = set("<>|&")
 
 def allowed_roots(cwd):
     home = os.path.expanduser("~")
-    roots = [cwd, "/tmp", os.path.join(home, "Desktop"), os.path.join(home, "Downloads")]
+    roots = [
+        cwd,
+        "/tmp",
+        os.path.join(home, "Desktop"),
+        os.path.join(home, "Downloads"),
+    ]
     return [os.path.realpath(root) for root in roots]
 
 
@@ -42,7 +47,9 @@ def resolve(target, cwd):
 def is_allowed(path, cwd):
     if path in DEVICES or path.startswith("/dev/fd/"):
         return True
-    return any(path == root or path.startswith(root + os.sep) for root in allowed_roots(cwd))
+    return any(
+        path == root or path.startswith(root + os.sep) for root in allowed_roots(cwd)
+    )
 
 
 def blocked_targets(command, cwd):
