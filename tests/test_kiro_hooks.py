@@ -12,6 +12,7 @@ import unittest
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ENFORCE_UV = REPO_ROOT / "dot_agents/hooks/executable_enforce-uv.sh"
 JAPANESE_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_japanese-guard-kiro.py"
+REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOOKS_DIR = REPO_ROOT / "dot_kiro/hooks"
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
 
@@ -152,6 +153,82 @@ class JapaneseGuardKiroTest(unittest.TestCase):
         self.assertEqual(self.run_stop(session_id="sess_missing"), "")
 
 
+class RedirectGuardKiroTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = pathlib.Path(tempfile.mkdtemp()).resolve()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.home = self.tmp / "home"
+        self.workspace = self.home / "project"
+        self.workspace.mkdir(parents=True)
+
+    def run_guard(self, command: str) -> subprocess.CompletedProcess[str]:
+        payload = kiro_payload(command)
+        payload["cwd"] = str(self.workspace)
+        return subprocess.run(
+            ["python3", str(REDIRECT_GUARD_KIRO)],
+            input=json.dumps(payload),
+            capture_output=True,
+            text=True,
+            env=dict(os.environ, HOME=str(self.home)),
+            check=False,
+        )
+
+    def test_allows_writes_inside_allowed_paths(self) -> None:
+        for command in (
+            "echo hi > out.txt",
+            "echo hi >> sub/out.txt",
+            "echo hi > /tmp/out.txt",
+            "echo hi > ~/Desktop/out.txt",
+            "echo hi > ~/Downloads/out.txt",
+            f"echo hi > {self.workspace}/out.txt",
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 0)
+
+    def test_allows_devices_fd_duplication_and_quoted_text(self) -> None:
+        for command in (
+            "rg x 2>/dev/null",
+            "rg x > /dev/stdout 2>&1",
+            "rg x >&2",
+            "echo 'a>b'",
+            'echo "a >> b"',
+            "cat < input.txt",
+            "cat <<EOF",
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 0)
+
+    def test_blocks_writes_outside_allowed_paths(self) -> None:
+        for command in (
+            "echo hi > ~/out.txt",
+            "echo hi >> /etc/hosts",
+            "echo hi &> ~/out.txt",
+            "echo hi >| ~/out.txt",
+            "echo hi > ../out.txt",
+            "echo hi 2> ~/err.txt",
+            "cat <> ~/out.txt",
+            "rg x && echo hi > ~/out.txt",
+            "echo $(echo hi > ~/out.txt)",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("write tool", result.stderr)
+
+    def test_blocks_targets_it_cannot_resolve(self) -> None:
+        for command in (
+            "echo hi > $HOME/out.txt",
+            "echo hi > `pwd`/out.txt",
+            "echo hi >(cat)",
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 2)
+
+    def test_blocks_symlink_escaping_the_workspace(self) -> None:
+        (self.workspace / "link").symlink_to(self.home)
+        self.assertEqual(self.run_guard("echo hi > link/out.txt").returncode, 2)
+
+
 def hook_file(name: str) -> dict:
     return json.loads(
         (HOOKS_DIR / name).read_text().replace("{{ .chezmoi.homeDir }}", "/home/u")
@@ -170,10 +247,12 @@ class KiroHookFilesTest(unittest.TestCase):
             triggers(config),
             [
                 ("PreToolUse", "/home/u/.agents/hooks/enforce-uv.sh"),
+                ("PreToolUse", "/home/u/.agents/hooks/redirect-guard-kiro.py"),
                 ("Stop", "/home/u/.agents/hooks/japanese-guard-kiro.py"),
             ],
         )
-        self.assertEqual(config["hooks"][0]["matcher"], "^execute_bash$")
+        for hook in config["hooks"][:2]:
+            self.assertEqual(hook["matcher"], "^execute_bash$")
 
     def test_otty_state(self) -> None:
         state = "/home/u/.kiro/hooks/otty-state.sh"

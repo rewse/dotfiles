@@ -11,6 +11,15 @@
       }
     },
     {
+      "name": "redirect-guard",
+      "trigger": "PreToolUse",
+      "matcher": "^execute_bash$",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/redirect-guard-kiro.py"
+      }
+    },
+    {
       "name": "japanese-guard",
       "trigger": "Stop",
       "action": {
