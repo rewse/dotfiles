@@ -18,7 +18,7 @@ Keep this file limited to repository-specific constraints that cannot be inferre
 | External rules | Configure files in `dot_agents/.chezmoiexternal.yaml`, then symlink them into Claude and Kiro and include them in `dot_codex/AGENTS.md.tmpl`. |
 | External skills | Add `install_skills <owner/repo> <skill>...` to `run_install-skills.sh`, or pass `'*'` when the repository's skills reference each other. Put any idempotent post-install patch immediately after its install call. |
 
-Prefer a skill to an always-loaded rule for task-specific reference material. When changing servers in `dot_config/mcporter/private_mcporter.json.tmpl`, update both the frontmatter description and server list in `dot_agents/skills/mcporter/SKILL.md.tmpl`.
+Prefer a skill to an always-loaded rule for task-specific reference material. When changing servers in `dot_config/mcporter/private_mcporter.json.tmpl`, update both the frontmatter description and server list in `dot_agents/skills/mcporter/SKILL.md.tmpl`, and the `mcporter call <server>.<read verb prefix>*` allows in `dot_kiro/settings/private_permissions.yaml.tmpl`.
 
 ## AWS
 
