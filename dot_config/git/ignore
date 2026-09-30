@@ -1,0 +1,4 @@
+**/.claude/settings.local.json
+# The Toolbox claude-code launcher writes a CLAUDE.md that only imports
+# AGENTS.md into every repository it starts in.
+CLAUDE.md
