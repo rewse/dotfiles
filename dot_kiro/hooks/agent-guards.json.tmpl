@@ -20,6 +20,14 @@
       }
     },
     {
+      "name": "superpowers-session-start",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-session-start.sh kiro"
+      }
+    },
+    {
       "name": "japanese-guard",
       "trigger": "Stop",
       "action": {

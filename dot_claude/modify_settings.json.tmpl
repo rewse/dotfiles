@@ -7,25 +7,32 @@ set -euo pipefail
 
 enforce_uv='{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh'
 japanese_guard='{{ .chezmoi.homeDir }}/.agents/hooks/japanese-guard.py'
+superpowers='{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-session-start.sh claude'
 
 # Keep a trailing newline, if any, so an unchanged file stays byte-identical.
 current=$(cat; printf x)
 current=${current%x}
 
 if [[ -n "$current" ]] &&
-   jq -e --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" '
+   jq -e --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" \
+     --arg superpowers "$superpowers" '
      any(.hooks.PreToolUse[]?.hooks[]?; .command == $enforce_uv) and
+     any(.hooks.SessionStart[]?.hooks[]?; .command == $superpowers) and
      any(.hooks.Stop[]?.hooks[]?; .command == $japanese_guard)
    ' <<<"$current" >/dev/null; then
   printf '%s' "$current"
   exit 0
 fi
 
-jq --indent 2 --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" '
+jq --indent 2 --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" \
+  --arg superpowers "$superpowers" '
   def has_hook(event; command):
     any(.hooks[event][]?.hooks[]?; .command == command);
   if has_hook("PreToolUse"; $enforce_uv) then . else
     .hooks.PreToolUse += [{matcher: "Bash", hooks: [{type: "command", command: $enforce_uv}]}]
+  end
+  | if has_hook("SessionStart"; $superpowers) then . else
+    .hooks.SessionStart += [{matcher: "startup|clear|compact", hooks: [{type: "command", command: $superpowers}]}]
   end
   | if has_hook("Stop"; $japanese_guard) then . else
     .hooks.Stop += [{hooks: [{type: "command", command: $japanese_guard}]}]
