@@ -77,6 +77,9 @@ install_skills firecrawl/anydoc convert-documents-to-markdown
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
 
+# nanaism Yomiyasu
+install_skills nanaism/yomiyasu yomiyasu
+
 # Obra Superpowers. Install every skill so new upstream skills arrive on the
 # next apply; the skills cross-reference each other, so a partial set leaves
 # dangling references. diagnosing-superpowers only debugs the plugin itself.
