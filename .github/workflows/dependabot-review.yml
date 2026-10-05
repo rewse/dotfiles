@@ -30,5 +30,4 @@ jobs:
         with:
           app-client-id: ${{ secrets.DEPENDABOT_APP_CLIENT_ID }}
           app-private-key: ${{ secrets.DEPENDABOT_APP_PRIVATE_KEY }}
-          dry-run: true
           kiro-api-key: ${{ secrets.KIRO_API_KEY }}
