@@ -250,6 +250,10 @@ class KiroHookFilesTest(unittest.TestCase):
             [
                 ("PreToolUse", "/home/u/.agents/hooks/enforce-uv.sh"),
                 ("PreToolUse", "/home/u/.agents/hooks/redirect-guard-kiro.py"),
+                (
+                    "SessionStart",
+                    "/home/u/.agents/hooks/superpowers-session-start.sh kiro",
+                ),
                 ("Stop", "/home/u/.agents/hooks/japanese-guard-kiro.py"),
             ],
         )

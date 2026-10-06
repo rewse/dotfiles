@@ -1,5 +1,6 @@
 """Regression tests for local fallback cache cleanup."""
 
+import json
 import os
 import pathlib
 import subprocess
@@ -27,8 +28,16 @@ class LocalCacheCleanupTest(unittest.TestCase):
         path.write_text(content)
         path.chmod(0o755)
 
-    def render(self, path: pathlib.Path, hostname: str = "youth") -> str:
-        data = f'{{"chezmoi":{{"hostname":"{hostname}","os":"darwin"}}}}'
+    def render(
+        self,
+        path: pathlib.Path,
+        hostname: str = "youth",
+        home: pathlib.Path | None = None,
+    ) -> str:
+        chezmoi = {"hostname": hostname, "os": "darwin"}
+        if home is not None:
+            chezmoi["homeDir"] = str(home)
+        data = json.dumps({"chezmoi": chezmoi})
         result = subprocess.run(
             [
                 "env",
@@ -162,9 +171,10 @@ class LocalCacheCleanupTest(unittest.TestCase):
             self.write_executable(commands / "rm", '#!/bin/sh\nexec /bin/rm "$@"\n')
 
         script = root / "cleanup"
-        rewritten = self.render(CLEANUP)
+        # Render against the fake home: a script that still names the real
+        # home would delete the real local caches.
+        rewritten = self.render(CLEANUP, home=home)
         replacements = {
-            "/Users/tats": str(home),
             "/Volumes/ExternalHD": str(volume),
             "/bin/rm": str(commands / "rm"),
             "/sbin/mount": str(commands / "mount"),
@@ -174,6 +184,7 @@ class LocalCacheCleanupTest(unittest.TestCase):
         }
         for source, destination in replacements.items():
             rewritten = rewritten.replace(source, destination)
+        self.assertNotIn(str(pathlib.Path.home()), rewritten)
         self.write_executable(script, rewritten)
 
         result = subprocess.run(

@@ -1,5 +1,6 @@
 """Regression tests for the ExternalHD-backed Apple container wrapper."""
 
+import json
 import os
 import pathlib
 import subprocess
@@ -12,9 +13,20 @@ ZPROFILE = REPO_ROOT / "dot_zprofile.tmpl"
 
 
 class ContainerWrapperTest(unittest.TestCase):
-    def render(self, path: pathlib.Path) -> str:
+    def render(self, path: pathlib.Path, home: pathlib.Path | None = None) -> str:
+        chezmoi = {"hostname": "youth", "os": "darwin"}
+        if home is not None:
+            chezmoi["homeDir"] = str(home)
         result = subprocess.run(
-            ["env", "-u", "OP_SERVICE_ACCOUNT_TOKEN", "chezmoi", "execute-template"],
+            [
+                "env",
+                "-u",
+                "OP_SERVICE_ACCOUNT_TOKEN",
+                "chezmoi",
+                "execute-template",
+                "--override-data",
+                json.dumps({"chezmoi": chezmoi}),
+            ],
             cwd=REPO_ROOT,
             input=path.read_text(),
             capture_output=True,
@@ -73,10 +85,10 @@ class ContainerWrapperTest(unittest.TestCase):
             'printf \'%s\\000\' "$@" >> "$CONTAINER_CALLS"\n',
         )
         wrapper = root / "container"
-        rendered = self.render(WRAPPER)
-        rendered = rendered.replace("/Users/tats", str(home)).replace(
+        rendered = self.render(WRAPPER, home=home).replace(
             "/opt/homebrew/bin/container", str(real_container)
         )
+        self.assertNotIn(str(pathlib.Path.home()), rendered)
         self.write_executable(wrapper, rendered)
         environment = os.environ.copy()
         environment.update(

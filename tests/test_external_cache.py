@@ -1,5 +1,6 @@
 """Regression tests for externally stored cache configuration."""
 
+import json
 import os
 import pathlib
 import subprocess
@@ -26,8 +27,19 @@ EXPECTED_EXPORTS = {
 
 class ExternalCacheConfigurationTest(unittest.TestCase):
     def render(self, path: pathlib.Path) -> str:
+        # The templates render only for the host with ExternalHD, so render
+        # as that host regardless of where the tests run.
+        data = json.dumps({"chezmoi": {"hostname": "youth", "os": "darwin"}})
         result = subprocess.run(
-            ["env", "-u", "OP_SERVICE_ACCOUNT_TOKEN", "chezmoi", "execute-template"],
+            [
+                "env",
+                "-u",
+                "OP_SERVICE_ACCOUNT_TOKEN",
+                "chezmoi",
+                "execute-template",
+                "--override-data",
+                data,
+            ],
             cwd=REPO_ROOT,
             input=path.read_text(),
             capture_output=True,
