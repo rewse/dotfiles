@@ -13,9 +13,9 @@ import unittest
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ENFORCE_UV = REPO_ROOT / "dot_agents/hooks/executable_enforce-uv.sh"
 JAPANESE_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_japanese-guard-kiro.py"
-OTTY_STATE = REPO_ROOT / "dot_kiro/hooks/executable_otty-state.sh"
+OTTY_STATE = REPO_ROOT / "private_dot_kiro/hooks/executable_otty-state.sh"
 REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
-HOOKS_DIR = REPO_ROOT / "dot_kiro/hooks"
+HOOKS_DIR = REPO_ROOT / "private_dot_kiro/hooks"
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
 
 SESSION_ID = "sess_test"

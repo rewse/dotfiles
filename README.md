@@ -94,7 +94,7 @@ chezmoi update
 ├── dot_claude/                   # Claude Code settings and configurations
 ├── dot_codex/                    # Codex agent settings and configurations
 ├── dot_config/                   # XDG Base Directory compliant configurations
-├── dot_kiro/                     # Kiro CLI settings and configurations
+├── private_dot_kiro/             # Kiro CLI settings and configurations
 │   ├── agents/                   # Default agent (main)
 │   ├── hooks/                    # v3 hook definitions and the Otty state script
 │   ├── settings/                 # CLI settings and tool permissions
