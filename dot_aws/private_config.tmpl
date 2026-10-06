@@ -19,7 +19,7 @@ output = yaml
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 
 [profile codex-DO-NOT-DELETE]
-credential_process = {{ .chezmoi.homeDir }}/.toolbox/bin/codex credential-process
+credential_process = {{ .chezmoi.homeDir }}/.toolbox/bin/codex amzn credential-process
 {{- end }}
 {{- if eq .chezmoi.hostname "fox" }}
 
