@@ -4,7 +4,7 @@ import pathlib
 import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-AGENT = REPO_ROOT / "dot_kiro/agents/main.json.tmpl"
+AGENT = REPO_ROOT / "dot_kiro/agents/private_main.json.tmpl"
 CLI = REPO_ROOT / "dot_kiro/settings/private_cli.json.tmpl"
 
 
