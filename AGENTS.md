@@ -41,6 +41,10 @@ Prefer a skill to an always-loaded rule for task-specific reference material. Wh
 - Keep `dot_aws/private_config.tmpl` comment-free and keep `[profile codex-DO-NOT-DELETE]` last because the Codex wrapper rewrites the file through an INI parser.
 - If Claude's Bedrock `/model` list disappears, delete `~/.claude/.amzn/state/recommendation-snapshot.json` and start a session. `claude post-install` does not restore the list.
 
+## Validation
+
+Before pushing, run `uvx pre-commit run --all-files` and `python3 -m unittest discover -s tests`, and commit any files the hooks reformat. CI runs the same hooks, and `core.hooksPath` points at git-defender, so `pre-commit install` cannot run them at commit time.
+
 ## Zed
 
 Keep keys in `dot_config/zed/private_settings.json`, including nested keys, in the order used by Zed's bundled `default.json` for the installed version.
