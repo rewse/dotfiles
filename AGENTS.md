@@ -43,7 +43,7 @@ Prefer a skill to an always-loaded rule for task-specific reference material. Wh
 
 ## Validation
 
-Before pushing, run `uvx pre-commit run --all-files` and `uv run python -m unittest discover -s tests`, and commit any files the hooks reformat. CI runs the same hooks, and `core.hooksPath` points at git-defender, so `pre-commit install` cannot run them at commit time.
+Before pushing, run `uvx pre-commit run --all-files` and `uv run python -m unittest discover -s tests`, and commit any files the hooks reformat. Stage new files first, because `--all-files` skips untracked files. CI runs the same hooks, and `core.hooksPath` points at git-defender, so `pre-commit install` cannot run them at commit time.
 
 ## Zed
 
