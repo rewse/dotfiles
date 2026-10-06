@@ -14,7 +14,9 @@ class KiroAgentTest(unittest.TestCase):
         # of that name wins.
         self.assertIn('"name": "main"', AGENT.read_text())
         self.assertIn('"chat.defaultAgent": "main"', CLI.read_text())
-        self.assertFalse((REPO_ROOT / "private_dot_kiro/private_agents/default.json.tmpl").exists())
+        self.assertFalse(
+            (REPO_ROOT / "private_dot_kiro/private_agents/default.json.tmpl").exists()
+        )
 
     def test_retired_default_agent_is_removed(self) -> None:
         removed = (REPO_ROOT / ".chezmoiremove").read_text().splitlines()

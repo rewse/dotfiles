@@ -5,7 +5,9 @@ import re
 import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-PERMISSIONS = REPO_ROOT / "private_dot_kiro/private_settings/private_permissions.yaml.tmpl"
+PERMISSIONS = (
+    REPO_ROOT / "private_dot_kiro/private_settings/private_permissions.yaml.tmpl"
+)
 HOST_GATE = '{{- if eq .chezmoi.hostname "7cf34ded5d65" }}'
 
 
