@@ -20,7 +20,7 @@ Update the following projects in `~/git` according to the procedure:
 ## 2. Update OSV-Scanner
 
 1. Check the latest version number from https://github.com/google/osv-scanner-action/releases
-2. If `.github/security-scan.yml` exists in the project, update the OSV-Scanner version to the latest
+2. If `.github/workflows/dependency-scan.yml` exists in the project, update the OSV-Scanner version to the latest, keeping each `uses:` pinned to the release's full commit SHA followed by `# vX.Y.Z`
 
 ## 3. Determine if uv project or npm project
 
