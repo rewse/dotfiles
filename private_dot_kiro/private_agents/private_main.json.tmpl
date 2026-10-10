@@ -23,6 +23,8 @@
     "file://README.md",
     "file://.kiro/steering/**/*.md",
     "file://~/.kiro/steering/**/*.md",
+{{- /* ~/.agents/skills is omitted because ~/.kiro/skills already symlinks to each skill there, and listing both would load every skill twice. */}}
+    "skill://.agents/skills/**/SKILL.md",
     "skill://.kiro/skills/**/SKILL.md",
     "skill://~/.kiro/skills/**/SKILL.md"
   ],
