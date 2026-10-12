@@ -130,6 +130,13 @@ When a URL fetch is denied (403, access denied, bot block), retry with `tvly ext
 
 Use `tvly` for web search, not a built-in web search or fetch tool. Before running `tvly`, read the matching skill for the subcommand in use (`tavily-crawl`, `tavily-extract`, `tavily-map`, `tavily-research`, `tavily-search`) and follow its guidance on flags and output handling.
 
+## Configuration Management Standards
+
+Make persistent changes to managed configuration in the repository that manages it and apply them from there, not by editing the deployed local file. Read the repository's `AGENTS.md` before editing it.
+
+- `~/git/ansible-playbooks`: Ansible playbooks that manage software installation and some system settings on the Macs, the Ubuntu servers (EC2 and Raspberry Pi), and the UniFi Dream Machine. Change the playbooks, roles, or inventory and run the playbook.
+- `~/git/chezmoi`: the chezmoi source for configuration files, scripts, and agent assets under the home directory. On the host `7cf34ded5d65`, `~/git/dotfiles-internal` also manages them. Change the source in the repository that manages the file and run `chezmoi apply`.
+
 ## Commit Message Standards
 
 Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
