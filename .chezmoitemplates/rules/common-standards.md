@@ -137,6 +137,13 @@ Make persistent changes to managed configuration in the repository that manages 
 - `~/git/ansible-playbooks`: Ansible playbooks that manage software installation and some system settings on the Macs, the Ubuntu servers (EC2 and Raspberry Pi), and the UniFi Dream Machine. Change the playbooks, roles, or inventory and run the playbook.
 - `~/git/chezmoi`: the chezmoi source for configuration files, scripts, and agent assets under the home directory. On the host `7cf34ded5d65`, `~/git/dotfiles-internal` also manages them. Change the source in the repository that manages the file and run `chezmoi apply`.
 
+## Temporary File Standards
+
+Choose where a temporary file lives by how long it is expected to last.
+
+- Up to 24 hours: create a run directory with `mktemp -d /tmp/<name>.XXXXXX` and keep the files in it. Pass the `/tmp` template explicitly, because a bare `mktemp -d` uses `$TMPDIR`, which is under `/var/folders` on macOS.
+- Beyond 24 hours: use `$XDG_STATE_HOME/<name>/` (`~/.local/state/<name>/`), and write a purge policy for it in the project's `AGENTS.md`. Fit the policy to the use; for example, delete files 30 days after their last access at the start of the next session.
+
 ## Commit Message Standards
 
 Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
