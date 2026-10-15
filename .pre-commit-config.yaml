@@ -21,7 +21,7 @@ repos:
         exclude: \.tmpl$
         exclude_types: [zsh]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: f12be1ebaa5351c1fc76472de98db2c3446c8253  # frozen: v0.16.10
+    rev: 44b5042edab9382aba712eed4f9c7bab7a3d6a3e  # frozen: v0.17.0
     hooks:
       - id: ruff-check
         exclude: \.tmpl$
@@ -30,7 +30,7 @@ repos:
         exclude: \.tmpl$
         types_or: [python, pyi]
   - repo: https://github.com/DetachHead/basedpyright-pre-commit-mirror
-    rev: 706e6acebe9e88c2c28d1527d3085a14b11794c4  # frozen: 1.40.1
+    rev: a11caebebdbf797e1e96611123db279b334a7675  # frozen: 1.40.2
     hooks:
       - id: basedpyright
         exclude: \.tmpl$
