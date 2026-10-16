@@ -1,3 +1,6 @@
 # Kiro CLI v3 never loads a user agent named "default"; the agent is main.json.
 .kiro/agents/default.json
 .kiro/agents/default.json.bak
+
+# dig-doh is a zsh alias for dig +https.
+.local/bin/dig-doh
