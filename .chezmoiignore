@@ -36,6 +36,7 @@ Library
 .agents/skills/github-push-via-fox
 .agents/skills/outlook-todo
 .kiro/settings/amazon-internal.json
+.kiro/settings/mcp.json
 .kiro/skills/github-push-via-fox
 .kiro/skills/outlook-todo
 {{- end }}
