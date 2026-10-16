@@ -93,10 +93,6 @@ Before starting an AWS task, look for a relevant AWS skill: run `mcporter call a
 
 On macOS, use `container` instead of `docker`. On Linux, use `docker`.
 
-### DNS Lookups
-
-Read how a name resolves from outside with `dig-doh <name> [type]`, not with `dig` against an external resolver. A gateway that filters DNS answers every port 53 packet itself, so switching resolvers changes nothing; the wrapper asks Cloudflare over DoH, which the redirect leaves alone.
-
 ### Document Reading and Editing
 
 Read a document with `npx -y @firecrawl/anydoc <file>`, which converts Office, OpenDocument, RTF, EPUB, CSV, and PDF to Markdown. Use `officecli` to edit or create `.docx`, `.xlsx`, and `.pptx`, or to read one when Markdown drops cell formulas, slide geometry, or styling. Neither does OCR; a scanned PDF needs Firecrawl Parse.
