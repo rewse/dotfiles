@@ -3,7 +3,13 @@
 
 Usage: away-continue.py claude|codex|kiro
 
-Every Stop is blocked once with REASON, so the agent decides from the
+A turn shorter than MIN_SECONDS passes untouched, because the user is likely
+still at the screen. The turn starts at the last prompt the user typed: the
+last non-meta user entry for Claude Code (Stop hook feedback is a meta entry),
+the last task_started event for Codex, and the last turn_start event in
+~/.kiro/sessions/<cwd hash>/<session_id>/messages.jsonl for Kiro.
+
+Every longer Stop is blocked once with REASON, so the agent decides from the
 conversation whether the user said they are away. Claude Code and Codex fire
 Stop again after a blocked turn continues. When that Stop arrives with
 stop_hook_active set and no tool call has been made since the last block, the
@@ -16,8 +22,12 @@ The tool call count at each block is kept in STATE_DIR per session. Losing the
 state only costs one extra reminder.
 """
 
+import hashlib
 import json
+import os
 import sys
+import time
+from datetime import datetime
 from pathlib import Path
 
 REASON = (
@@ -28,6 +38,9 @@ REASON = (
     "重要な判断や取り消しにくい操作が必要なら、ユーザーを待つ。\n"
     "- 離席中と伝えられていない場合: 待つことを一言だけ伝えて終了し、ユーザーを待つ。"
 )
+# Turns shorter than this many seconds are not checked
+MIN_SECONDS = float(os.environ.get("AWAY_CONTINUE_MIN_SECONDS", "600"))
+KIRO_SESSIONS_DIR = Path.home() / ".kiro" / "sessions"
 STATE_DIR = Path("/tmp/away-continue")
 CODEX_TOOL_CALLS = {
     "custom_tool_call",
@@ -53,30 +66,78 @@ def is_tool_call(agent, entry):
     )
 
 
-def count_tool_calls(agent, transcript):
+def is_turn_start(agent, entry):
+    if agent == "claude":
+        if entry.get("type") != "user" or entry.get("isMeta"):
+            return False
+        content = (entry.get("message") or {}).get("content")
+        if isinstance(content, str):
+            return True
+        return isinstance(content, list) and not any(
+            isinstance(item, dict) and item.get("type") == "tool_result"
+            for item in content
+        )
+    payload = entry.get("payload") or {}
+    if agent == "codex":
+        return (
+            entry.get("type") == "event_msg" and payload.get("type") == "task_started"
+        )
+    return payload.get("type") == "turn_start"
+
+
+def kiro_transcript(session, cwd):
+    if cwd:
+        digest = hashlib.sha256(cwd.encode()).hexdigest()[:16]
+        log = KIRO_SESSIONS_DIR / digest / session / "messages.jsonl"
+        if log.is_file():
+            return log
+    logs = KIRO_SESSIONS_DIR.glob(f"*/{session}/messages.jsonl")
+    return max(logs, key=lambda path: path.stat().st_mtime, default=None)
+
+
+def read_entries(transcript):
     try:
         lines = Path(transcript).read_text().splitlines()
     except (OSError, TypeError):
-        return 0
-    count = 0
+        return []
+    entries = []
     for line in lines:
         try:
             entry = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if isinstance(entry, dict) and is_tool_call(agent, entry):
-            count += 1
-    return count
+        if isinstance(entry, dict):
+            entries.append(entry)
+    return entries
+
+
+def turn_seconds(agent, entries):
+    """Return the seconds since the turn started, or 0 if it is unknown."""
+    for entry in reversed(entries):
+        if is_turn_start(agent, entry):
+            try:
+                started = datetime.fromisoformat(entry["timestamp"])
+            except (AttributeError, KeyError, ValueError):
+                return 0
+            return time.time() - started.timestamp()
+    return 0
 
 
 def should_block(agent, data):
-    if agent == "kiro":
-        return True
     session = data.get("session_id")
     if not session or "/" in session:
         return False
+    if agent == "kiro":
+        transcript = kiro_transcript(session, data.get("cwd"))
+    else:
+        transcript = data.get("transcript_path")
+    entries = read_entries(transcript)
+    if turn_seconds(agent, entries) < MIN_SECONDS:
+        return False
+    if agent == "kiro":
+        return True
     state = STATE_DIR / f"{agent}-{session}"
-    count = count_tool_calls(agent, data.get("transcript_path"))
+    count = sum(is_tool_call(agent, entry) for entry in entries)
     if data.get("stop_hook_active"):
         try:
             if int(state.read_text()) == count:
