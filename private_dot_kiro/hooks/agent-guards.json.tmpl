@@ -34,6 +34,14 @@
         "type": "command",
         "command": "{{ .chezmoi.homeDir }}/.agents/hooks/japanese-guard-kiro.py"
       }
+    },
+    {
+      "name": "away-continue",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/away-continue.py kiro"
+      }
     }
   ]
 }

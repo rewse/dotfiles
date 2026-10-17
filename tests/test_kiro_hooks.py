@@ -255,6 +255,7 @@ class KiroHookFilesTest(unittest.TestCase):
                     "/home/u/.agents/hooks/superpowers-session-start.sh kiro",
                 ),
                 ("Stop", "/home/u/.agents/hooks/japanese-guard-kiro.py"),
+                ("Stop", "/home/u/.agents/hooks/away-continue.py kiro"),
             ],
         )
         for hook in config["hooks"][:2]:

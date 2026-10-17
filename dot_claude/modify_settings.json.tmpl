@@ -5,6 +5,7 @@
 
 set -euo pipefail
 
+away_continue='{{ .chezmoi.homeDir }}/.agents/hooks/away-continue.py claude'
 enforce_uv='{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh'
 japanese_guard='{{ .chezmoi.homeDir }}/.agents/hooks/japanese-guard.py'
 superpowers='{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-session-start.sh claude'
@@ -14,18 +15,19 @@ current=$(cat; printf x)
 current=${current%x}
 
 if [[ -n "$current" ]] &&
-   jq -e --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" \
-     --arg superpowers "$superpowers" '
+   jq -e --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv" \
+     --arg japanese_guard "$japanese_guard" --arg superpowers "$superpowers" '
      any(.hooks.PreToolUse[]?.hooks[]?; .command == $enforce_uv) and
      any(.hooks.SessionStart[]?.hooks[]?; .command == $superpowers) and
-     any(.hooks.Stop[]?.hooks[]?; .command == $japanese_guard)
+     any(.hooks.Stop[]?.hooks[]?; .command == $japanese_guard) and
+     any(.hooks.Stop[]?.hooks[]?; .command == $away_continue)
    ' <<<"$current" >/dev/null; then
   printf '%s' "$current"
   exit 0
 fi
 
-jq --indent 2 --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_guard" \
-  --arg superpowers "$superpowers" '
+jq --indent 2 --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv" \
+  --arg japanese_guard "$japanese_guard" --arg superpowers "$superpowers" '
   def has_hook(event; command):
     any(.hooks[event][]?.hooks[]?; .command == command);
   if has_hook("PreToolUse"; $enforce_uv) then . else
@@ -36,5 +38,8 @@ jq --indent 2 --arg enforce_uv "$enforce_uv" --arg japanese_guard "$japanese_gua
   end
   | if has_hook("Stop"; $japanese_guard) then . else
     .hooks.Stop += [{hooks: [{type: "command", command: $japanese_guard}]}]
+  end
+  | if has_hook("Stop"; $away_continue) then . else
+    .hooks.Stop += [{hooks: [{type: "command", command: $away_continue}]}]
   end
 ' <<<"${current:-"{}"}"
