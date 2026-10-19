@@ -73,12 +73,18 @@ install_skills blader/humanizer humanizer
 # Firecrawl anydoc
 install_skills firecrawl/anydoc convert-documents-to-markdown
 
+# HumanLayer Show Me
+install_skills humanlayer/skills show-me
+
 # Kepano Obsidian Skills
 install_skills kepano/obsidian-skills \
   json-canvas obsidian-bases obsidian-markdown
 
 # nanaism Yomiyasu
 install_skills nanaism/yomiyasu yomiyasu
+
+# Nico Bailon Visual Explainer
+install_skills nicobailon/visual-explainer visual-explainer
 
 # Obra Superpowers. Install every skill so new upstream skills arrive on the
 # next apply; the skills cross-reference each other, so a partial set leaves
