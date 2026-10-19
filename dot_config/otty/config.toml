@@ -40,3 +40,5 @@ keybind = "cmd+down=focus_pane_down"
 adjust-cell-height = "20%"
 omit-otty-prefix = true
 cli-allow-overwrite = true
+
+ipc-allow-send-keys = true
