@@ -4,3 +4,6 @@
 
 # dig-doh is a zsh alias for dig +https.
 .local/bin/dig-doh
+
+# amazon-internal.json only held {"sandbox": false}; the Kiro sandbox is back on.
+.kiro/settings/amazon-internal.json

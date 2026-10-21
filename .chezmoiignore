@@ -28,7 +28,8 @@ Library
 {{- end }}
 
 {{- if ne .chezmoi.hostname "7cf34ded5d65" }}
-{{- /* Claude Code and Amazon-internal tooling run only on the business Mac. */}}
+{{- /* Claude Code and Amazon-internal tooling run only on the business Mac.
+       amazon-internal.json is listed so .chezmoiremove deletes it only there. */}}
 .claude
 .claude.json
 .config/git/ignore
