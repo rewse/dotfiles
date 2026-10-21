@@ -1,5 +1,6 @@
 """Regression tests for the Kiro CLI v3 permissions template."""
 
+import fnmatch
 import pathlib
 import re
 import unittest
@@ -36,6 +37,14 @@ class KiroPermissionsTest(unittest.TestCase):
 
     def matches(self, capability: str) -> list[str]:
         return [value for rule in self.rules_for(capability) for value in rule["match"]]
+
+    def shell_allows(self, command: str) -> bool:
+        # A Kiro glob * spans spaces and slashes, as fnmatch's does.
+        return any(
+            any(fnmatch.fnmatchcase(command, p) for p in rule["match"])
+            and not any(fnmatch.fnmatchcase(command, p) for p in rule["exclude"])
+            for rule in self.rules_for("shell")
+        )
 
     def test_shell_patterns_are_globs(self) -> None:
         for value in self.matches("shell"):
@@ -100,6 +109,10 @@ class KiroPermissionsTest(unittest.TestCase):
         shell = self.matches("shell")
         for pattern in (
             "chezmoi *",
+            "chezmoi --no-pager cat *",
+            "chezmoi --no-pager dump *",
+            "chezmoi cat *",
+            "chezmoi dump *",
             "env *",
             "mcporter *",
             "mcporter call *",
@@ -111,6 +124,19 @@ class KiroPermissionsTest(unittest.TestCase):
         ):
             with self.subTest(pattern=pattern):
                 self.assertNotIn(pattern, shell)
+
+    def test_commands_that_print_rendered_secrets_are_not_allowed(self) -> None:
+        for command in (
+            "chezmoi --no-pager cat ~/.aws/credentials",
+            "chezmoi dump ~/.zshenv",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+
+    def test_read_only_uses_of_narrowed_commands_are_allowed(self) -> None:
+        for command in ("chezmoi --no-pager diff ~/.zshrc",):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
 
     def test_read_only_forms_are_allowed(self) -> None:
         shell = self.matches("shell")
