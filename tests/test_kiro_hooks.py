@@ -163,9 +163,12 @@ class RedirectGuardKiroTest(unittest.TestCase):
         self.workspace = self.home / "project"
         self.workspace.mkdir(parents=True)
 
-    def run_guard(self, command: str) -> subprocess.CompletedProcess[str]:
+    def run_guard(
+        self, command: str, tool_cwd: str | None = None
+    ) -> subprocess.CompletedProcess[str]:
         payload = kiro_payload(command)
         payload["cwd"] = str(self.workspace)
+        payload["tool_input"]["cwd"] = tool_cwd
         return subprocess.run(
             ["python3", str(REDIRECT_GUARD_KIRO)],
             input=json.dumps(payload),
@@ -229,6 +232,42 @@ class RedirectGuardKiroTest(unittest.TestCase):
     def test_blocks_symlink_escaping_the_workspace(self) -> None:
         (self.workspace / "link").symlink_to(self.home)
         self.assertEqual(self.run_guard("echo hi > link/out.txt").returncode, 2)
+
+    def test_blocks_redirects_hidden_by_hash_or_fused_punctuation(self) -> None:
+        # Bash starts a comment only at a word boundary, so x#y is one word.
+        for command in (
+            "printf x#y >> /etc/passwd",
+            "echo hi;> ~/out.txt",
+            "echo hi;>>~/out.txt",
+            "(echo hi)>~/out.txt",
+            "rg x;>(cat)",
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 2)
+
+    def test_allows_fused_punctuation_inside_allowed_paths(self) -> None:
+        for command in ("echo hi;> out.txt", "(echo hi)>/tmp/out.txt", "echo a;>&2"):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 0)
+
+    def test_tool_cwd_does_not_widen_allowed_paths(self) -> None:
+        for command, tool_cwd in (
+            ("echo hi > /etc/hosts", "/"),
+            ("echo hi > etc/hosts", "/"),
+            ("echo hi > out.txt", str(self.home)),
+        ):
+            with self.subTest(command=command, tool_cwd=tool_cwd):
+                self.assertEqual(self.run_guard(command, tool_cwd).returncode, 2)
+
+    def test_tool_cwd_resolves_relative_targets(self) -> None:
+        (self.workspace / "sub").mkdir()
+        self.assertEqual(
+            self.run_guard("echo hi > out.txt", str(self.workspace / "sub")).returncode,
+            0,
+        )
+        self.assertEqual(self.run_guard("echo hi > out.txt", "sub").returncode, 0)
+        self.assertEqual(self.run_guard("echo hi > ../out.txt", "sub").returncode, 0)
+        self.assertEqual(self.run_guard("echo hi > ../../out.txt", "sub").returncode, 2)
 
 
 def hook_file(name: str) -> dict:
