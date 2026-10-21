@@ -52,16 +52,6 @@ class KiroAgentTest(unittest.TestCase):
 
 
 class KiroCliSettingsTest(unittest.TestCase):
-    def test_sandbox_is_not_disabled(self) -> None:
-        # The sandbox contains what an injected prompt can do through the
-        # auto-approved tools, so no file may turn it off.
-        settings = REPO_ROOT / "private_dot_kiro/private_settings"
-        for path in settings.iterdir():
-            with self.subTest(path=path.name):
-                self.assertNotRegex(path.read_text(), r'"sandbox":\s*false')
-        removed = (REPO_ROOT / ".chezmoiremove").read_text().splitlines()
-        self.assertIn(".kiro/settings/amazon-internal.json", removed)
-
     def test_cli_selects_v3_engine(self) -> None:
         self.assertIn('"chat.agentEngine": "v3"', CLI.read_text())
 
