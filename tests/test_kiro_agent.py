@@ -42,6 +42,11 @@ class KiroAgentTest(unittest.TestCase):
         # agent and swaps in the built-in default.
         self.assertIn('"permissions": {', AGENT.read_text())
 
+    def test_default_agent_does_not_load_project_readme(self) -> None:
+        # A cloned repository's README is third-party text; loading it as a
+        # standing resource puts it in context without a read step.
+        self.assertNotIn("file://README.md", AGENT.read_text())
+
     def test_default_agent_auto_allows_read_only_shell(self) -> None:
         self.assertIn('"policies": ["read-only-shell"]', AGENT.read_text())
 
