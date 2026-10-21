@@ -4,7 +4,6 @@ rules:
     match:
       - "agent-browser *"
       - "arp *"
-      - "awk *"
       - "base64 *"
       - "basename *"
       - "cat *"
@@ -35,7 +34,6 @@ rules:
       - "cmp *"
       - "column *"
       - "comm *"
-      - "curl *"
       - "cut *"
       - "date *"
       - "defaults domains *"
@@ -201,7 +199,6 @@ rules:
       - "env"
       - "file *"
       - "free *"
-      - "fuser *"
       - "gh issue list *"
       - "gh issue view *"
       - "gh pr list *"
@@ -212,9 +209,6 @@ rules:
       - "gh run view *"
       - "gh search *"
       - "git -P blame *"
-      - "git -P diff *"
-      - "git -P log *"
-      - "git -P show *"
       - "git remote -v *"
       - "git status *"
       - "grep *"
@@ -340,7 +334,7 @@ rules:
       - "md5 *"
       - "mdfind *"
       - "mktemp *"
-      - "mount *"
+      - "mount"
       - "mtr --report *"
       - "mtr --report-wide *"
       - "mtr -r *"
@@ -410,7 +404,6 @@ rules:
       - "readlink *"
       - "realpath *"
       - "rev *"
-      - "rg *"
       - "route *"
       - "scutil --dns *"
       - "scutil --get *"
@@ -433,7 +426,6 @@ rules:
       - "systemctl status *"
       - "tac *"
       - "tail *"
-      - "tar -t*"
       - "top -l 1 *"
       - "tr *"
       - "tracepath *"
@@ -444,7 +436,6 @@ rules:
       - "type *"
       - "uname *"
       - "uniq *"
-      - "unzip *"
       - "uptime *"
       - "vm_stat *"
       - "vmstat *"
@@ -454,6 +445,27 @@ rules:
       - "whoami *"
       - "whois *"
       - "xxd *"
+  - capability: shell
+    effect: allow
+    # These read-only commands also take options that run a program or write a
+    # file, so those options fall through to a prompt. bsdtar and GNU tar
+    # accept abbreviated long options, so a tar listing allows none of them.
+    match:
+      - "git -P diff *"
+      - "git -P log *"
+      - "git -P show *"
+      - "rg *"
+      - "tar -t*"
+      - "unzip -Z *"
+      - "unzip -l *"
+    exclude:
+      - "*--output*"
+      - "rg *--hostname-bin*"
+      - "rg *--pre*"
+      - "tar -t*--*"
+      - "tar -t*:*"
+      - "tar -t*F*"
+      - "tar -t*I*"
   - capability: shell
     effect: allow
     match:

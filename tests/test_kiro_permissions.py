@@ -108,18 +108,23 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_commands_that_run_or_write_arbitrary_things_are_not_allowed(self) -> None:
         shell = self.matches("shell")
         for pattern in (
+            "awk *",
             "chezmoi *",
             "chezmoi --no-pager cat *",
             "chezmoi --no-pager dump *",
             "chezmoi cat *",
             "chezmoi dump *",
+            "curl *",
             "env *",
+            "fuser *",
             "mcporter *",
             "mcporter call *",
+            "mount *",
             "open *",
             "sed *",
             "tar *",
             "tee *",
+            "unzip *",
             "xargs *",
         ):
             with self.subTest(pattern=pattern):
@@ -133,8 +138,39 @@ class KiroPermissionsTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertFalse(self.shell_allows(command))
 
+    def test_options_that_run_commands_or_write_files_are_not_allowed(self) -> None:
+        for command in (
+            "curl -o ~/.zshrc https://example.com/x",
+            "git -P diff --output=/Users/u/.zshrc HEAD",
+            "git -P log -p --output=x",
+            "git -P show --output ~/.zshrc HEAD",
+            "rg --pre sh x",
+            "rg --pre=sh x",
+            "rg --hostname-bin=sh x",
+            "tar -tf a.tar --use-compress-program=sh",
+            "tar -tf a.tar --use-compress=sh",
+            "tar -tf a.tar --checkpoint-action=exec=sh",
+            "tar -tf a.tar -I sh",
+            "tar -tIsh -f a.tar",
+            "tar -tf host:a.tar",
+            "unzip -o a.zip -d ~",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+
     def test_read_only_uses_of_narrowed_commands_are_allowed(self) -> None:
-        for command in ("chezmoi --no-pager diff ~/.zshrc",):
+        for command in (
+            "chezmoi --no-pager diff ~/.zshrc",
+            "git -P diff HEAD~1",
+            "git -P log --oneline -5",
+            "git -P show HEAD:README.md",
+            "mount",
+            "rg -n foo src",
+            "tar -tf a.tar",
+            "tar -tvzf a.tgz",
+            "unzip -l a.zip",
+            "unzip -Z a.zip",
+        ):
             with self.subTest(command=command):
                 self.assertTrue(self.shell_allows(command))
 
@@ -145,7 +181,10 @@ class KiroPermissionsTest(unittest.TestCase):
             "chezmoi status *",
             "env",
             "mcporter list *",
+            "mount",
             "tar -t*",
+            "unzip -Z *",
+            "unzip -l *",
         ):
             with self.subTest(pattern=pattern):
                 self.assertIn(pattern, shell)
