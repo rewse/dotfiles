@@ -121,7 +121,6 @@ class ZshStartupTest(unittest.TestCase):
             'path=("${HOME}/bin" $path)',
             'path=("${HOME}/.local/bin" $path)',
             'path+=("${DOTNET_CLI_HOME}/tools")',
-            'path+=("${HOME}/.lmstudio/bin")',
             'path+=("/Applications/Obsidian.app/Contents/MacOS")',
             'path=("${HOME}/.aim/mcp-servers" $path)',
             'path=("${HOME}/.toolbox/bin" $path)',
