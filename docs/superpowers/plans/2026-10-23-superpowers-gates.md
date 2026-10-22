@@ -57,16 +57,16 @@
   - `sg_disabled` → `SUPERPOWERS_GATES=off` なら 0
   - `sg_json_get <json> <keypath>`、`sg_json_escape <text>`、`sg_count_lines <text>`
   - `sg_repo_root <path-or-dir>` → worktree のルート、無ければ 1
-  - `sg_defers <repo-root>` → `<repo-root>/scripts/agent-hooks/core.sh` があれば 0
+  - `sg_defers <target-root> <session-cwd>` → 書き込み先のルートと、セッションの作業ディレクトリのルートの両方に `.agents/hooks/superpowers-gates/core.sh` があれば 0
   - `sg_state_dir <cli> <session-id>` → `$HOME/.local/state/superpowers-gates/<cli>/<session-id>`（作る。30 日より古い兄弟のディレクトリを消す）
   - `sg_skill_doc <repo-root> <skill>` → 示す SKILL.md のパス（`.agents/skills/<skill>/SKILL.md` か `~/.agents/skills/<skill>/SKILL.md`）
-  - `sg_note_skill_read <state-dir> <text>`、`sg_skill_for_path <relpath>`、`sg_check_write <state-dir> <repo-root> <relpath> <kind> <changed-lines>`、`sg_reminder <repo-root> <relpath> <kind> <changed-lines>`、`sg_unfinished_ledgers <repo-root>`
-  - `sg_compact_context <repo-root>` → 未完了の台帳ごとに 1 文、無ければ何も出さない
+  - `sg_note_skill_read <state-dir> <text>`、`sg_skill_for_path <relpath>`、`sg_check_write <state-dir> <repo-root> <relpath> <kind> <changed-lines>`、`sg_reminder <repo-root> <relpath> <kind> <changed-lines>`、`sg_note_ledger <state-dir> <repo-root> <relpath>`、`sg_ledger_plan <repo-root> <ledger>`
+  - `sg_compact_context <state-dir>` → このセッションが書いた台帳のうち未完了のものごとに 1 文、無ければ何も出さない
 - 入口 `~/.agents/hooks/superpowers-gates/claude <event>`、`<event>` は `pre-tool-use`、`post-tool-use`、`session-start`
 
-MeetNote の関数との違い: `ah_` を `sg_` にし、`ah_check_push`、`ah_is_push`、`ah_push_gate`、`record-check-pass` を持ってこない。`ah_session_context` の代わりに `sg_compact_context` を置き、using-superpowers の全文は出さない。メッセージの `.agents/skills/<skill>/SKILL.md` を `sg_skill_doc` の結果に置き換える。印の場所は上の「決まっていること」のとおりリポジトリから切り離す。各入口は `sg_disabled` のあと、書き込み先のリポジトリのルートを求めた直後に `sg_defers` を見る（post-tool-use の読み取りでは `sg_defers` を見ない。読んだ印はどのリポジトリでも付ける）。
+MeetNote の関数との違い: `ah_` を `sg_` にし、`ah_check_push`、`ah_is_push`、`ah_push_gate`、`record-check-pass` を持ってこない。`ah_session_context` の代わりに `sg_compact_context` を置き、using-superpowers の全文は出さない。メッセージの `.agents/skills/<skill>/SKILL.md` を `sg_skill_doc` の結果に置き換える。印の場所は上の「決まっていること」のとおりリポジトリから切り離す。各入口は `sg_disabled` のあと、書き込み先のリポジトリのルートを求めた直後に `sg_defers` を見る（Claude Code のセッションのルートは、Bash の `cd` に追従する `cwd` ではなく `${CLAUDE_PROJECT_DIR:-$cwd}`）（post-tool-use の読み取りでは `sg_defers` を見ない。読んだ印はどのリポジトリでも付ける）。
 
-`claude session-start` は `source` が `compact` のときだけ `sg_compact_context`（`cwd` のリポジトリ）を `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"..."}}` で出し、ほかの `source` では何も出さない。
+`claude session-start` は `source` が `compact` のときだけ `sg_compact_context`（印のディレクトリ。`sg_defers` は見ない）を `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"..."}}` で出し、ほかの `source` では何も出さない。
 
 `modify_settings.json.tmpl` に足す登録（コマンドは `{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/claude <event>`）: `PreToolUse` の matcher `Write|Edit|MultiEdit`、`PostToolUse` の matcher `Read|Skill|Bash|Write|Edit|MultiEdit`、`SessionStart` の matcher `compact`、`UserPromptSubmit`（matcher なし。入力が `/writing-plans` などで始まるときに読んだ印を付ける）。既存の `has_hook` と「全部あれば素通し」の判定に 4 つを足す。
 
@@ -85,7 +85,7 @@ MeetNote の関数との違い: `ah_` を `sg_` にし、`ah_check_push`、`ah_i
 | `test_spec_subdirectory_is_gated` | `Write` で `docs/superpowers/specs/a/b c.md` | 2、stderr に `brainstorming/SKILL.md` |
 | `test_new_ledger_needs_sdd_read` | 無い `.superpowers/sdd/p/progress.md` への `Write` | 2。SDD の SKILL.md を読んだあとは 0。ある台帳への 30 行の `Edit` は読まなくても 0 |
 | `test_reminder_after_plan_write` | `Write` の post で計画 | stdout の JSON の `additionalContext` に `Self-Review checklist in ~/.agents/skills/writing-plans/SKILL.md` |
-| `test_compact_names_unfinished_ledger` | 2 タスクの計画と `Task 1: complete` だけの台帳、`session-start` で `source: "compact"` | `additionalContext` に `.superpowers/sdd/p/progress.md` と `Re-read ~/.agents/skills/subagent-driven-development/SKILL.md` |
+| `test_compact_names_unfinished_ledger` | 2 タスクの計画と `Task 1: complete` だけの台帳をセッションが書いたあと、`session-start` で `source: "compact"`（書いていない台帳では何も出ない） | `additionalContext` に `.superpowers/sdd/p/progress.md` と `re-read ~/.agents/skills/subagent-driven-development/SKILL.md` |
 | `test_startup_prints_nothing` | 同じ台帳で `source: "startup"` | stdout が空 |
 | `test_defers_to_project_hooks` | 作業ディレクトリのリポジトリに `.agents/hooks/superpowers-gates/core.sh` がある状態の、同じリポジトリの計画への `Write` と、その post | どちらも 0 で stdout と stderr が空 |
 | `test_disabled_by_env` | `SUPERPOWERS_GATES=off` での計画への `Write` | 0、出力なし |
@@ -141,7 +141,7 @@ MeetNote の `codex` との違い: push の分岐と `session-start` を持た�
 | `test_codex_delete_does_not_hide_a_plan` | Add 計画 / Delete x / Add y → 2。Update 計画（+25）/ Delete x / Update y（+1）→ 2 |
 | `test_codex_prompt_mention_counts_as_read` | `prompt: "use $writing-plans"` のあと Add → 0 |
 | `test_codex_reminder_after_add` | 計画の Add の post → `additionalContext` に `Self-Review checklist` |
-| `test_codex_post_compact_names_ledger` | 未完了の台帳で `post-compact` → `hookEventName` が `PostCompact`、台帳のパス |
+| `test_codex_post_compact_names_ledger` | セッションが書いた未完了の台帳で `post-compact` → `hookEventName` が `PostCompact`、台帳のパス |
 | `test_codex_template_is_idempotent` | テンプレートを `{}` で実行 → 4 つの登録、`session-start` の登録は無い。出力を再入力 → 同じ。既存の `enforce-uv` と otty の登録が残る |
 
 - [ ] **Step 2: 失敗することを確かめる**
