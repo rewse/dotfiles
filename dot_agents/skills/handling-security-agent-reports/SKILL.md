@@ -7,7 +7,7 @@ description: Use when an AWS Security Agent weekly report issue arrives in rewse
 
 Read the `using-superpowers` skill first and apply the process skills it points to: test-driven development for fixes, subagent-driven work for fan-out.
 
-`~/git/security-agent` files each Medium+ finding as a draft repository advisory (public repositories) or a `security-agent` issue (private repositories), identified by a `<!-- security-agent-fingerprint: ... -->` marker. Its reconciler drops every finding whose record is closed, so a record closed too early hides a regression for good. Read `~/git/security-agent/AGENTS.md` and `src/security_agent_scan/github.py` for the current rules before changing any record.
+`~/git/security-agent` files each Medium+ finding as a draft repository advisory (public repositories) or a `security-agent` issue (private repositories), identified by a `<!-- security-agent-fingerprint: ... -->` marker. A record closed as fixed is reopened when its fingerprint is detected again; a record closed as not planned is suppressed for good, so closing a fixed finding as not planned hides a regression. Read `~/git/security-agent/AGENTS.md` and `src/security_agent_scan/github.py` for the current rules before changing any record.
 
 ## Workflow
 
@@ -18,15 +18,16 @@ Read the `using-superpowers` skill first and apply the process skills it points 
 5. **Fix in parallel.** Dispatch one implementer subagent per repository: test first, run the repository's validation commands, commit locally, no push. Review each diff, then push.
 6. **Apply.** Run `ansible-playbook ... --check --diff` before every real run, then verify on the host. Apply `chezmoi` changes and check what they affect.
 7. **Write the records.** For a repository advisory, PATCH `description`, adding a section just before the marker and keeping the marker last; advisories have no comment API. For an issue, add a comment.
-   - Fixed: `## Remediation (YYYY-MM-DD)` with the commits. Leave the record open.
-   - Accepted or false positive: `## Resolution (YYYY-MM-DD)` with the reason. Close the record.
-8. **Next scan.** Close a fixed record only after the next weekly scan no longer reports its fingerprint.
+   - Fixed and applied: `## Remediation (YYYY-MM-DD)` with the commits. Close the record: an advisory with `state: closed`, an issue with `--reason completed`.
+   - Accepted or false positive: `## Resolution (YYYY-MM-DD)` with the reason. Close the record as not planned: for an advisory, add `<!-- security-agent-resolution: not-planned -->` on its own line before the fingerprint marker in the same PATCH; for an issue, use `--reason "not planned"`.
+   - Partly fixed, or waiting on a manual step: write the section and leave the record open.
+8. **Close the weekly issue** once all its findings are handled. The workflow changes only the current week's issue.
 
 ## Rules
 
 | Situation | Do |
 |---|---|
-| Fix pushed and applied | Keep the record open until the next scan confirms |
+| Fix pushed and applied | Close as fixed; the report reopens it if the finding returns |
 | Public repository commit | Describe the change, never the finding or GHSA ID |
 | Owner rejects a fix after trying it | Revert, put the reason next to the setting, and mark the record accepted |
 | A blocked or destructive step, such as a history rewrite | Hand the owner the exact commands |
