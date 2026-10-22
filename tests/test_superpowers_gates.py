@@ -11,6 +11,8 @@ import unittest
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CLAUDE = REPO_ROOT / "dot_agents/hooks/superpowers-gates/executable_claude"
 CODEX = REPO_ROOT / "dot_agents/hooks/superpowers-gates/executable_codex"
+KIRO = REPO_ROOT / "dot_agents/hooks/superpowers-gates/executable_kiro"
+KIRO_TEMPLATE = REPO_ROOT / "private_dot_kiro/hooks/superpowers-gates.json.tmpl"
 CODEX_TEMPLATE = REPO_ROOT / "dot_codex/modify_private_hooks.json.tmpl"
 SETTINGS_TEMPLATE = REPO_ROOT / "dot_claude/modify_settings.json.tmpl"
 
@@ -482,6 +484,66 @@ class CodexTest(GatesTestCase):
         removed = json.loads(first)
         del removed["hooks"]["PostCompact"]
         self.assertIn(f"{gates} post-compact", self.render_codex(json.dumps(removed)))
+
+
+class KiroTest(GatesTestCase):
+    def kiro(self, event, tool, tool_input):
+        payload = self.payload(tool, tool_input)
+        payload["hook_event_name"] = event
+        return self.run_hook(event, payload, script=KIRO)
+
+    def kiro_write(self, tool="fs_write", relpath=PLAN, **extra):
+        tool_input = {"path": str(self.repo / relpath), "text": "x"}
+        tool_input.update(extra)
+        return self.kiro("pre-tool-use", tool, tool_input)
+
+    def test_kiro_new_plan_is_blocked(self):
+        result = self.kiro_write()
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Read ~/.agents/skills/writing-plans/SKILL.md", result.stderr)
+        self.assertIn("Self-Review checklist", result.stderr)
+
+    def test_kiro_read_file_counts(self):
+        skill = self.home / ".agents/skills/writing-plans/SKILL.md"
+        read = self.kiro("post-tool-use", "read_file", {"path": str(skill)})
+        self.assertEqual(read.returncode, 0)
+        self.assertEqual(self.kiro_write().returncode, 0)
+
+    def test_kiro_small_replace_is_allowed(self):
+        (self.repo / PLAN).parent.mkdir(parents=True)
+        (self.repo / PLAN).write_text("a\nb\n")
+        result = self.kiro_write(
+            "str_replace", oldStr="a\nb", newStr="c\nd\ne", replace_all=False
+        )
+        self.assertEqual(result.returncode, 0)
+
+    def test_kiro_append_to_missing_file_is_a_create(self):
+        result = self.kiro_write("fs_append", text="a\nb\nc")
+        self.assertEqual(result.returncode, 2)
+
+    def test_kiro_hooks_file_is_valid(self):
+        config = json.loads(
+            KIRO_TEMPLATE.read_text().replace("{{ .chezmoi.homeDir }}", "/home/u")
+        )
+        self.assertEqual(config["version"], "v1")
+        by_trigger = {h["trigger"]: h for h in config["hooks"]}
+        self.assertEqual(
+            set(by_trigger), {"PreToolUse", "PostToolUse", "UserPromptSubmit"}
+        )
+        for hook in config["hooks"]:
+            matcher = hook.get("matcher")
+            if matcher is not None:
+                self.assertTrue(matcher.startswith("^") and matcher.endswith("$"))
+            self.assertTrue(hook["name"].startswith("superpowers-gates-"))
+            self.assertTrue(
+                hook["action"]["command"].startswith(
+                    "/home/u/.agents/hooks/superpowers-gates/kiro "
+                )
+            )
+        self.assertEqual(
+            by_trigger["PreToolUse"]["matcher"], "^(fs_write|fs_append|str_replace)$"
+        )
+        self.assertEqual(by_trigger["PostToolUse"]["matcher"], "^read_file$")
 
 
 if __name__ == "__main__":

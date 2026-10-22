@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# Kiro CLI (V3 engine) hook entry point:
+# kiro <pre-tool-use|post-tool-use|user-prompt-submit>
+# Reads the hook JSON on stdin. Any failure allows the action. Kiro does not
+# show PostToolUse output to the model, so a block carries the post-write
+# reminder in its message.
+
+# shellcheck source=core.sh
+source "${BASH_SOURCE[0]%/*}/core.sh" || exit 0
+sg_disabled && exit 0
+trap 'exit 0' ERR
+
+event=${1:-}
+input=$(< /dev/stdin)
+session_id=$(sg_json_get "$input" session_id) || session_id=
+cwd=$(sg_json_get "$input" cwd) || cwd=
+tool=$(sg_json_get "$input" tool_name) || tool=
+
+# resolve_write: sets root, relpath, kind and lines for the file a
+# fs_write, fs_append or str_replace touches; fails when it is outside a
+# repository or the repository carries its own hooks.
+resolve_write() {
+    local file old new
+    file=$(sg_json_get "$input" tool_input.path) || return 1
+    case "$file" in /*) ;; *) file="$cwd/$file" ;; esac
+    root=$(sg_repo_root "${file%/*}") || return 1
+    sg_defers "$root" && return 1
+    relpath=${file#"$root"/}
+    lines=0
+    case "$tool" in
+        fs_write)
+            if [ -e "$file" ]; then kind=rewrite; else kind=create; fi
+            ;;
+        fs_append)
+            if [ -e "$file" ]; then kind=edit; else kind=create; fi
+            new=$(sg_json_get "$input" tool_input.text) || new=
+            lines=$(sg_count_lines "$new")
+            ;;
+        str_replace)
+            kind=edit
+            old=$(sg_json_get "$input" tool_input.oldStr) || old=
+            new=$(sg_json_get "$input" tool_input.newStr) || new=
+            lines=$(($(sg_count_lines "$old") + $(sg_count_lines "$new")))
+            ;;
+        *) return 1 ;;
+    esac
+}
+
+case "$event" in
+    pre-tool-use)
+        case "$tool" in
+            fs_write | fs_append | str_replace)
+                resolve_write || exit 0
+                state=$(sg_state_dir kiro "$session_id") || exit 0
+                rc=0
+                message=$(sg_check_write "$state" "$root" "$relpath" "$kind" "$lines") || rc=$?
+                if [ "$rc" -eq 2 ]; then
+                    reminder=$(sg_reminder "$root" "$relpath" "$kind" "$lines")
+                    printf '%s\n' "$message${reminder:+ After writing: $reminder}" >&2
+                    exit 2
+                fi
+                ;;
+        esac
+        ;;
+    post-tool-use)
+        if [ "$tool" = read_file ]; then
+            text=$(sg_json_get "$input" tool_input.path) || exit 0
+            state=$(sg_state_dir kiro "$session_id") || exit 0
+            sg_note_skill_read "$state" "$text"
+        fi
+        ;;
+    user-prompt-submit)
+        prompt=$(sg_json_get "$input" prompt) || exit 0
+        state=$(sg_state_dir kiro "$session_id") || exit 0
+        set -f
+        for word in $prompt; do
+            word=${word#\$}
+            word=${word%[.,;:!?\)]}
+            sg_note_skill_read "$state" "$word"
+        done
+        set +f
+        ;;
+esac
+exit 0

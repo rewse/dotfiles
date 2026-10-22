@@ -1,0 +1,31 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "superpowers-gates-pre-tool-use",
+      "trigger": "PreToolUse",
+      "matcher": "^(fs_write|fs_append|str_replace)$",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/kiro pre-tool-use"
+      }
+    },
+    {
+      "name": "superpowers-gates-post-tool-use",
+      "trigger": "PostToolUse",
+      "matcher": "^read_file$",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/kiro post-tool-use"
+      }
+    },
+    {
+      "name": "superpowers-gates-user-prompt-submit",
+      "trigger": "UserPromptSubmit",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/kiro user-prompt-submit"
+      }
+    }
+  ]
+}
