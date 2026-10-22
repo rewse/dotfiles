@@ -251,6 +251,17 @@ class SessionStartTest(GatesTestCase):
         result = self.session_start("compact")
         self.assertEqual((result.returncode, result.stdout), (0, ""))
 
+    def test_compact_names_ledger_in_plain_repo_from_hooked_session(self):
+        hooked = hook_repo(self.tmp / "hooked")
+        self.make_unfinished_ledger()
+        self.post_write(LEDGER, cwd=hooked)
+        result = self.run_hook(
+            "session-start",
+            {"session_id": SESSION_ID, "cwd": str(hooked), "source": "compact"},
+        )
+        context = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn(LEDGER, context)
+
     def test_compact_skips_finished_ledger(self):
         self.make_unfinished_ledger()
         self.post_write(LEDGER)
@@ -331,6 +342,14 @@ class SkipTest(GatesTestCase):
         other = hook_repo(self.tmp / "other")
         self.assert_silent_allow(self.write(PLAN, repo=other, cwd=self.repo))
         self.assert_silent_allow(self.write(PLAN, repo=self.repo, cwd=other))
+
+    def test_claude_project_dir_is_the_session_root(self):
+        hooked = hook_repo(self.tmp / "hooked")
+        plain = git_init(self.tmp / "plain")
+        self.extra_env = {"CLAUDE_PROJECT_DIR": str(plain)}
+        self.assertEqual(self.write(PLAN, repo=hooked, cwd=hooked).returncode, 2)
+        self.extra_env = {"CLAUDE_PROJECT_DIR": str(hooked)}
+        self.assert_silent_allow(self.write(PLAN, repo=hooked, cwd=plain))
 
     def test_hooked_session_is_gated_in_plain_repo(self):
         hooked = hook_repo(self.tmp / "hooked")

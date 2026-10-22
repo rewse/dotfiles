@@ -113,7 +113,6 @@ case "$event" in
         set +f
         ;;
     post-compact)
-        if root=$(sg_repo_root "$cwd") && sg_defers "$root" "$cwd"; then exit 0; fi
         state=$(sg_state_dir codex "$session_id") || exit 0
         context=$(sg_compact_context "$state")
         [ -z "$context" ] || emit_context PostCompact "$context"

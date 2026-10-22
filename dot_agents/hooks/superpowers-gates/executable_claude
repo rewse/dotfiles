@@ -13,6 +13,9 @@ input=$(< /dev/stdin)
 session_id=$(sg_json_get "$input" session_id) || session_id=
 cwd=$(sg_json_get "$input" cwd) || cwd=
 tool=$(sg_json_get "$input" tool_name) || tool=
+# The payload cwd follows `cd` in Bash, but project hooks load from the
+# project the session started in.
+session_root=${CLAUDE_PROJECT_DIR:-$cwd}
 
 emit_context() {  # <event name> <text>
     printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$1" "$(sg_json_escape "$2")"
@@ -26,7 +29,7 @@ resolve_write() {
     file=$(sg_json_get "$input" tool_input.file_path) || return 1
     case "$file" in /*) ;; *) file="$cwd/$file" ;; esac
     root=$(sg_repo_root "${file%/*}") || return 1
-    sg_defers "$root" "$cwd" && return 1
+    sg_defers "$root" "$session_root" && return 1
     relpath=${file#"$root"/}
     lines=0
     case "$tool" in
@@ -87,7 +90,6 @@ case "$event" in
     session-start)
         source_name=$(sg_json_get "$input" source) || exit 0
         [ "$source_name" = "compact" ] || exit 0
-        if root=$(sg_repo_root "$cwd") && sg_defers "$root" "$cwd"; then exit 0; fi
         state=$(sg_state_dir claude "$session_id") || exit 0
         context=$(sg_compact_context "$state")
         [ -z "$context" ] || emit_context SessionStart "$context"
