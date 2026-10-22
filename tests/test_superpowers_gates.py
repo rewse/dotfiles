@@ -10,6 +10,8 @@ import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CLAUDE = REPO_ROOT / "dot_agents/hooks/superpowers-gates/executable_claude"
+CODEX = REPO_ROOT / "dot_agents/hooks/superpowers-gates/executable_codex"
+CODEX_TEMPLATE = REPO_ROOT / "dot_codex/modify_private_hooks.json.tmpl"
 SETTINGS_TEMPLATE = REPO_ROOT / "dot_claude/modify_settings.json.tmpl"
 
 SESSION_ID = "sess_test"
@@ -48,7 +50,7 @@ class GatesTestCase(unittest.TestCase):
         self.path = "/usr/bin:/bin"
         self.extra_env = {}
 
-    def run_hook(self, event, payload, cwd=None):
+    def run_hook(self, event, payload, cwd=None, script=None):
         env = {
             "HOME": str(self.home),
             "PATH": self.path,
@@ -57,7 +59,7 @@ class GatesTestCase(unittest.TestCase):
         }
         data = payload if isinstance(payload, str) else json.dumps(payload)
         return subprocess.run(
-            ["/bin/bash", str(CLAUDE), event],
+            ["/bin/bash", str(script or CLAUDE), event],
             input=data,
             capture_output=True,
             text=True,
@@ -335,6 +337,151 @@ class SettingsTemplateTest(unittest.TestCase):
         removed = json.loads(first)
         del removed["hooks"]["SessionStart"][-1]
         self.assertIn(GATES, self.render(json.dumps(removed)))
+
+
+class CodexTest(GatesTestCase):
+    def codex(self, event, payload):
+        return self.run_hook(event, payload, script=CODEX)
+
+    def patch_payload(self, patch, tool="apply_patch"):
+        return {
+            "session_id": SESSION_ID,
+            "cwd": str(self.repo),
+            "tool_name": tool,
+            "tool_input": {"command": patch},
+        }
+
+    def pre_patch(self, patch):
+        return self.codex("pre-tool-use", self.patch_payload(patch))
+
+    def read_via_cat(self, skill="writing-plans"):
+        command = f"cat ~/.agents/skills/{skill}/SKILL.md"
+        return self.codex("post-tool-use", self.patch_payload(command, "Bash"))
+
+    @staticmethod
+    def envelope(*sections):
+        return "*** Begin Patch\n" + "".join(sections) + "*** End Patch\n"
+
+    @staticmethod
+    def add(path, body="+x\n"):
+        return f"*** Add File: {path}\n{body}"
+
+    @staticmethod
+    def update(path, body):
+        return f"*** Update File: {path}\n@@\n{body}"
+
+    @staticmethod
+    def delete(path):
+        return f"*** Delete File: {path}\n"
+
+    def test_codex_add_plan_is_blocked(self):
+        result = self.pre_patch(self.envelope(self.add(PLAN)))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn(
+            f"Read ~/.agents/skills/writing-plans/SKILL.md before writing {PLAN}",
+            result.stderr,
+        )
+
+    def test_codex_cat_skill_counts_as_read(self):
+        patch = self.envelope(self.add(PLAN))
+        self.assertEqual(self.pre_patch(patch).returncode, 2)
+        self.read_via_cat()
+        self.assertEqual(self.pre_patch(patch).returncode, 0)
+
+    def test_codex_small_update_is_allowed(self):
+        body = "+a\n+b\n+c\n-d\n-e\n"
+        patch = self.envelope(self.update(PLAN, body))
+        self.assertEqual(self.pre_patch(patch).returncode, 0)
+
+    def test_codex_dash_prefixed_lines_count(self):
+        body = "----\n++x\n" * 11
+        patch = self.envelope(self.update(PLAN, body))
+        self.assertEqual(self.pre_patch(patch).returncode, 2)
+
+    def test_codex_delete_does_not_hide_a_plan(self):
+        patch = self.envelope(self.add(PLAN), self.delete("x"), self.add("y"))
+        self.assertEqual(self.pre_patch(patch).returncode, 2)
+        patch = self.envelope(
+            self.update(PLAN, "+a\n" * 25),
+            self.delete("x"),
+            self.update("y", "+b\n"),
+        )
+        self.assertEqual(self.pre_patch(patch).returncode, 2)
+
+    def test_codex_prompt_mention_counts_as_read(self):
+        prompt = {
+            "session_id": SESSION_ID,
+            "cwd": str(self.repo),
+            "prompt": "use $writing-plans",
+        }
+        self.assertEqual(self.codex("user-prompt-submit", prompt).returncode, 0)
+        patch = self.envelope(self.add(PLAN))
+        self.assertEqual(self.pre_patch(patch).returncode, 0)
+
+    def test_codex_reminder_after_add(self):
+        result = self.codex(
+            "post-tool-use", self.patch_payload(self.envelope(self.add(PLAN)))
+        )
+        self.assertEqual(result.returncode, 0)
+        context = json.loads(result.stdout)["hookSpecificOutput"]
+        self.assertEqual(context["hookEventName"], "PostToolUse")
+        self.assertIn("Self-Review checklist", context["additionalContext"])
+
+    def test_codex_post_compact_names_ledger(self):
+        self.make_unfinished_ledger()
+        result = self.codex(
+            "post-compact", {"session_id": SESSION_ID, "cwd": str(self.repo)}
+        )
+        self.assertEqual(result.returncode, 0)
+        context = json.loads(result.stdout)["hookSpecificOutput"]
+        self.assertEqual(context["hookEventName"], "PostCompact")
+        self.assertIn(LEDGER, context["additionalContext"])
+
+    def test_codex_post_compact_without_ledger_prints_nothing(self):
+        result = self.codex(
+            "post-compact", {"session_id": SESSION_ID, "cwd": str(self.repo)}
+        )
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+
+    def render_codex(self, stdin):
+        script = CODEX_TEMPLATE.read_text().replace("{{ .chezmoi.homeDir }}", "/home/u")
+        return subprocess.run(
+            ["bash", "-c", script],
+            input=stdin,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+
+    def test_codex_template_is_idempotent(self):
+        first = self.render_codex("{}")
+        hooks = json.loads(first)["hooks"]
+        gates = "/home/u/.agents/hooks/superpowers-gates/codex"
+        matcher = "^(apply_patch|Bash)$"
+        for event, entry_matcher, command in (
+            ("PreToolUse", matcher, "pre-tool-use"),
+            ("PostToolUse", matcher, "post-tool-use"),
+            ("UserPromptSubmit", None, "user-prompt-submit"),
+            ("PostCompact", None, "post-compact"),
+        ):
+            entry = {"hooks": [{"type": "command", "command": f"{gates} {command}"}]}
+            if entry_matcher:
+                entry = {"matcher": entry_matcher, **entry}
+            self.assertIn(entry, hooks[event])
+        self.assertNotIn("session-start", first)
+        self.assertEqual(self.render_codex(first), first)
+        extra = json.loads(first)
+        extra["hooks"]["PreToolUse"].append(
+            {"matcher": "x", "hooks": [{"type": "command", "command": "otty-hook"}]}
+        )
+        text = json.dumps(extra, indent=2) + "\n"
+        out = self.render_codex(text)
+        self.assertEqual(out, text)
+        self.assertIn("otty-hook", out)
+        self.assertIn("enforce-uv.sh", out)
+        removed = json.loads(first)
+        del removed["hooks"]["PostCompact"]
+        self.assertIn(f"{gates} post-compact", self.render_codex(json.dumps(removed)))
 
 
 if __name__ == "__main__":

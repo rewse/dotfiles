@@ -1,0 +1,116 @@
+#!/bin/bash
+#
+# Codex hook entry point:
+# codex <pre-tool-use|post-tool-use|user-prompt-submit|post-compact>
+# Reads the hook JSON on stdin. Any failure allows the action.
+
+source "${BASH_SOURCE[0]%/*}/core.sh" || exit 0
+sg_disabled && exit 0
+trap 'exit 0' ERR
+
+event=${1:-}
+input=$(< /dev/stdin)
+session_id=$(sg_json_get "$input" session_id) || session_id=
+cwd=$(sg_json_get "$input" cwd) || cwd=
+tool=$(sg_json_get "$input" tool_name) || tool=
+
+emit_context() {  # <event name> <text>
+    printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$1" "$(sg_json_escape "$2")"
+}
+
+# parse_patch <patch>: fills the parallel arrays paths, kinds and counts
+# with the files an apply_patch envelope touches.
+parse_patch() {
+    local line n=-1
+    paths=() kinds=() counts=()
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            "*** Add File: "*)
+                n=$((n + 1)); paths[n]=${line#"*** Add File: "}; kinds[n]=create; counts[n]=0 ;;
+            "*** Update File: "*)
+                n=$((n + 1)); paths[n]=${line#"*** Update File: "}; kinds[n]=edit; counts[n]=0 ;;
+            "*** Delete File: "*)
+                # A deletion takes a slot of its own so that the hunk lines
+                # after it cannot overwrite an earlier file's entry.
+                n=$((n + 1)); paths[n]=${line#"*** Delete File: "}; kinds[n]=skip; counts[n]=0 ;;
+            "*** "*)
+                # Other envelope lines (Move to, End Patch) are not hunk lines.
+                ;;
+            "+"* | "-"*)
+                if [ "$n" -ge 0 ] && [ "${kinds[n]}" = edit ]; then
+                    counts[n]=$((counts[n] + 1))
+                fi
+                ;;
+        esac
+    done <<< "$1"
+}
+
+# repo_relative <path>: sets root and relpath for a patch path, relative to
+# cwd or absolute; fails when it is outside a repository or the repository
+# carries its own hooks.
+repo_relative() {
+    local file=$1
+    case "$file" in /*) ;; *) file="$cwd/$file" ;; esac
+    root=$(sg_repo_root "${file%/*}") || return 1
+    sg_defers "$root" && return 1
+    relpath=${file#"$root"/}
+}
+
+case "$event" in
+    pre-tool-use)
+        [ "$tool" = apply_patch ] || exit 0
+        patch=$(sg_json_get "$input" tool_input.command) || exit 0
+        parse_patch "$patch"
+        blocked=
+        for i in "${!paths[@]}"; do
+            [ "${kinds[i]}" != skip ] || continue
+            repo_relative "${paths[i]}" || continue
+            state=$(sg_state_dir codex "$session_id") || exit 0
+            rc=0
+            message=$(sg_check_write "$state" "$root" "$relpath" "${kinds[i]}" "${counts[i]}") || rc=$?
+            if [ "$rc" -eq 2 ]; then
+                blocked=${blocked:+$blocked$'\n'}$message
+            fi
+        done
+        if [ -n "$blocked" ]; then
+            printf '%s\n' "$blocked" >&2
+            exit 2
+        fi
+        ;;
+    post-tool-use)
+        case "$tool" in
+            Bash)
+                text=$(sg_json_get "$input" tool_input.command) || exit 0
+                sg_note_skill_read "$(sg_state_dir codex "$session_id")" "$text"
+                ;;
+            apply_patch)
+                patch=$(sg_json_get "$input" tool_input.command) || exit 0
+                parse_patch "$patch"
+                reminders=
+                for i in "${!paths[@]}"; do
+                    [ "${kinds[i]}" != skip ] || continue
+                    repo_relative "${paths[i]}" || continue
+                    message=$(sg_reminder "$root" "$relpath" "${kinds[i]}" "${counts[i]}")
+                    [ -z "$message" ] || reminders=${reminders:+$reminders$'\n'}$message
+                done
+                [ -z "$reminders" ] || emit_context PostToolUse "$reminders"
+                ;;
+        esac
+        ;;
+    user-prompt-submit)
+        prompt=$(sg_json_get "$input" prompt) || exit 0
+        state=$(sg_state_dir codex "$session_id") || exit 0
+        for word in $prompt; do
+            word=${word#\$}
+            word=${word%[.,;:!?\)]}
+            sg_note_skill_read "$state" "$word"
+        done
+        ;;
+    post-compact)
+        root=$(sg_repo_root "$cwd") || exit 0
+        sg_defers "$root" && exit 0
+        context=$(sg_compact_context "$root")
+        [ -z "$context" ] || emit_context PostCompact "$context"
+        ;;
+esac
+exit 0

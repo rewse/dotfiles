@@ -7,21 +7,28 @@ set -euo pipefail
 
 away_continue='{{ .chezmoi.homeDir }}/.agents/hooks/away-continue.py codex'
 enforce_uv='{{ .chezmoi.homeDir }}/.agents/hooks/enforce-uv.sh'
+gates='{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/codex'
 
 # Keep a trailing newline, if any, so an unchanged file stays byte-identical.
 current=$(cat; printf x)
 current=${current%x}
 
 if [[ -n "$current" ]] &&
-   jq -e --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv" '
+   jq -e --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv" \
+     --arg gates "$gates" '
      any(.hooks.PreToolUse[]?.hooks[]?; .command == $enforce_uv) and
-     any(.hooks.Stop[]?.hooks[]?; .command == $away_continue)
+     any(.hooks.Stop[]?.hooks[]?; .command == $away_continue) and
+     any(.hooks.PreToolUse[]?.hooks[]?; .command == ($gates + " pre-tool-use")) and
+     any(.hooks.PostToolUse[]?.hooks[]?; .command == ($gates + " post-tool-use")) and
+     any(.hooks.UserPromptSubmit[]?.hooks[]?; .command == ($gates + " user-prompt-submit")) and
+     any(.hooks.PostCompact[]?.hooks[]?; .command == ($gates + " post-compact"))
    ' <<<"$current" >/dev/null; then
   printf '%s' "$current"
   exit 0
 fi
 
-jq --indent 2 --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv" '
+jq --indent 2 --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv" \
+  --arg gates "$gates" '
   def has_hook(event; command):
     any(.hooks[event][]?.hooks[]?; .command == command);
   if has_hook("PreToolUse"; $enforce_uv) then . else
@@ -29,5 +36,17 @@ jq --indent 2 --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv
   end
   | if has_hook("Stop"; $away_continue) then . else
     .hooks.Stop += [{hooks: [{type: "command", command: $away_continue}]}]
+  end
+  | if has_hook("PreToolUse"; $gates + " pre-tool-use") then . else
+    .hooks.PreToolUse += [{matcher: "^(apply_patch|Bash)$", hooks: [{type: "command", command: ($gates + " pre-tool-use")}]}]
+  end
+  | if has_hook("PostToolUse"; $gates + " post-tool-use") then . else
+    .hooks.PostToolUse += [{matcher: "^(apply_patch|Bash)$", hooks: [{type: "command", command: ($gates + " post-tool-use")}]}]
+  end
+  | if has_hook("UserPromptSubmit"; $gates + " user-prompt-submit") then . else
+    .hooks.UserPromptSubmit += [{hooks: [{type: "command", command: ($gates + " user-prompt-submit")}]}]
+  end
+  | if has_hook("PostCompact"; $gates + " post-compact") then . else
+    .hooks.PostCompact += [{hooks: [{type: "command", command: ($gates + " post-compact")}]}]
   end
 ' <<<"${current:-"{}"}"
