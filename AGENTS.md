@@ -42,13 +42,13 @@ Prefer a skill to an always-loaded rule for task-specific reference material. Wh
 - Keep `dot_aws/private_config.tmpl` comment-free because the Codex wrapper rewrites the file through an INI parser.
 - If Claude's Bedrock `/model` list disappears, delete `~/.claude/.amzn/state/recommendation-snapshot.json` and start a session. `claude post-install` does not restore the list.
 
+## Superpowers gates
+
+The hooks in `dot_agents/hooks/superpowers-gates/` keep their per-session marks under `~/.local/state/superpowers-gates/`; the hooks delete session directories untouched for more than 30 days whenever they open a session's marks. They parse hook input with `/usr/bin/plutil`, so on hosts without it (Linux) the gates do nothing.
+
 ## Validation
 
 Before pushing, run `uvx pre-commit run --all-files` and `uv run python -m unittest discover -s tests`, and commit any files the hooks reformat. Stage new files first, because `--all-files` skips untracked files. CI runs the same hooks, and `core.hooksPath` points at git-defender, so `pre-commit install` cannot run them at commit time.
-
-## Superpowers gates
-
-The hooks in `dot_agents/hooks/superpowers-gates/` keep their per-session marks under `~/.local/state/superpowers-gates/`; every hook start deletes session directories older than 30 days.
 
 ## Zed
 
