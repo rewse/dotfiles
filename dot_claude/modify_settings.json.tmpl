@@ -25,7 +25,8 @@ if [[ -n "$current" ]] &&
      any(.hooks.Stop[]?.hooks[]?; .command == $away_continue) and
      any(.hooks.PreToolUse[]?.hooks[]?; .command == ($gates + " pre-tool-use")) and
      any(.hooks.PostToolUse[]?.hooks[]?; .command == ($gates + " post-tool-use")) and
-     any(.hooks.SessionStart[]?.hooks[]?; .command == ($gates + " session-start"))
+     any(.hooks.SessionStart[]?.hooks[]?; .command == ($gates + " session-start")) and
+     any(.hooks.UserPromptSubmit[]?.hooks[]?; .command == ($gates + " user-prompt-submit"))
    ' <<<"$current" >/dev/null; then
   printf '%s' "$current"
   exit 0
@@ -56,5 +57,8 @@ jq --indent 2 --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv
   end
   | if has_hook("SessionStart"; $gates + " session-start") then . else
     .hooks.SessionStart += [{matcher: "compact", hooks: [{type: "command", command: ($gates + " session-start")}]}]
+  end
+  | if has_hook("UserPromptSubmit"; $gates + " user-prompt-submit") then . else
+    .hooks.UserPromptSubmit += [{hooks: [{type: "command", command: ($gates + " user-prompt-submit")}]}]
   end
 ' <<<"${current:-"{}"}"

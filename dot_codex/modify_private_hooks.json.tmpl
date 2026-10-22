@@ -38,7 +38,7 @@ jq --indent 2 --arg away_continue "$away_continue" --arg enforce_uv "$enforce_uv
     .hooks.Stop += [{hooks: [{type: "command", command: $away_continue}]}]
   end
   | if has_hook("PreToolUse"; $gates + " pre-tool-use") then . else
-    .hooks.PreToolUse += [{matcher: "^(apply_patch|Bash)$", hooks: [{type: "command", command: ($gates + " pre-tool-use")}]}]
+    .hooks.PreToolUse += [{matcher: "^apply_patch$", hooks: [{type: "command", command: ($gates + " pre-tool-use")}]}]
   end
   | if has_hook("PostToolUse"; $gates + " post-tool-use") then . else
     .hooks.PostToolUse += [{matcher: "^(apply_patch|Bash)$", hooks: [{type: "command", command: ($gates + " post-tool-use")}]}]

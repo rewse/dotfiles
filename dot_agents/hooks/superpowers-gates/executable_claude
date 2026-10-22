@@ -1,8 +1,9 @@
 #!/bin/bash
 #
-# Claude Code hook entry point: claude <pre-tool-use|post-tool-use|session-start>
+# Claude Code hook entry point: claude <pre-tool-use|post-tool-use|session-start|user-prompt-submit>
 # Reads the hook JSON on stdin. Any failure allows the action.
 
+# shellcheck source=/dev/null
 source "${BASH_SOURCE[0]%/*}/core.sh" || exit 0
 sg_disabled && exit 0
 trap 'exit 0' ERR
@@ -25,7 +26,7 @@ resolve_write() {
     file=$(sg_json_get "$input" tool_input.file_path) || return 1
     case "$file" in /*) ;; *) file="$cwd/$file" ;; esac
     root=$(sg_repo_root "${file%/*}") || return 1
-    sg_defers "$root" && return 1
+    sg_defers "$root" "$cwd" && return 1
     relpath=${file#"$root"/}
     lines=0
     case "$tool" in
@@ -71,10 +72,13 @@ case "$event" in
                     Skill) text=$(sg_json_get "$input" tool_input.skill) || exit 0 ;;
                     Bash) text=$(sg_json_get "$input" tool_input.command) || exit 0 ;;
                 esac
-                sg_note_skill_read "$(sg_state_dir claude "$session_id")" "$text"
+                state=$(sg_state_dir claude "$session_id") || exit 0
+                sg_note_skill_read "$state" "$text"
                 ;;
             Write | Edit | MultiEdit)
                 resolve_write || exit 0
+                state=$(sg_state_dir claude "$session_id") || exit 0
+                sg_note_ledger "$state" "$root" "$relpath"
                 message=$(sg_reminder "$root" "$relpath" "$kind" "$lines")
                 [ -z "$message" ] || emit_context PostToolUse "$message"
                 ;;
@@ -83,10 +87,20 @@ case "$event" in
     session-start)
         source_name=$(sg_json_get "$input" source) || exit 0
         [ "$source_name" = "compact" ] || exit 0
-        root=$(sg_repo_root "$cwd") || exit 0
-        sg_defers "$root" && exit 0
-        context=$(sg_compact_context "$root")
+        if root=$(sg_repo_root "$cwd") && sg_defers "$root" "$cwd"; then exit 0; fi
+        state=$(sg_state_dir claude "$session_id") || exit 0
+        context=$(sg_compact_context "$state")
         [ -z "$context" ] || emit_context SessionStart "$context"
+        ;;
+    user-prompt-submit)
+        # Claude Code expands a typed slash command without a Skill tool call,
+        # so the command itself is the only sign that the skill was loaded.
+        prompt=$(sg_json_get "$input" prompt) || exit 0
+        prompt=${prompt#"${prompt%%[![:space:]]*}"}
+        case "$prompt" in /*) ;; *) exit 0 ;; esac
+        command_name=${prompt%%[[:space:]]*}
+        state=$(sg_state_dir claude "$session_id") || exit 0
+        sg_note_skill_read "$state" "${command_name#/}"
         ;;
 esac
 exit 0

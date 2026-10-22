@@ -4,6 +4,7 @@
 # codex <pre-tool-use|post-tool-use|user-prompt-submit|post-compact>
 # Reads the hook JSON on stdin. Any failure allows the action.
 
+# shellcheck source=/dev/null
 source "${BASH_SOURCE[0]%/*}/core.sh" || exit 0
 sg_disabled && exit 0
 trap 'exit 0' ERR
@@ -52,7 +53,7 @@ repo_relative() {
     local file=$1
     case "$file" in /*) ;; *) file="$cwd/$file" ;; esac
     root=$(sg_repo_root "${file%/*}") || return 1
-    sg_defers "$root" && return 1
+    sg_defers "$root" "$cwd" && return 1
     relpath=${file#"$root"/}
 }
 
@@ -81,15 +82,18 @@ case "$event" in
         case "$tool" in
             Bash)
                 text=$(sg_json_get "$input" tool_input.command) || exit 0
-                sg_note_skill_read "$(sg_state_dir codex "$session_id")" "$text"
+                state=$(sg_state_dir codex "$session_id") || exit 0
+                sg_note_skill_read "$state" "$text"
                 ;;
             apply_patch)
                 patch=$(sg_json_get "$input" tool_input.command) || exit 0
                 parse_patch "$patch"
+                state=$(sg_state_dir codex "$session_id") || exit 0
                 reminders=
                 for i in "${!paths[@]}"; do
                     [ "${kinds[i]}" != skip ] || continue
                     repo_relative "${paths[i]}" || continue
+                    sg_note_ledger "$state" "$root" "$relpath"
                     message=$(sg_reminder "$root" "$relpath" "${kinds[i]}" "${counts[i]}")
                     [ -z "$message" ] || reminders=${reminders:+$reminders$'\n'}$message
                 done
@@ -100,16 +104,18 @@ case "$event" in
     user-prompt-submit)
         prompt=$(sg_json_get "$input" prompt) || exit 0
         state=$(sg_state_dir codex "$session_id") || exit 0
+        set -f
         for word in $prompt; do
             word=${word#\$}
             word=${word%[.,;:!?\)]}
             sg_note_skill_read "$state" "$word"
         done
+        set +f
         ;;
     post-compact)
-        root=$(sg_repo_root "$cwd") || exit 0
-        sg_defers "$root" && exit 0
-        context=$(sg_compact_context "$root")
+        if root=$(sg_repo_root "$cwd") && sg_defers "$root" "$cwd"; then exit 0; fi
+        state=$(sg_state_dir codex "$session_id") || exit 0
+        context=$(sg_compact_context "$state")
         [ -z "$context" ] || emit_context PostCompact "$context"
         ;;
 esac

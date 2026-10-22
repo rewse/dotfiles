@@ -6,7 +6,9 @@
 #
 # The gates make an agent read the superpowers skill that governs a plan, a
 # spec or an SDD ledger before it writes one. A repository that carries its
-# own scripts/agent-hooks/core.sh is left to those hooks.
+# own .agents/hooks/superpowers-gates/core.sh is left to those hooks, but only
+# in a session started in such a repository, because a CLI loads project hooks
+# from its own project alone.
 #
 # Hooks run with a minimal PATH, so this file calls external programs by
 # absolute path and otherwise uses bash builtins.
@@ -15,6 +17,7 @@ SG_JSON_TOOL=/usr/bin/plutil
 SG_WINDOW_SECONDS=3600
 SG_SMALL_EDIT_LINES=20
 SG_SESSION_MAX_AGE_DAYS=30
+SG_PROJECT_MARKER=.agents/hooks/superpowers-gates/core.sh
 
 # sg_disabled: succeeds when SUPERPOWERS_GATES=off.
 sg_disabled() {
@@ -61,10 +64,15 @@ sg_repo_root() {
     return 1
 }
 
-# sg_defers <repo-root>: succeeds when the repository carries its own agent
-# hooks; these gates then do nothing there.
+# sg_defers <target-root> <cwd>: succeeds when both the repository being
+# written to and the repository of the session's working directory carry
+# their own agent hooks; these gates then do nothing. A session started
+# elsewhere does not run the target's project hooks, so it stays gated.
 sg_defers() {
-    [ -f "$1/scripts/agent-hooks/core.sh" ]
+    local session_root
+    [ -f "$1/$SG_PROJECT_MARKER" ] || return 1
+    session_root=$(sg_repo_root "$2") || return 1
+    [ -f "$session_root/$SG_PROJECT_MARKER" ]
 }
 
 # sg_state_dir <cli> <session-id>: creates and prints the directory that
@@ -178,44 +186,57 @@ sg_reminder() {
     return 0
 }
 
-# sg_unfinished_ledgers <repo-root>: the repo-relative path of each SDD
-# ledger with fewer "Task <N>: complete" lines than its plan has "### Task"
-# headings, one per line. A ledger whose plan file is missing is skipped.
-sg_unfinished_ledgers() {
-    local root=$1 ledger header plan line total done_count
-    for ledger in "$root"/.superpowers/sdd/*/progress.md; do
-        [ -f "$ledger" ] || continue
-        read -r header < "$ledger" || [ -n "$header" ] || continue
-        case "$header" in "# SDD ledger "*"plan: "*) ;; *) continue ;; esac
-        plan=${header#*plan: }
-        case "$plan" in /*) ;; *) plan="$root/$plan" ;; esac
-        [ -f "$plan" ] || continue
-        total=0
+# sg_note_ledger <state-dir> <repo-root> <relpath>: records the absolute path
+# of an SDD ledger that this session wrote, so a compaction reminder names
+# only the ledgers of this session.
+sg_note_ledger() {
+    local abs="$2/$3" line
+    [ "$(sg_skill_for_path "$3")" = "subagent-driven-development" ] || return 0
+    if [ -f "$1/ledgers" ]; then
         while IFS= read -r line || [ -n "$line" ]; do
-            case "$line" in "### Task "[0-9]*) total=$((total + 1)) ;; esac
-        done < "$plan"
-        done_count=0
-        while IFS= read -r line || [ -n "$line" ]; do
-            case "$line" in *"Task "[0-9]*": complete"*) done_count=$((done_count + 1)) ;; esac
-        done < "$ledger"
-        if [ "$done_count" -lt "$total" ]; then
-            printf '%s\n' "${ledger#"$root"/}"
-        fi
-    done
+            [ "$line" != "$abs" ] || return 0
+        done < "$1/ledgers"
+    fi
+    printf '%s\n' "$abs" >> "$1/ledgers"
     return 0
 }
 
-# sg_compact_context <repo-root>: a sentence per unfinished SDD ledger that
-# points the agent back to the skill and the ledger; nothing when every
-# ledger is finished.
+# sg_ledger_plan <repo-root> <ledger>: prints the plan path from the ledger
+# header and succeeds when the ledger has fewer "Task <N>: complete" lines
+# than its plan has "### Task" headings. Fails for a finished or malformed
+# ledger and when the plan file is missing.
+sg_ledger_plan() {
+    local root=$1 ledger=$2 header plan planfile line total=0 done_count=0
+    [ -f "$ledger" ] || return 1
+    read -r header < "$ledger" || [ -n "$header" ] || return 1
+    case "$header" in "# SDD ledger "*"plan: "*) ;; *) return 1 ;; esac
+    plan=${header#*plan: }
+    planfile=$plan
+    case "$plan" in /*) ;; *) planfile="$root/$plan" ;; esac
+    [ -f "$planfile" ] || return 1
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in "### Task "[0-9]*) total=$((total + 1)) ;; esac
+    done < "$planfile"
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in *"Task "[0-9]*": complete"*) done_count=$((done_count + 1)) ;; esac
+    done < "$ledger"
+    [ "$done_count" -lt "$total" ] || return 1
+    printf '%s' "$plan"
+}
+
+# sg_compact_context <state-dir>: a reminder per unfinished SDD ledger that
+# this session wrote, pointing the agent back to the skill and the ledger;
+# nothing when the session wrote none or every one is finished.
 sg_compact_context() {
-    local ledger first=1 doc
-    doc=$(sg_skill_doc "$1" subagent-driven-development)
-    while IFS= read -r ledger; do
-        [ -n "$ledger" ] || continue
+    local ledger root plan first=1
+    [ -f "$1/ledgers" ] || return 0
+    while IFS= read -r ledger || [ -n "$ledger" ]; do
+        root=$(sg_repo_root "${ledger%/*}") || continue
+        plan=$(sg_ledger_plan "$root" "$ledger") || continue
         [ "$first" -eq 1 ] || printf '\n'
         first=0
-        printf 'An unfinished subagent-driven-development ledger exists at %s. Re-read %s and that ledger before continuing.' "$ledger" "$doc"
-    done <<< "$(sg_unfinished_ledgers "$1")"
+        printf 'An unfinished subagent-driven-development ledger exists at %s. If this session is executing the plan in %s, re-read %s and that ledger before continuing.' \
+            "${ledger#"$root"/}" "$plan" "$(sg_skill_doc "$root" subagent-driven-development)"
+    done < "$1/ledgers"
     return 0
 }

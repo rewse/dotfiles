@@ -3,6 +3,7 @@
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import tempfile
 import time
@@ -30,6 +31,15 @@ def git_init(path: pathlib.Path) -> pathlib.Path:
         check=True,
         env={**os.environ, "GIT_CONFIG_GLOBAL": "/dev/null"},
     )
+    return path
+
+
+def hook_repo(path: pathlib.Path) -> pathlib.Path:
+    """A repository that carries the project's own superpowers gates."""
+    git_init(path)
+    core = path / ".agents/hooks/superpowers-gates/core.sh"
+    core.parent.mkdir(parents=True, exist_ok=True)
+    core.write_text("# project hooks\n")
     return path
 
 
@@ -78,11 +88,22 @@ class GatesTestCase(unittest.TestCase):
             "tool_input": tool_input,
         }
 
-    def write(self, relpath, repo=None):
+    def write(self, relpath, repo=None, cwd=None):
         repo = repo or self.repo
         return self.run_hook(
             "pre-tool-use",
-            self.payload("Write", {"file_path": str(repo / relpath), "content": "x"}),
+            self.payload(
+                "Write", {"file_path": str(repo / relpath), "content": "x"}, cwd
+            ),
+        )
+
+    def post_write(self, relpath, repo=None, cwd=None):
+        repo = repo or self.repo
+        return self.run_hook(
+            "post-tool-use",
+            self.payload(
+                "Write", {"file_path": str(repo / relpath), "content": "x"}, cwd
+            ),
         )
 
     def edit(self, relpath, old, new):
@@ -212,40 +233,108 @@ class SessionStartTest(GatesTestCase):
 
     def test_compact_names_unfinished_ledger(self):
         self.make_unfinished_ledger()
+        self.post_write(LEDGER)
         result = self.session_start("compact")
         self.assertEqual(result.returncode, 0)
         output = json.loads(result.stdout)["hookSpecificOutput"]
         self.assertEqual(output["hookEventName"], "SessionStart")
         self.assertIn(".superpowers/sdd/p/progress.md", output["additionalContext"])
         self.assertIn(
-            "Re-read ~/.agents/skills/subagent-driven-development/SKILL.md",
+            "If this session is executing the plan in docs/superpowers/plans/p.md, "
+            "re-read ~/.agents/skills/subagent-driven-development/SKILL.md "
+            "and that ledger before continuing.",
             output["additionalContext"],
         )
 
+    def test_compact_ignores_ledger_the_session_never_touched(self):
+        self.make_unfinished_ledger()
+        result = self.session_start("compact")
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+
+    def test_compact_skips_finished_ledger(self):
+        self.make_unfinished_ledger()
+        self.post_write(LEDGER)
+        with (self.repo / LEDGER).open("a") as f:
+            f.write("Task 2: complete\n")
+        result = self.session_start("compact")
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+
     def test_startup_prints_nothing(self):
         self.make_unfinished_ledger()
+        self.post_write(LEDGER)
         result = self.session_start("startup")
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
 
 
+class UserPromptSubmitTest(GatesTestCase):
+    def prompt(self, text):
+        return self.run_hook(
+            "user-prompt-submit",
+            {"session_id": SESSION_ID, "cwd": str(self.repo), "prompt": text},
+        )
+
+    def test_slash_command_counts_as_read(self):
+        for text in (
+            "/writing-plans",
+            "/superpowers:writing-plans make it",
+            "  /writing-plans\nmore",
+        ):
+            shutil.rmtree(self.home / ".local", ignore_errors=True)
+            self.assertEqual(self.write(PLAN).returncode, 2)
+            result = self.prompt(text)
+            self.assertEqual((result.returncode, result.stdout), (0, ""))
+            self.assertEqual(self.write(PLAN).returncode, 0, text)
+
+    def test_other_slash_commands_and_prose_do_not(self):
+        for text in (
+            "/review",
+            "/writing-plans-extra",
+            "please run /writing-plans",
+            "use writing-plans",
+        ):
+            self.prompt(text)
+            self.assertEqual(self.write(PLAN).returncode, 2, text)
+
+    def test_brainstorming_and_sdd_commands(self):
+        self.prompt("/brainstorming idea")
+        self.assertEqual(self.write("docs/superpowers/specs/s.md").returncode, 0)
+        self.prompt("/superpowers:subagent-driven-development")
+        self.assertEqual(self.write(LEDGER).returncode, 0)
+
+
 class SkipTest(GatesTestCase):
+    def assert_silent_allow(self, result):
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+
     def test_defers_to_project_hooks(self):
+        hook_repo(self.repo)
+        for result in (self.write(PLAN), self.post_write(PLAN)):
+            self.assert_silent_allow(result)
+
+    def test_old_project_marker_no_longer_defers(self):
         core = self.repo / "scripts/agent-hooks/core.sh"
         core.parent.mkdir(parents=True)
-        core.write_text("# project hooks\n")
-        for result in (
-            self.write(PLAN),
-            self.run_hook(
-                "post-tool-use",
-                self.payload(
-                    "Write", {"file_path": str(self.repo / PLAN), "content": "x"}
-                ),
-            ),
-        ):
-            self.assertEqual(result.returncode, 0)
-            self.assertEqual(result.stdout, "")
-            self.assertEqual(result.stderr, "")
+        core.write_text("# old location\n")
+        self.assertEqual(self.write(PLAN).returncode, 2)
+
+    def test_session_elsewhere_is_gated_in_hooked_repo(self):
+        hook_repo(self.repo)
+        elsewhere = git_init(self.tmp / "elsewhere")
+        self.assertEqual(self.write(PLAN, cwd=elsewhere).returncode, 2)
+        self.assertEqual(self.write(PLAN, cwd=self.tmp).returncode, 2)
+
+    def test_hooked_session_defers_for_another_hooked_repo(self):
+        hook_repo(self.repo)
+        other = hook_repo(self.tmp / "other")
+        self.assert_silent_allow(self.write(PLAN, repo=other, cwd=self.repo))
+        self.assert_silent_allow(self.write(PLAN, repo=self.repo, cwd=other))
+
+    def test_hooked_session_is_gated_in_plain_repo(self):
+        hooked = hook_repo(self.tmp / "hooked")
+        self.assertEqual(self.write(PLAN, repo=self.repo, cwd=hooked).returncode, 2)
 
     def test_disabled_by_env(self):
         self.extra_env = {"SUPERPOWERS_GATES": "off"}
@@ -315,15 +404,13 @@ class SettingsTemplateTest(unittest.TestCase):
                 f"{GATES} post-tool-use",
             ),
             "SessionStart": ("compact", f"{GATES} session-start"),
+            "UserPromptSubmit": (None, f"{GATES} user-prompt-submit"),
         }
         for event, (matcher, command) in expected.items():
-            self.assertIn(
-                {
-                    "matcher": matcher,
-                    "hooks": [{"type": "command", "command": command}],
-                },
-                hooks[event],
-            )
+            entry = {"hooks": [{"type": "command", "command": command}]}
+            if matcher:
+                entry = {"matcher": matcher, **entry}
+            self.assertIn(entry, hooks[event])
 
     def test_settings_template_is_idempotent(self):
         first = self.render("{}")
@@ -339,6 +426,9 @@ class SettingsTemplateTest(unittest.TestCase):
         removed = json.loads(first)
         del removed["hooks"]["SessionStart"][-1]
         self.assertIn(GATES, self.render(json.dumps(removed)))
+        removed = json.loads(first)
+        del removed["hooks"]["UserPromptSubmit"]
+        self.assertIn(f"{GATES} user-prompt-submit", self.render(json.dumps(removed)))
 
 
 class CodexTest(GatesTestCase):
@@ -431,6 +521,10 @@ class CodexTest(GatesTestCase):
 
     def test_codex_post_compact_names_ledger(self):
         self.make_unfinished_ledger()
+        self.codex(
+            "post-tool-use",
+            self.patch_payload(self.envelope(self.update(LEDGER, "+x\n"))),
+        )
         result = self.codex(
             "post-compact", {"session_id": SESSION_ID, "cwd": str(self.repo)}
         )
@@ -438,6 +532,40 @@ class CodexTest(GatesTestCase):
         context = json.loads(result.stdout)["hookSpecificOutput"]
         self.assertEqual(context["hookEventName"], "PostCompact")
         self.assertIn(LEDGER, context["additionalContext"])
+        self.assertIn(
+            "If this session is executing the plan in", context["additionalContext"]
+        )
+
+    def test_codex_post_compact_ignores_untouched_ledger(self):
+        self.make_unfinished_ledger()
+        result = self.codex(
+            "post-compact", {"session_id": SESSION_ID, "cwd": str(self.repo)}
+        )
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+
+    def test_codex_absolute_path_into_other_repo_is_gated(self):
+        hooked = hook_repo(self.tmp / "hooked")
+        elsewhere = git_init(self.tmp / "elsewhere")
+        patch = self.envelope(self.add(str(hooked / PLAN)))
+        payload = self.patch_payload(patch)
+        payload["cwd"] = str(elsewhere)
+        self.assertEqual(self.codex("pre-tool-use", payload).returncode, 2)
+        payload["cwd"] = str(hooked)
+        result = self.codex("pre-tool-use", payload)
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+
+    def test_codex_mixed_patch_blocks_only_the_gated_repo(self):
+        hooked = hook_repo(self.tmp / "hooked")
+        patch = self.envelope(
+            self.add(str(hooked / PLAN)),
+            self.add(str(self.repo / "docs/superpowers/specs/s.md")),
+        )
+        payload = self.patch_payload(patch)
+        payload["cwd"] = str(hooked)
+        result = self.codex("pre-tool-use", payload)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("brainstorming/SKILL.md", result.stderr)
+        self.assertNotIn("writing-plans", result.stderr)
 
     def test_codex_post_compact_without_ledger_prints_nothing(self):
         result = self.codex(
@@ -459,10 +587,9 @@ class CodexTest(GatesTestCase):
         first = self.render_codex("{}")
         hooks = json.loads(first)["hooks"]
         gates = "/home/u/.agents/hooks/superpowers-gates/codex"
-        matcher = "^(apply_patch|Bash)$"
         for event, entry_matcher, command in (
-            ("PreToolUse", matcher, "pre-tool-use"),
-            ("PostToolUse", matcher, "post-tool-use"),
+            ("PreToolUse", "^apply_patch$", "pre-tool-use"),
+            ("PostToolUse", "^(apply_patch|Bash)$", "post-tool-use"),
             ("UserPromptSubmit", None, "user-prompt-submit"),
             ("PostCompact", None, "post-compact"),
         ):
