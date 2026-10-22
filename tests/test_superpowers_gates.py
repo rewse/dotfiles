@@ -278,6 +278,16 @@ class SkipTest(GatesTestCase):
         self.assertFalse(old.exists())
         self.assertTrue(self.state_dir().exists())
 
+    def test_current_stale_session_is_kept(self):
+        current = self.state_dir()
+        current.mkdir(parents=True)
+        stale = time.time() - 31 * 86400
+        os.utime(current, (stale, stale))
+        self.read_skill()
+        self.assertTrue(current.is_dir())
+        self.assertTrue((current / "read-writing-plans").exists())
+        self.assertEqual(self.write(PLAN).returncode, 0)
+
 
 class SettingsTemplateTest(unittest.TestCase):
     def render(self, stdin: str) -> str:

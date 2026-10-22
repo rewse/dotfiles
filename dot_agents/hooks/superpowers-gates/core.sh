@@ -78,7 +78,10 @@ sg_state_dir() {
     session=${session//\//%}
     local dir="$parent/$session"
     /bin/mkdir -p "$dir" || return 1
-    /usr/bin/find "$parent" -mindepth 1 -maxdepth 1 -type d \
+    # Touch first so the current session counts as recent, and exclude it by
+    # name as well so it survives even when the touch fails.
+    /usr/bin/touch "$dir" 2>/dev/null
+    /usr/bin/find "$parent" -mindepth 1 -maxdepth 1 -type d ! -name "$session" \
         -mtime "+$SG_SESSION_MAX_AGE_DAYS" -exec /bin/rm -rf {} + 2>/dev/null
     printf '%s' "$dir"
 }
