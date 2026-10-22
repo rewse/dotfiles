@@ -46,6 +46,10 @@ Prefer a skill to an always-loaded rule for task-specific reference material. Wh
 
 Before pushing, run `uvx pre-commit run --all-files` and `uv run python -m unittest discover -s tests`, and commit any files the hooks reformat. Stage new files first, because `--all-files` skips untracked files. CI runs the same hooks, and `core.hooksPath` points at git-defender, so `pre-commit install` cannot run them at commit time.
 
+## Superpowers gates
+
+The hooks in `dot_agents/hooks/superpowers-gates/` keep their per-session marks under `~/.local/state/superpowers-gates/`; every hook start deletes session directories older than 30 days.
+
 ## Zed
 
 Keep keys in `dot_config/zed/private_settings.json`, including nested keys, in the order used by Zed's bundled `default.json` for the installed version.
