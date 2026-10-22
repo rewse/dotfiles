@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+# Claude Code hook entry point: claude <pre-tool-use|post-tool-use|session-start>
+# Reads the hook JSON on stdin. Any failure allows the action.
+
+source "${BASH_SOURCE[0]%/*}/core.sh" || exit 0
+sg_disabled && exit 0
+trap 'exit 0' ERR
+
+event=${1:-}
+input=$(< /dev/stdin)
+session_id=$(sg_json_get "$input" session_id) || session_id=
+cwd=$(sg_json_get "$input" cwd) || cwd=
+tool=$(sg_json_get "$input" tool_name) || tool=
+
+emit_context() {  # <event name> <text>
+    printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' "$1" "$(sg_json_escape "$2")"
+}
+
+# resolve_write: sets root, relpath, kind and lines for the file a
+# Write/Edit/MultiEdit touches; fails when it is outside a repository or the
+# repository carries its own hooks.
+resolve_write() {
+    local file edits i old new
+    file=$(sg_json_get "$input" tool_input.file_path) || return 1
+    case "$file" in /*) ;; *) file="$cwd/$file" ;; esac
+    root=$(sg_repo_root "${file%/*}") || return 1
+    sg_defers "$root" && return 1
+    relpath=${file#"$root"/}
+    lines=0
+    case "$tool" in
+        Write)
+            if [ -e "$file" ]; then kind=rewrite; else kind=create; fi
+            ;;
+        Edit)
+            kind=edit
+            old=$(sg_json_get "$input" tool_input.old_string) || old=
+            new=$(sg_json_get "$input" tool_input.new_string) || new=
+            lines=$(($(sg_count_lines "$old") + $(sg_count_lines "$new")))
+            ;;
+        MultiEdit)
+            kind=edit
+            edits=$(sg_json_get "$input" tool_input.edits) || edits=0
+            for ((i = 0; i < edits; i++)); do
+                old=$(sg_json_get "$input" "tool_input.edits.$i.old_string") || old=
+                new=$(sg_json_get "$input" "tool_input.edits.$i.new_string") || new=
+                lines=$((lines + $(sg_count_lines "$old") + $(sg_count_lines "$new")))
+            done
+            ;;
+        *) return 1 ;;
+    esac
+}
+
+case "$event" in
+    pre-tool-use)
+        case "$tool" in Write | Edit | MultiEdit) ;; *) exit 0 ;; esac
+        resolve_write || exit 0
+        state=$(sg_state_dir claude "$session_id") || exit 0
+        rc=0
+        message=$(sg_check_write "$state" "$root" "$relpath" "$kind" "$lines") || rc=$?
+        if [ "$rc" -eq 2 ]; then
+            printf '%s\n' "$message" >&2
+            exit 2
+        fi
+        ;;
+    post-tool-use)
+        case "$tool" in
+            Read | Skill | Bash)
+                case "$tool" in
+                    Read) text=$(sg_json_get "$input" tool_input.file_path) || exit 0 ;;
+                    Skill) text=$(sg_json_get "$input" tool_input.skill) || exit 0 ;;
+                    Bash) text=$(sg_json_get "$input" tool_input.command) || exit 0 ;;
+                esac
+                sg_note_skill_read "$(sg_state_dir claude "$session_id")" "$text"
+                ;;
+            Write | Edit | MultiEdit)
+                resolve_write || exit 0
+                message=$(sg_reminder "$root" "$relpath" "$kind" "$lines")
+                [ -z "$message" ] || emit_context PostToolUse "$message"
+                ;;
+        esac
+        ;;
+    session-start)
+        source_name=$(sg_json_get "$input" source) || exit 0
+        [ "$source_name" = "compact" ] || exit 0
+        root=$(sg_repo_root "$cwd") || exit 0
+        sg_defers "$root" && exit 0
+        context=$(sg_compact_context "$root")
+        [ -z "$context" ] || emit_context SessionStart "$context"
+        ;;
+esac
+exit 0
