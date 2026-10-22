@@ -15,7 +15,7 @@
 - 入れるのは、計画（`docs/superpowers/plans/*.md` → writing-plans）、spec（`docs/superpowers/specs/` の下の `*.md` → brainstorming）、新しい台帳（`.superpowers/sdd/*/progress.md` → subagent-driven-development）の判定と、書き込み後の念押しと、圧縮のあとの台帳の読み直し。判定の中身（20 行の線、3600 秒、印は 1 回で消える、台帳は `create` だけ止める）は MeetNote と同じ
 - 入れないもの: push の前の `make check`（MeetNote にしか Makefile の印が無い）、using-superpowers の差し込み（`superpowers-session-start.sh` がすでに行う。Codex には upstream に合わせて差し込まない）
 - 外し方: CLI の環境の `SUPERPOWERS_GATES=off`
-- リポジトリに `scripts/agent-hooks/core.sh` があれば、そのリポジトリ自身のフックに任せ、何もせずに 0 で終わる
+- 書き込み先のリポジトリのルートと、セッションの作業ディレクトリのリポジトリのルートの両方に `.agents/hooks/superpowers-gates/core.sh` があるときだけ、プロジェクト自身のフックに任せ、何もせずに 0 で終わる（CLI がプロジェクトのフックを読むのは、セッションを始めたプロジェクトだけのため。別の場所で始めたセッションからの書き込みは、この全体向けの判定が止める）
 - 止めたときと念押しで示す SKILL.md は、リポジトリに `.agents/skills/<name>/SKILL.md` があればそのリポジトリからの相対パス、無ければ `~/.agents/skills/<name>/SKILL.md`。読んだ印は、どこにある `<name>/SKILL.md` を読んでも付く（`~/.claude/skills/<name>` は `~/.agents/skills/<name>` へのリンク）
 - 読んだ印はセッションごとに 1 か所（`${TMPDIR}` ではなく `~/.local/state/superpowers-gates/<cli>/<session>/`）に置き、どのリポジトリへの書き込みにも効かせる。セッションの作業ディレクトリと書き込み先のリポジトリが違っても、読んだ印が使える（MeetNote 版は印をリポジトリの `.git` に置くため、別のリポジトリへの書き込みが読んでも通らない）。window は印のディレクトリの下に、リポジトリのルートと相対パスを `%` でつないだ名前で置く。30 日より古いセッションのディレクトリは、入口が起動のたびに消す
 - git のリポジトリの外では何もしない
@@ -68,7 +68,7 @@ MeetNote の関数との違い: `ah_` を `sg_` にし、`ah_check_push`、`ah_i
 
 `claude session-start` は `source` が `compact` のときだけ `sg_compact_context`（`cwd` のリポジトリ）を `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"..."}}` で出し、ほかの `source` では何も出さない。
 
-`modify_settings.json.tmpl` に足す登録（コマンドは `{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/claude <event>`）: `PreToolUse` の matcher `Write|Edit|MultiEdit`、`PostToolUse` の matcher `Read|Skill|Bash|Write|Edit|MultiEdit`、`SessionStart` の matcher `compact`。既存の `has_hook` と「全部あれば素通し」の判定に 3 つを足す。
+`modify_settings.json.tmpl` に足す登録（コマンドは `{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/claude <event>`）: `PreToolUse` の matcher `Write|Edit|MultiEdit`、`PostToolUse` の matcher `Read|Skill|Bash|Write|Edit|MultiEdit`、`SessionStart` の matcher `compact`、`UserPromptSubmit`（matcher なし。入力が `/writing-plans` などで始まるときに読んだ印を付ける）。既存の `has_hook` と「全部あれば素通し」の判定に 4 つを足す。
 
 - [ ] **Step 1: テストを書く** — `tests/test_superpowers_gates.py`。各テストは `tempfile.TemporaryDirectory()` に偽の `HOME`（`.agents/skills/{writing-plans,brainstorming,subagent-driven-development}/SKILL.md` と、`.claude/skills/writing-plans` → `../../.agents/skills/writing-plans` のリンク）と、`git init` したリポジトリを作り、`env={"HOME": home, "PATH": "/usr/bin:/bin", "GIT_CONFIG_GLOBAL": "/dev/null"}` で入口を `subprocess.run(["bash", str(CLAUDE), event], input=json.dumps(payload), ...)` で呼ぶ。
 
@@ -87,7 +87,7 @@ MeetNote の関数との違い: `ah_` を `sg_` にし、`ah_check_push`、`ah_i
 | `test_reminder_after_plan_write` | `Write` の post で計画 | stdout の JSON の `additionalContext` に `Self-Review checklist in ~/.agents/skills/writing-plans/SKILL.md` |
 | `test_compact_names_unfinished_ledger` | 2 タスクの計画と `Task 1: complete` だけの台帳、`session-start` で `source: "compact"` | `additionalContext` に `.superpowers/sdd/p/progress.md` と `Re-read ~/.agents/skills/subagent-driven-development/SKILL.md` |
 | `test_startup_prints_nothing` | 同じ台帳で `source: "startup"` | stdout が空 |
-| `test_defers_to_project_hooks` | リポジトリに `scripts/agent-hooks/core.sh` がある状態の計画への `Write` と、その post | どちらも 0 で stdout と stderr が空 |
+| `test_defers_to_project_hooks` | 作業ディレクトリのリポジトリに `.agents/hooks/superpowers-gates/core.sh` がある状態の、同じリポジトリの計画への `Write` と、その post | どちらも 0 で stdout と stderr が空 |
 | `test_disabled_by_env` | `SUPERPOWERS_GATES=off` での計画への `Write` | 0、出力なし |
 | `test_malformed_input_allows` | `{`、`{}` | 0、出力なし |
 | `test_outside_git_repo_allows` | `git init` していないディレクトリの計画への `Write` | 0、出力なし |
@@ -128,7 +128,7 @@ git commit -m "feat(agents): gate plan, spec and ledger writes on reading their 
 
 MeetNote の `codex` との違い: push の分岐と `session-start` を持たない。`post-compact` は `sg_compact_context` を `{"hookSpecificOutput":{"hookEventName":"PostCompact","additionalContext":"..."}}` で出し、台帳が無ければ何も出さない。
 
-`modify_private_hooks.json.tmpl` に足す登録（コマンドは `{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/codex <event>`）: `PreToolUse` と `PostToolUse` の matcher `^(apply_patch|Bash)$`、`UserPromptSubmit`、`PostCompact`。
+`modify_private_hooks.json.tmpl` に足す登録（コマンドは `{{ .chezmoi.homeDir }}/.agents/hooks/superpowers-gates/codex <event>`）: `PreToolUse` の matcher `^apply_patch$`、`PostToolUse` の matcher `^(apply_patch|Bash)$`（Bash は skill を読んだ印のためだけ）、`UserPromptSubmit`、`PostCompact`。
 
 - [ ] **Step 1: テストを足す**
 
@@ -216,10 +216,12 @@ git commit -m "feat(agents): add the superpowers gates to Kiro CLI"
 Run: `uvx pre-commit run --all-files` と `uv run python -m unittest discover -s tests`
 Expected: どちらも PASS
 
-- [ ] **Step 2: 差分を見てから反映する**
+- [ ] **Step 2: 差分を見てから反映する** — Codex の登録の変更は最初の `chezmoi apply` の前にすべて済ませる。Codex はフックの信頼を定義のハッシュごとに持つため、定義を変えると承認し直しになる。
 
 Run: `chezmoi diff` を確かめたあと `chezmoi apply`
-Expected: 差分が `~/.agents/hooks/superpowers-gates/`、`~/.claude/settings.json` の 3 つの登録、`~/.codex/hooks.json` の 4 つの登録、`~/.kiro/hooks/superpowers-gates.json` だけ
+Expected: 差分が `~/.agents/hooks/superpowers-gates/`、`~/.claude/settings.json` の 4 つの登録、`~/.codex/hooks.json` の 4 つの登録、`~/.kiro/hooks/superpowers-gates.json` だけ
+
+- [ ] **Step 2b: Codex でフックを承認する** — Codex の `/hooks` で、新しい 4 つのフック（PreToolUse、PostToolUse、UserPromptSubmit、PostCompact）を承認する。承認するまで動かない。
 
 - [ ] **Step 3: MeetNote 以外のリポジトリで確かめる** — chezmoi のリポジトリで、各 CLI の新しいセッションに、skill を読ませずに `docs/superpowers/plans/2026-10-23-smoke.md` に 1 行書くよう頼む。Kiro はコントローラーが `kiro-cli chat --no-interactive --v3 --trust-tools=read_file,fs_write` で行い、Claude Code と Codex は Tats が行う。
 
