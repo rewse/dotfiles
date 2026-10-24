@@ -16,10 +16,12 @@ tests
 git
 {{- end }}
 {{- else }}
+.agents/hooks/otty-kiro.py
 .agents/skills/obsidian-ops
 .claude/skills/obsidian-ops
 .config/1Password/ssh/agent.toml
 .config/karabiner
+.kiro/hooks/otty-kiro.json
 .kiro/skills/obsidian-ops
 git
 Library

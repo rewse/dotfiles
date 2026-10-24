@@ -1,9 +1,11 @@
 """Regression tests for the Kiro CLI v3 hooks and the scripts they run."""
 
+import base64
 import hashlib
 import json
 import os
 import pathlib
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -12,6 +14,7 @@ import unittest
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ENFORCE_UV = REPO_ROOT / "dot_agents/hooks/executable_enforce-uv.sh"
 JAPANESE_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_japanese-guard-kiro.py"
+OTTY_KIRO = REPO_ROOT / "dot_agents/hooks/executable_otty-kiro.py"
 REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOOKS_DIR = REPO_ROOT / "private_dot_kiro/hooks"
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
@@ -299,11 +302,173 @@ class KiroHookFilesTest(unittest.TestCase):
             self.assertEqual(hook["matcher"], "^execute_bash$")
 
 
+def osc_fields(data: bytes) -> list[str]:
+    if not (data.startswith(b"\x1b]") and data.endswith(b"\x07")):
+        raise AssertionError(f"not a single OSC sequence: {data!r}")
+    return data[2:-1].decode().split(";")
+
+
+def b64(value: str) -> str:
+    return base64.b64decode(value).decode()
+
+
+def arm_args(data: bytes) -> str:
+    values = dict(field.split("=", 1) for field in osc_fields(data)[2:])
+    return b64(values["args"])
+
+
+class OttyKiroTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        hooks = self.tmp / "hooks"
+        hooks.mkdir()
+        self.script = hooks / "otty-kiro.py"
+        shutil.copy(OTTY_KIRO, self.script)
+        shutil.copy(JAPANESE_GUARD_KIRO, hooks / "japanese-guard-kiro.py")
+        (hooks / "japanese-guard.py").write_text(GUARD_STUB)
+        current = hashlib.sha256(b"/tmp/project").hexdigest()[:16]
+        self.session_dir = self.tmp / "home/.kiro/sessions" / current / SESSION_ID
+        self.session_dir.mkdir(parents=True)
+        self.tty = self.tmp / "tty"
+        self.tty.write_bytes(b"")
+
+    def write_session(self, *lines: str) -> None:
+        (self.session_dir / "messages.jsonl").write_text("\n".join(lines) + "\n")
+
+    def run_process(
+        self,
+        event_name: str,
+        *,
+        tty: str | None = "",
+        args: str = "chat",
+        session_id: str = SESSION_ID,
+    ) -> subprocess.CompletedProcess[str]:
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("KIRO_OTTY_TTY", "KIRO_OTTY_ARGS")
+        }
+        env["HOME"] = str(self.tmp / "home")
+        env["KIRO_OTTY_ARGS"] = args
+        if tty is not None:
+            env["KIRO_OTTY_TTY"] = tty or str(self.tty)
+        payload = {
+            "session_id": session_id,
+            "hook_event_name": event_name,
+            "cwd": "/tmp/project",
+        }
+        return subprocess.run(
+            ["python3", str(self.script), event_name],
+            input=json.dumps(payload),
+            capture_output=True,
+            text=True,
+            env=env,
+            check=False,
+        )
+
+    def run_hook(
+        self, event_name: str, *, args: str = "chat", session_id: str = SESSION_ID
+    ) -> bytes:
+        result = self.run_process(event_name, args=args, session_id=session_id)
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+        return self.tty.read_bytes()
+
+    def test_hook_file(self) -> None:
+        hook = "/home/u/.agents/hooks/otty-kiro.py"
+        self.assertEqual(
+            triggers(hook_file("otty-kiro.json.tmpl")),
+            [("SessionStart", f"{hook} session-start"), ("Stop", f"{hook} stop")],
+        )
+
+    def test_arm_resumes_the_session_with_launch_options(self) -> None:
+        out = self.run_hook("session-start", args="chat --trust-all-tools --resume")
+        fields = osc_fields(out)
+        self.assertEqual(fields[:2], ["88", "arm"])
+        values = dict(field.split("=", 1) for field in fields[2:])
+        self.assertEqual(b64(values["cmd"]), "kiro-cli")
+        self.assertEqual(
+            b64(values["args"]), "chat --trust-all-tools --resume-id sess_test"
+        )
+        self.assertEqual(b64(values["cwd"]), "/tmp/project")
+
+    def test_arm_drops_every_resume_flag(self) -> None:
+        out = self.run_hook(
+            "session-start",
+            args="chat -r --resume-picker --resume-id old --resume-id=old2",
+        )
+        self.assertEqual(arm_args(out), "chat --resume-id sess_test")
+
+    def test_arm_adds_chat_when_launched_without_arguments(self) -> None:
+        out = self.run_hook("session-start", args="")
+        self.assertEqual(arm_args(out), "chat --resume-id sess_test")
+
+    def test_arm_keeps_quoted_arguments(self) -> None:
+        out = self.run_hook("session-start", args="chat --agent 'my agent'")
+        self.assertEqual(
+            shlex.split(arm_args(out)),
+            ["chat", "--agent", "my agent", "--resume-id", "sess_test"],
+        )
+
+    def test_stop_notifies_with_project_and_answer(self) -> None:
+        self.write_session(
+            event({"type": "user", "content": "q"}),
+            say("## 結果\n\n**直した**よ。`a.py` を見てね"),
+        )
+        self.assertEqual(
+            osc_fields(self.run_hook("stop")),
+            ["777", "notify", "Kiro — project", "結果 直したよ。a.py を見てね"],
+        )
+
+    def test_stop_truncates_long_answers(self) -> None:
+        self.write_session(say("あ" * 150))
+        body = osc_fields(self.run_hook("stop"))[3]
+        self.assertEqual(body, "あ" * 99 + "…")
+
+    def test_stop_drops_code_fences(self) -> None:
+        self.write_session(say("修正したよ\n```python\nprint(1)\n```"))
+        self.assertEqual(osc_fields(self.run_hook("stop"))[3], "修正したよ print(1)")
+
+    def test_stop_skips_english_answer(self) -> None:
+        self.write_session(say("EN answer"))
+        self.assertEqual(self.run_hook("stop"), b"")
+
+    def test_stop_uses_stock_body_for_empty_answer(self) -> None:
+        self.write_session(event({"type": "user", "content": "q"}))
+        self.assertEqual(osc_fields(self.run_hook("stop"))[3], "Response complete")
+
+    def test_notification_strips_separators_and_controls(self) -> None:
+        self.write_session(say("a;b\x1b[31m赤\x07c"))
+        fields = osc_fields(self.run_hook("stop"))
+        self.assertEqual(len(fields), 4)
+        self.assertNotRegex(fields[3], r"[\x00-\x1f\x7f]")
+
+    def test_does_nothing_without_tty(self) -> None:
+        self.write_session(say("日本語の回答"))
+        result = self.run_process("stop", tty=None)
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+        self.assertEqual(self.tty.read_bytes(), b"")
+
+    def test_unwritable_tty_is_ignored(self) -> None:
+        self.write_session(say("日本語の回答"))
+        result = self.run_process("stop", tty=str(self.tmp / "missing/tty"))
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
+
+    def test_rejects_bad_session_id(self) -> None:
+        for session_id in ("", "../x"):
+            with self.subTest(session_id=session_id):
+                self.assertEqual(
+                    self.run_hook("session-start", session_id=session_id), b""
+                )
+
+
 class ChezmoiIgnoreTest(unittest.TestCase):
     def test_linux_ignores_only_otty_hooks(self) -> None:
         text = CHEZMOIIGNORE.read_text()
         start = text.index("{{- else }}\n")
         linux = text[start : text.index("{{- end }}", start)].splitlines()
+        self.assertIn(".agents/hooks/otty-kiro.py", linux)
+        self.assertIn(".kiro/hooks/otty-kiro.json", linux)
         self.assertNotIn(".kiro/hooks/otty-state.json", linux)
         self.assertNotIn(".kiro/hooks/otty-state.sh", linux)
         self.assertNotIn(".kiro/hooks", linux)

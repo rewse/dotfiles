@@ -1,0 +1,21 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "otty-kiro-session-start",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/otty-kiro.py session-start"
+      }
+    },
+    {
+      "name": "otty-kiro-stop",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "{{ .chezmoi.homeDir }}/.agents/hooks/otty-kiro.py stop"
+      }
+    }
+  ]
+}
