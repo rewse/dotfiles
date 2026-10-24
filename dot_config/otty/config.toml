@@ -17,7 +17,6 @@ palette-11 = "#d2b67b"
 palette-12 = "#2f5af3"
 palette-13 = "#a00095"
 palette-14 = "#3e953a"
-privilege-notification-on-finish = true
 notification-foreground = "tab-unfocused"
 auto-hide-tabs-panel = "always"
 font-family = "HackGen Console"
