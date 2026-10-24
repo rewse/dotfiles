@@ -271,8 +271,9 @@ fi
 source {{ .chezmoi.homeDir }}/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization script
 {{- end }}
 
-# Otty rewrites this block, and moves it to the end of the file, whenever it
-# differs from Otty's own text, so keep it verbatim and last.
+# Otty rewrites this block, and moves it to the end of the file after a blank
+# line, whenever it differs from Otty's own text, so keep it verbatim and last.
+
 # >>> otty shell integration >>>
 # Added by Otty — toggle in Settings > Shell > Shell Integration.
 # Inert unless launched by Otty (it sets $OTTY_SHELL_INTEGRATION).
