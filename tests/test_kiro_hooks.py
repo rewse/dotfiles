@@ -482,7 +482,9 @@ class KiroWrapperTest(unittest.TestCase):
         fake.write_text(FAKE_KIRO_CLI)
         fake.chmod(0o755)
         self.path = f"{bin_dir}{os.pathsep}{os.environ['PATH']}"
-        match = re.search(r"^kiro-cli\(\) \{\n.*?^\}\n", ZSHRC.read_text(), re.M | re.S)
+        match = re.search(
+            r"^kiro-cli\(\) \{\n.*?^\}\n", ZSHRC.read_text(), re.MULTILINE | re.DOTALL
+        )
         if match is None:
             self.fail("kiro-cli function not found in dot_zshrc.tmpl")
         self.function = match.group()
