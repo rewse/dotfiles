@@ -412,6 +412,30 @@ class OttyKiroTest(unittest.TestCase):
             ["chat", "--agent", "my agent", "--resume-id", "sess_test"],
         )
 
+    def test_arm_drops_the_first_question(self) -> None:
+        # Resuming must not ask the launch question again, least of all with
+        # --trust-all-tools.
+        out = self.run_hook(
+            "session-start",
+            args="chat --trust-all-tools --model m --effort=high 'fix the tests'",
+        )
+        self.assertEqual(
+            shlex.split(arm_args(out)),
+            [
+                "chat",
+                "--trust-all-tools",
+                "--model",
+                "m",
+                "--effort=high",
+                "--resume-id",
+                "sess_test",
+            ],
+        )
+
+    def test_does_not_arm_non_interactive_runs(self) -> None:
+        out = self.run_hook("session-start", args="chat --no-interactive 'run it'")
+        self.assertEqual(out, b"")
+
     def test_stop_notifies_with_project_and_answer(self) -> None:
         self.write_session(
             event({"type": "user", "content": "q"}),
