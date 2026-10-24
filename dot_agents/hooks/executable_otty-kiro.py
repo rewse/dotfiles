@@ -24,6 +24,10 @@ a rewrite are not announced, because Kiro does not fire Stop again for the
 rewritten turn.
 """
 
+# Kiro's hook environment can resolve python3 to the macOS system Python 3.9,
+# which cannot evaluate `str | None` annotations at import time.
+from __future__ import annotations
+
 import base64
 import contextlib
 import importlib.util

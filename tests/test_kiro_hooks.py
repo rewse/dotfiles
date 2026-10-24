@@ -19,6 +19,7 @@ OTTY_KIRO = REPO_ROOT / "dot_agents/hooks/executable_otty-kiro.py"
 REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOOKS_DIR = REPO_ROOT / "private_dot_kiro/hooks"
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
+SYSTEM_PYTHON = pathlib.Path("/usr/bin/python3")
 ZSHRC = REPO_ROOT / "dot_zshrc.tmpl"
 
 SESSION_ID = "sess_test"
@@ -345,6 +346,7 @@ class OttyKiroTest(unittest.TestCase):
         tty: str | None = "",
         args: str = "chat",
         session_id: str = SESSION_ID,
+        python: str = "python3",
     ) -> subprocess.CompletedProcess[str]:
         env = {
             k: v
@@ -361,7 +363,7 @@ class OttyKiroTest(unittest.TestCase):
             "cwd": "/tmp/project",
         }
         return subprocess.run(
-            ["python3", str(self.script), event_name],
+            [python, str(self.script), event_name],
             input=json.dumps(payload),
             capture_output=True,
             text=True,
@@ -479,6 +481,17 @@ class OttyKiroTest(unittest.TestCase):
         self.write_session(say("日本語の回答"))
         result = self.run_process("stop", tty=str(self.tmp / "missing/tty"))
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
+
+    @unittest.skipUnless(SYSTEM_PYTHON.exists(), "needs the macOS system Python")
+    def test_runs_on_the_system_python(self) -> None:
+        # Kiro's hook environment can resolve python3 to /usr/bin/python3.
+        self.write_session(say("日本語の回答"))
+        for event_name, osc in (("session-start", "88"), ("stop", "777")):
+            with self.subTest(event_name=event_name):
+                self.tty.write_bytes(b"")
+                result = self.run_process(event_name, python=str(SYSTEM_PYTHON))
+                self.assertEqual((result.returncode, result.stderr), (0, ""))
+                self.assertEqual(osc_fields(self.tty.read_bytes())[0], osc)
 
     def test_rejects_bad_session_id(self) -> None:
         for session_id in ("", "../x"):
