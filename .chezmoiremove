@@ -4,3 +4,7 @@
 
 # dig-doh is a zsh alias for dig +https.
 .local/bin/dig-doh
+
+# Kiro reports its own state to Otty with OSC 7501, and an otty tab badge hides it.
+.kiro/hooks/otty-state.json
+.kiro/hooks/otty-state.sh

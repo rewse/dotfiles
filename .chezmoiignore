@@ -20,8 +20,6 @@ git
 .claude/skills/obsidian-ops
 .config/1Password/ssh/agent.toml
 .config/karabiner
-.kiro/hooks/otty-state.json
-.kiro/hooks/otty-state.sh
 .kiro/skills/obsidian-ops
 git
 Library

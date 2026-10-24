@@ -7,13 +7,11 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
-import time
 import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 ENFORCE_UV = REPO_ROOT / "dot_agents/hooks/executable_enforce-uv.sh"
 JAPANESE_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_japanese-guard-kiro.py"
-OTTY_STATE = REPO_ROOT / "private_dot_kiro/hooks/executable_otty-state.sh"
 REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOOKS_DIR = REPO_ROOT / "private_dot_kiro/hooks"
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
@@ -300,81 +298,20 @@ class KiroHookFilesTest(unittest.TestCase):
         for hook in config["hooks"][:2]:
             self.assertEqual(hook["matcher"], "^execute_bash$")
 
-    def test_otty_state(self) -> None:
-        state = "/home/u/.kiro/hooks/otty-state.sh"
-        self.assertEqual(
-            triggers(hook_file("otty-state.json.tmpl")),
-            [
-                ("SessionStart", f"{state} idle"),
-                ("UserPromptSubmit", f"{state} processing"),
-                ("PreToolUse", f"{state} processing"),
-                ("PostToolUse", f"{state} processing"),
-                ("PreTaskExec", f"{state} processing"),
-                ("PostTaskExec", f"{state} processing"),
-                ("Stop", f"{state} idle"),
-            ],
-        )
-
-
-class OttyStateTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.tmp = pathlib.Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, self.tmp)
-        self.calls = self.tmp / "calls"
-        self.fake = self.tmp / "otty"
-        self.fake.write_text(
-            "#!/bin/sh\n"
-            f'echo "$*" >> {self.calls}\n'
-            'if [ "$1 $2" = "pane show" ]; then\n'
-            '  printf \'{"data": {"id": "p_%s", "tab_id": "t_from_%s"}}\\n\' "$3" "$3"\n'
-            "fi\n"
-        )
-        self.fake.chmod(0o755)
-
-    def run_state(self, state: str, pane_id: str | None = "abc_1") -> list[str]:
-        env = dict(os.environ, OTTY_CLI=str(self.fake))
-        env.pop("OTTY_PANE_ID", None)
-        if pane_id is not None:
-            env["OTTY_PANE_ID"] = pane_id
-        subprocess.run(["sh", str(OTTY_STATE), state], env=env, check=True)
-        for _ in range(50):
-            if self.calls.exists() and "tab badge" in self.calls.read_text():
-                break
-            time.sleep(0.05)
-        return self.calls.read_text().splitlines() if self.calls.exists() else []
-
-    def test_badges_the_tab_of_its_own_pane(self) -> None:
-        # The hook runs in a sandbox that cannot inspect processes, so the pane
-        # comes from OTTY_PANE_ID rather than from focus or an agent pid.
-        calls = self.run_state("processing")
-        self.assertEqual(calls[0], "pane show abc_1 --json")
-        self.assertIn("tab badge --tab t_from_abc_1 --kind running -q", calls)
-
-    def test_maps_states_to_badge_kinds(self) -> None:
-        for state, kind in (
-            ("awaiting", "awaiting-input"),
-            ("idle", "finished"),
-            ("processing", "running"),
-        ):
-            with self.subTest(state=state):
-                self.calls.unlink(missing_ok=True)
-                self.assertIn(
-                    f"tab badge --tab t_from_abc_1 --kind {kind} -q",
-                    self.run_state(state),
-                )
-
-    def test_does_nothing_outside_otty(self) -> None:
-        self.assertEqual(self.run_state("idle", pane_id=None), [])
-
 
 class ChezmoiIgnoreTest(unittest.TestCase):
     def test_linux_ignores_only_otty_hooks(self) -> None:
         text = CHEZMOIIGNORE.read_text()
         start = text.index("{{- else }}\n")
         linux = text[start : text.index("{{- end }}", start)].splitlines()
-        self.assertIn(".kiro/hooks/otty-state.json", linux)
-        self.assertIn(".kiro/hooks/otty-state.sh", linux)
+        self.assertNotIn(".kiro/hooks/otty-state.json", linux)
+        self.assertNotIn(".kiro/hooks/otty-state.sh", linux)
         self.assertNotIn(".kiro/hooks", linux)
+
+    def test_removes_otty_state_hooks(self) -> None:
+        lines = (REPO_ROOT / ".chezmoiremove").read_text().splitlines()
+        self.assertIn(".kiro/hooks/otty-state.json", lines)
+        self.assertIn(".kiro/hooks/otty-state.sh", lines)
 
 
 if __name__ == "__main__":
