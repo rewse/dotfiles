@@ -28,7 +28,7 @@ Kiro を動かしたまま別のアプリを見ていると、ターンが終わ
 Kiro と Otty のあいだで今起きていること:
 
 - Kiro 本体は端末に OSC 7501（Program Status）を送る。ターンの始まりに `state=working:app=kiro-cli`、終わりに `state=done:app=kiro-cli`、承認や質問を待つときに `state=blocked:kind=...` を送る。`msg` と `title` は付かない。環境変数 `KIRO_NO_PROGRAM_STATUS` を設定すると送らなくなる。
-- Otty は OSC 7501 からタブのバッジと通知を作る。「kiro-cli / Finished — zsh」は、この `done` から作られた通知である。`done` の通知には「Notify on Command Finish」（`privilege-notification-on-finish`）、`blocked` の通知には「Notify When Awaiting Input」が要る。前者は既定でオフだが、今の設定ではオンになっている。
+- Otty は OSC 7501 からタブのバッジと通知を作る。「kiro-cli / Finished — zsh」は、この `done` から作られた通知である。`done` の通知には「Notify on Command Finish」（`privilege-notification-on-finish`）、`blocked` の通知には「Notify When Awaiting Input」が要る。前者は既定でオフである。オフにすると「Finished」は出なくなり、承認待ちのバッジと「Needs permission」の通知は出ることを実機で確かめた。
 - Otty は、`otty tab badge` で付けたバッジを OSC 7501 のバッジより優先する。今の `otty-state.sh` は `SessionStart`、`UserPromptSubmit`、ツールの前後、`Stop` でバッジを付けるので、Kiro の `blocked` バッジが隠れている。
 - hook から `msg` 付きの `done` を送る試作では、Kiro の `done` の前に送っても後に送っても、通知は「Finished」のままだった。記録は受け付けられ、タブのプレビューと Inbox には `msg` が出た。Otty は少し間をおいて記録の状態の変化を見て通知を出すので、同じ記録を使うかぎり Kiro の `done` を内容つきの通知に置き換えられないと考えられる。同じペインからの通知は3秒に1回までで、あふれた分は捨てられる。
 
@@ -42,6 +42,9 @@ hook を書くうえでの制約:
 - OSC 88 の `arm` は、`cmd` の basename と同じ名前のプロセスがペインのプロセスツリーにいないと登録されない。ペインには `kiro-cli chat ...` のプロセスがいる。
 - インストール済みの otty 1.6.2 には `otty resume:arm` がないので、OSC 88 は自分で組み立てて書く。
 - Kiro の hook には終了時のトリガーがない。
+- Kiro は `SessionStart` を起動したときではなく、そのセッションで最初のメッセージを送ったときに発火する。メッセージを送っていないセッションには resume の登録が付かないので、Otty を再起動するとそのペインは素のシェルに戻る。`/chat new` で新しいセッションに切り替えたときも、最初のメッセージで新しいセッション ID に登録し直す。
+- Otty は登録したコマンドをペインのログインシェルに入力して resume するので、復活した Kiro にもラッパーの環境変数が付く。⌘Q で Otty を終了しても `clear` は届かず、登録は残る。
+- Kiro のシェル連携（`zshrc.pre.zsh`）は、対話シェルを `kiro-cli-term` の中の別の pty で動かす。`$TTY` はその内側の pty を指し、そこに書いたシーケンスは Otty のペインまで中継される。
 - `~/.config/otty/config.toml` は Otty が書き換える実ファイルを正とし、変更は `chezmoi add` で取り込む（AGENTS.md）。
 - `dot_zshrc.tmpl` には `ka`（`kiro-cli chat --trust-all-tools`）と `kar`（`... --resume`）の alias がある。
 
@@ -98,6 +101,6 @@ Python の hook を1本作り、Kiro の hook 定義の `SessionStart` と `Stop
 
 ## 実装するときに確かめること
 
-- 「Notify on Command Finish」をオフにしたあと、Kiro の `done` から通知が出なくなり、`blocked` の通知とバッジは出ること。
-- Otty が resume するとき、シェルを通して起動するか。通さない場合はラッパー関数が効かないので、復活したセッションでは通知も `clear` も効かなくなる。
-- `/load` などでセッションを切り替えたときに `SessionStart` が発火するか。発火しないと、登録が古い会話を指したまま残る。
+最初の3つは実機で確かめ、結果を「制約」に移した。
+
+- `/chat` の一覧や `/sessions` から以前のセッションに切り替えたときに `SessionStart` が発火するか。`/chat new` では発火することを確かめたが、以前のセッションへの切り替えは確かめていない。発火しないと、登録が切り替える前の会話を指したまま残る。
