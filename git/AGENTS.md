@@ -6,6 +6,10 @@ Before starting a git-related task, check whether the target repository is alrea
 
 Run `git pull` in the target repository before making any change, and check out the default branch first when the clone is on a stale feature branch. The remote often carries commits that are not in the local clone, and building on an outdated base means the work has to be rebased or reapplied later.
 
+# Python Lockfiles
+
+Run `uv lock` with an empty user-level configuration, for example `XDG_CONFIG_HOME=$(mktemp -d /tmp/uvcfg.XXXXXX) uv lock`. Otherwise the `exclude-newer` settings in the user's `uv.toml` are written into `uv.lock`, and `uv sync --locked` in CI, which lacks them, rejects the lockfile as stale.
+
 # GitHub Configuration
 
 Keep `.github` consistent across the `rewse/*` repositories cloned here. A repository may differ only for a reason stated in this section or in its own AGENTS.md. Repositories hosted on GitLab and forks of upstream projects are out of scope.
