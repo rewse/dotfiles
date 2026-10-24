@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import shlex
 import shutil
 import subprocess
@@ -18,6 +19,7 @@ OTTY_KIRO = REPO_ROOT / "dot_agents/hooks/executable_otty-kiro.py"
 REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOOKS_DIR = REPO_ROOT / "private_dot_kiro/hooks"
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
+ZSHRC = REPO_ROOT / "dot_zshrc.tmpl"
 
 SESSION_ID = "sess_test"
 GUARD_STUB = """\
@@ -460,6 +462,69 @@ class OttyKiroTest(unittest.TestCase):
                 self.assertEqual(
                     self.run_hook("session-start", session_id=session_id), b""
                 )
+
+
+FAKE_KIRO_CLI = """\
+#!/bin/sh
+[ -n "${KIRO_OTTY_TTY+x}" ] && echo "KIRO_OTTY_TTY=$KIRO_OTTY_TTY"
+[ -n "${KIRO_OTTY_ARGS+x}" ] && echo "KIRO_OTTY_ARGS=$KIRO_OTTY_ARGS"
+exit "${FAKE_STATUS:-0}"
+"""
+
+
+class KiroWrapperTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        bin_dir = self.tmp / "bin"
+        bin_dir.mkdir()
+        fake = bin_dir / "kiro-cli"
+        fake.write_text(FAKE_KIRO_CLI)
+        fake.chmod(0o755)
+        self.path = f"{bin_dir}{os.pathsep}{os.environ['PATH']}"
+        match = re.search(r"^kiro-cli\(\) \{\n.*?^\}\n", ZSHRC.read_text(), re.M | re.S)
+        if match is None:
+            self.fail("kiro-cli function not found in dot_zshrc.tmpl")
+        self.function = match.group()
+
+    def run_wrapper(self, *args: str, fake_status: int = 0) -> bytes:
+        # script(1) gives zsh a real tty, so $TTY is set as in an Otty pane.
+        code = self.function + 'kiro-cli "$@"; echo "status=$?"\n'
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("KIRO_OTTY_TTY", "KIRO_OTTY_ARGS")
+        }
+        env.update(PATH=self.path, FAKE_STATUS=str(fake_status))
+        result = subprocess.run(
+            ["script", "-q", "/dev/null", "zsh", "-fc", code, "zsh", *args],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            env=env,
+            check=True,
+        )
+        return result.stdout.replace(b"\r", b"")
+
+    def test_wrapper_passes_tty_and_quoted_arguments(self) -> None:
+        out = self.run_wrapper("chat", "--agent", "my agent")
+        self.assertRegex(out, rb"KIRO_OTTY_TTY=/dev/ttys\d+\n")
+        self.assertIn(b"KIRO_OTTY_ARGS=chat --agent 'my agent'\n", out)
+
+    def test_wrapper_clears_and_keeps_exit_status(self) -> None:
+        out = self.run_wrapper("chat", fake_status=3)
+        self.assertIn(b"\x1b]88;clear\x07", out)
+        self.assertIn(b"status=3\n", out)
+
+    def test_wrapper_treats_no_arguments_as_chat(self) -> None:
+        out = self.run_wrapper()
+        self.assertRegex(out, rb"KIRO_OTTY_TTY=/dev/ttys\d+\n")
+        self.assertIn(b"KIRO_OTTY_ARGS=\n", out)
+
+    def test_wrapper_passes_other_subcommands_through(self) -> None:
+        out = self.run_wrapper("settings", "list", fake_status=2)
+        self.assertNotIn(b"KIRO_OTTY_TTY=", out)
+        self.assertNotIn(b"\x1b]88;clear", out)
+        self.assertIn(b"status=2\n", out)
 
 
 class ChezmoiIgnoreTest(unittest.TestCase):

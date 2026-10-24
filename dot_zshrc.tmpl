@@ -115,6 +115,22 @@ _notify_terminal_cwd() {
 chpwd_functions+=(_notify_terminal_cwd)
 precmd_functions+=(_notify_terminal_cwd)
 
+# Kiro runs its hooks without a controlling terminal, so the chat session gets
+# the pane's tty path and its own arguments for ~/.agents/hooks/otty-kiro.py,
+# which posts Otty notifications and arms OSC 88 resume. Kiro has no hook for
+# its exit, so the resume declaration is withdrawn here once it returns.
+kiro-cli() {
+  if [[ $# -gt 0 && "$1" != chat ]]; then
+    command kiro-cli "$@"
+    return
+  fi
+  local exit_status=0
+  KIRO_OTTY_TTY="$TTY" KIRO_OTTY_ARGS="${(j: :)${(q-)@}}" \
+    command kiro-cli "$@" || exit_status=$?
+  [[ -n "$TTY" ]] && printf '\e]88;clear\a' > "$TTY"
+  return $exit_status
+}
+
 # >>>
 # <<< Aliases
 
