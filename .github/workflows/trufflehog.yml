@@ -23,5 +23,5 @@ jobs:
           base: ""
           head: main
           # Keep in step with the action version above; Dependabot does not update this input.
-          version: 3.99.2@sha256:47a84bc18a0d04a165498bbbd3bacfd84176661cbc91f8e0f85467f6a771e99a
+          version: 3.99.7@sha256:0d003fc3abc4e1565eca8462b992001314de51451e96e3c44de80d116794d5d1
           extra_args: --exclude-detectors=lob --exclude-paths=.trufflehog-exclude-paths.txt --results=verified,unknown
