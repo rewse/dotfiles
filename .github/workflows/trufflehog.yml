@@ -18,10 +18,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: trufflesecurity/trufflehog@e76dff8a7e57d6df0c60ad8cbf5d5cba505a8fc9  # v3.99.2
+      - uses: rewse/actions/trufflehog@27dd72c4d9cd7def26e267caba0e11ff87ec6f49  # v1.1.6
         with:
-          base: ""
-          head: main
-          # Keep in step with the action version above; Dependabot does not update this input.
-          version: 3.99.2@sha256:47a84bc18a0d04a165498bbbd3bacfd84176661cbc91f8e0f85467f6a771e99a
-          extra_args: --exclude-detectors=lob --exclude-paths=.trufflehog-exclude-paths.txt --results=verified,unknown
+          extra-args: --exclude-detectors=lob --exclude-paths=.trufflehog-exclude-paths.txt --results=verified,unknown
