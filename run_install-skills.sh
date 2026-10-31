@@ -113,6 +113,28 @@ install_skills vercel-labs/skills find-skills
 # X Platform xurl
 install_skills xdevplatform/xurl xurl
 
+# Vercel Labs agent-desktop. Its skills are compiled into the binary, which
+# ansible installs via npm, so writing the core guide out on every apply keeps
+# the skill matched to the installed version. The guide loads the platform skill
+# and its references from the binary on demand. A temporary file keeps the
+# existing SKILL.md intact when the command fails or returns no content.
+if command -v agent-desktop >/dev/null 2>&1; then
+  agent_desktop_skill="$(mktemp /tmp/agent-desktop-skill.XXXXXX)"
+  if agent-desktop skills get desktop < /dev/null |
+    jq -er '.data.content | select(type == "string" and length > 0)' > "$agent_desktop_skill"; then
+    if ! { chmod 0644 "$agent_desktop_skill" &&
+      mkdir -p "$SKILLS_DIR/agent-desktop" &&
+      command mv "$agent_desktop_skill" "$SKILLS_DIR/agent-desktop/SKILL.md"; }; then
+      record_failure "write agent-desktop skill"
+    fi
+  else
+    record_failure "update agent-desktop skill"
+  fi
+  command rm -f "$agent_desktop_skill"
+else
+  record_failure "find agent-desktop"
+fi
+
 # OfficeCLI (iOfficeAI/OfficeCLI) — AI-friendly CLI for Office documents.
 # Not distributed via `skills`; its own installer embeds the SKILL.md files and
 # writes them into agent skill dirs. The `codex` target maps to ~/.agents/skills,
