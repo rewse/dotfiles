@@ -101,8 +101,11 @@ install_skills oracle/skills db
 
 # Tavily AI. tavily-search covers extract, map and crawl in its references, and
 # replaces the per-command skills that upstream removed; remove those so hosts
-# that installed them earlier converge.
-install_skills tavily-ai/skills tavily-research tavily-search
+# that installed them earlier converge. The task skills send the agent to each
+# other and tell it to install a missing one itself, so install them together.
+# tavily-best-practices covers the SDKs, not the CLI, and is left out.
+install_skills tavily-ai/skills \
+  tavily-entity tavily-list tavily-monitor tavily-research tavily-search
 skills remove -g -y tavily-cli tavily-crawl tavily-extract tavily-map < /dev/null ||
   record_failure "remove skills: tavily-cli tavily-crawl tavily-extract tavily-map"
 
