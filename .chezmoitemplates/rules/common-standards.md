@@ -124,7 +124,7 @@ When a URL fetch is denied (403, access denied, bot block), retry with `tvly ext
 
 ### Web Search
 
-Use `tvly` for web search, not a built-in web search or fetch tool. Before running `tvly`, read the matching skill for the subcommand in use (`tavily-crawl`, `tavily-extract`, `tavily-map`, `tavily-research`, `tavily-search`) and follow its guidance on flags and output handling.
+Use `tvly` for web search, not a built-in web search or fetch tool. Before running `tvly`, read the `tavily-research` skill for `tvly research` or the `tavily-search` skill for any other subcommand, including the reference it points to for that subcommand, and follow its guidance on flags and output handling.
 
 ## Configuration Management Standards
 

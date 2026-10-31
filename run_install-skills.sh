@@ -99,9 +99,12 @@ install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
 # Oracle DB Skills
 install_skills oracle/skills db
 
-# Tavily AI
-install_skills tavily-ai/skills \
-  tavily-cli tavily-crawl tavily-extract tavily-map tavily-research tavily-search
+# Tavily AI. tavily-search covers extract, map and crawl in its references, and
+# replaces the per-command skills that upstream removed; remove those so hosts
+# that installed them earlier converge.
+install_skills tavily-ai/skills tavily-research tavily-search
+skills remove -g -y tavily-cli tavily-crawl tavily-extract tavily-map < /dev/null ||
+  record_failure "remove skills: tavily-cli tavily-crawl tavily-extract tavily-map"
 
 # Upstash Context7
 install_skills upstash/context7 find-docs
