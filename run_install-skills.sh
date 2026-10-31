@@ -117,11 +117,12 @@ install_skills xdevplatform/xurl xurl
 # ansible installs via npm, so writing the core guide out on every apply keeps
 # the skill matched to the installed version. The guide loads the platform skill
 # and its references from the binary on demand. A temporary file keeps the
-# existing SKILL.md intact when the command fails or returns no content.
+# existing SKILL.md intact when the command fails or returns content without
+# the frontmatter that agents need to discover the skill.
 if command -v agent-desktop >/dev/null 2>&1; then
   agent_desktop_skill="$(mktemp /tmp/agent-desktop-skill.XXXXXX)"
   if agent-desktop skills get desktop < /dev/null |
-    jq -er '.data.content | select(type == "string" and length > 0)' > "$agent_desktop_skill"; then
+    jq -er '.data.content | select(type == "string" and startswith("---\nname: agent-desktop\n"))' > "$agent_desktop_skill"; then
     if ! { chmod 0644 "$agent_desktop_skill" &&
       mkdir -p "$SKILLS_DIR/agent-desktop" &&
       command mv "$agent_desktop_skill" "$SKILLS_DIR/agent-desktop/SKILL.md"; }; then
