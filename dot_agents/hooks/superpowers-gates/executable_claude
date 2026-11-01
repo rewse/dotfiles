@@ -45,6 +45,9 @@ resolve_write() {
         MultiEdit)
             kind=edit
             edits=$(sg_json_get "$input" tool_input.edits) || edits=0
+            # plutil prints an array's length but a string verbatim, and bash
+            # arithmetic evaluates a string as an expression.
+            [[ $edits =~ ^[0-9]+$ ]] || edits=0
             for ((i = 0; i < edits; i++)); do
                 old=$(sg_json_get "$input" "tool_input.edits.$i.old_string") || old=
                 new=$(sg_json_get "$input" "tool_input.edits.$i.new_string") || new=

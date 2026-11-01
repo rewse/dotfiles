@@ -196,6 +196,21 @@ class PreToolUseTest(GatesTestCase):
         windows[0].write_text(f"{int(time.time()) - 3601}\n")
         self.assertEqual(self.edit(PLAN, old, new).returncode, 2)
 
+    def test_multiedit_edits_count_is_not_evaluated(self):
+        marker = self.tmp / "marker"
+        result = self.run_hook(
+            "pre-tool-use",
+            self.payload(
+                "MultiEdit",
+                {
+                    "file_path": str(self.repo / PLAN),
+                    "edits": f"x[$(touch {marker})]",
+                },
+            ),
+        )
+        self.assertEqual(result.returncode, 0)
+        self.assertFalse(marker.exists())
+
     def test_spec_subdirectory_is_gated(self):
         result = self.write("docs/superpowers/specs/a/b c.md")
         self.assertEqual(result.returncode, 2)
