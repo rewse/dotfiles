@@ -241,6 +241,9 @@ class RedirectGuardKiroTest(unittest.TestCase):
         command = "git commit -F - <<'EOF'\nfix: don't stop\nEOF"
         self.assertEqual(self.run_guard(command).returncode, 0)
 
+    def test_blocks_writes_to_the_terminal(self) -> None:
+        self.assertEqual(self.run_guard("printf x > /dev/tty").returncode, 2)
+
     def test_blocks_symlink_escaping_the_workspace(self) -> None:
         (self.workspace / "link").symlink_to(self.home)
         self.assertEqual(self.run_guard("echo hi > link/out.txt").returncode, 2)

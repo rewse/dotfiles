@@ -26,7 +26,7 @@ import re
 import shlex
 import sys
 
-DEVICES = {"/dev/null", "/dev/stderr", "/dev/stdin", "/dev/stdout", "/dev/tty"}
+DEVICES = {"/dev/null", "/dev/stderr", "/dev/stdin", "/dev/stdout"}
 UNRESOLVABLE = set("$`*?[(")
 # shlex's default punctuation_chars; it fuses adjacent ones into one token.
 PUNCTUATION = set("();<>|&")
