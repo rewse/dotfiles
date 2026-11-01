@@ -14,6 +14,10 @@ fi
 
 SKILLS_DIR="$HOME/.agents/skills"
 failures=0
+# ansible installs agent-desktop and officecli only on macOS, so their absence
+# is a failure there and expected elsewhere.
+is_darwin=false
+[ "$(uname -s)" = Darwin ] && is_darwin=true
 
 record_failure() {
   echo "Failed to $1" >&2
@@ -138,7 +142,7 @@ if command -v agent-desktop >/dev/null 2>&1; then
     record_failure "update agent-desktop skill"
   fi
   command rm -f "$agent_desktop_skill"
-else
+elif "$is_darwin"; then
   record_failure "find agent-desktop"
 fi
 
@@ -153,7 +157,7 @@ if command -v officecli >/dev/null 2>&1; then
   for skill in pptx word excel; do
     officecli skills install "$skill" codex < /dev/null || record_failure "update OfficeCLI $skill skill"
   done
-else
+elif "$is_darwin"; then
   record_failure "find officecli"
 fi
 
