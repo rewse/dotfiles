@@ -17,6 +17,14 @@ output = yaml
 [profile hugo]
 region = ap-northeast-1
 output = yaml
+{{- if has .chezmoi.hostname (list "fox" "hotel" "youth") }}
+
+[profile security-agent-deploy]
+region = us-east-1
+output = yaml
+role_arn = arn:aws:iam::070392599442:role/security-agent-deploy
+source_profile = default
+{{- end }}
 {{- if eq .chezmoi.hostname "fox" }}
 
 [profile sslcert]
