@@ -1,6 +1,6 @@
 {
   "file_types": {
-    "ini": ["**/dot_aws/config.tmpl", "**/dot_aws/private_credentials.tmpl"],
+    "ini": ["**/private_dot_aws/private_config.tmpl", "**/private_dot_aws/private_credentials.tmpl"],
     "Git Config": ["dot_gitconfig.tmpl"],
     "JSON": ["*.json.tmpl"],
     "JSONC": ["private_settings.json"],
