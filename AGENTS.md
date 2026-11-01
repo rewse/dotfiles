@@ -23,7 +23,6 @@ Prefer a skill to an always-loaded rule for task-specific reference material. Wh
 ## AWS
 
 - Keep dependent AWS resource definitions outside this repository. The CloudFormation stacks live in account `070392599442`; recover a template with `aws cloudformation get-template --stack-name <stack> --region <region> | cat` and inspect parameters and outputs with `describe-stacks`.
-- Stack `agentcore-websearch-caller` in `us-east-1` creates the `agentcore-websearch` IAM user and its gateway-only policy. Its access key is stored in 1Password as `AWS IAM - AgentCore Web Search` and rendered by `dot_aws/private_credentials.tmpl`; `dot_aws/private_config.tmpl` defines the profile.
 - The Web Search gateway comes from `aws-samples/sample-agentcore-websearch-agent-skill`. Export its `GatewayUrl` output as `AGENTCORE_GATEWAY_URL` in `dot_zshenv.tmpl`.
 
 ## Commit types
