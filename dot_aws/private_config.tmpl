@@ -10,47 +10,48 @@ output = yaml
 credential_process = isengardcli credentials --role Admin --awscli 070392599442
 {{- end }}
 
+{{- $sourceProfile := "" }}
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+{{-   $sourceProfile = "admin" }}
+{{- else if has .chezmoi.hostname (list "fox" "hotel" "youth") }}
+{{-   $sourceProfile = "default" }}
+{{- end }}
+
+{{- if $sourceProfile }}
+
 [profile bedrock]
 region = us-west-2
 output = yaml
-
-{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
-
-[profile cloudfront-waf-deploy]
-region = us-east-1
-output = yaml
-role_arn = arn:aws:iam::070392599442:role/cloudfront-waf-deploy
-source_profile = admin
-
-[profile rewse-blog-deploy]
-region = ap-northeast-1
-output = yaml
-role_arn = arn:aws:iam::070392599442:role/rewse-blog-deploy
-source_profile = admin
-{{- end }}
-{{- if has .chezmoi.hostname (list "fox" "hotel" "youth") }}
+role_arn = arn:aws:iam::070392599442:role/bedrock
+source_profile = {{ $sourceProfile }}
 
 [profile cloudfront-waf-deploy]
 region = us-east-1
 output = yaml
 role_arn = arn:aws:iam::070392599442:role/cloudfront-waf-deploy
-source_profile = default
+source_profile = {{ $sourceProfile }}
+
+[profile cyberduck]
+region = ap-northeast-1
+output = yaml
+role_arn = arn:aws:iam::070392599442:role/cyberduck
+source_profile = {{ $sourceProfile }}
 
 [profile rewse-blog-deploy]
 region = ap-northeast-1
 output = yaml
 role_arn = arn:aws:iam::070392599442:role/rewse-blog-deploy
-source_profile = default
+source_profile = {{ $sourceProfile }}
 
 [profile security-agent-deploy]
 region = us-east-1
 output = yaml
 role_arn = arn:aws:iam::070392599442:role/security-agent-deploy
-source_profile = default
-{{- end }}
-{{- if eq .chezmoi.hostname "fox" }}
+source_profile = {{ $sourceProfile }}
 
 [profile sslcert]
 region = us-east-1
 output = yaml
+role_arn = arn:aws:iam::070392599442:role/sslcert
+source_profile = {{ $sourceProfile }}
 {{- end }}
