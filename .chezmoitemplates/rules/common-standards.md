@@ -87,9 +87,9 @@ For bug fixes, state the enduring failure mode or constraint in the present tens
 
 ### AWS Profiles
 
-Use the default AWS profile for read access. On the host `7cf34ded5d65` it is the Isengard `ReadOnly` role, and the `admin` profile holds the Isengard `Admin` role; on every other host it is the IAM user `tats` with `ReadOnlyAccess`.
+Use the default AWS profile for read access. On the host `7cf34ded5d65` it is the Isengard `ReadOnly` role, and the `admin` profile holds the Isengard `Admin` role; on every other host it is the IAM user `tats` with `ReadOnlyAccess` and, for routine DNS record edits, `AmazonRoute53FullAccess`. `tats` is defined in `infra/iam.yaml` in `~/git/ansible-playbooks`.
 
-When a project needs more than read access, do not add permissions or access keys to `tats`. Define an IAM role named `<project>-deploy` in a CloudFormation template in the project's repository, grant it AWS managed policies at ReadOnly or FullAccess granularity per service, and let only `tats` and, where the project is used from `7cf34ded5d65`, the Isengard `Admin` role assume it. Deploy the template once with admin credentials, then add a profile with the same name as the role to `dot_aws/private_config.tmpl` in `~/git/chezmoi` with `source_profile = admin` on `7cf34ded5d65` and `source_profile = default` on the other hosts.
+When a project needs more than read access, do not add further permissions or access keys to `tats`. Define an IAM role named `<project>-deploy` in a CloudFormation template in the project's repository, grant it AWS managed policies at ReadOnly or FullAccess granularity per service, and let only `tats` and, where the project is used from `7cf34ded5d65`, the Isengard `Admin` role assume it. Deploy the template once with admin credentials, then add a profile with the same name as the role to `dot_aws/private_config.tmpl` in `~/git/chezmoi` with `source_profile = admin` on `7cf34ded5d65` and `source_profile = default` on the other hosts.
 
 ### AWS Skill Discovery
 
