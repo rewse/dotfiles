@@ -85,6 +85,12 @@ For bug fixes, state the enduring failure mode or constraint in the present tens
 
 ## CLI Command Standards
 
+### AWS Profiles
+
+Use the default AWS profile for read access. On the host `7cf34ded5d65` it is the Isengard `ReadOnly` role, and the `admin` profile holds the Isengard `Admin` role; on every other host it is the IAM user `tats` with `ReadOnlyAccess`.
+
+When a project needs more than read access, do not add permissions or access keys to `tats`. Define an IAM role named `<project>-deploy` in a CloudFormation template in the project's repository, grant it AWS managed policies at ReadOnly or FullAccess granularity per service, and let only `tats` and, where the project is used from `7cf34ded5d65`, the Isengard `Admin` role assume it. Deploy the template once with admin credentials, then add a profile for the role to `dot_aws/private_config.tmpl` in `~/git/chezmoi` with `source_profile = admin` on `7cf34ded5d65` and `source_profile = default` on the other hosts.
+
 ### AWS Skill Discovery
 
 Before starting an AWS task, look for a relevant AWS skill: run `mcporter call aws-mcp.aws___search_documentation search_phrase="..."` to discover what exists, then `mcporter call aws-mcp.aws___retrieve_skill skill_name="<skill-name>"` to load one, and prefer its guidance over general knowledge. Do not use `npx skills find/search` for AWS skill discovery.
