@@ -233,6 +233,14 @@ class RedirectGuardKiroTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(self.run_guard(command).returncode, 2)
 
+    def test_blocks_commands_it_cannot_tokenize(self) -> None:
+        # Bash reads #' as a comment, so the redirect still runs.
+        self.assertEqual(self.run_guard("echo x > ~/.zshrc #'").returncode, 2)
+
+    def test_allows_untokenizable_commands_without_a_redirect(self) -> None:
+        command = "git commit -F - <<'EOF'\nfix: don't stop\nEOF"
+        self.assertEqual(self.run_guard(command).returncode, 0)
+
     def test_blocks_symlink_escaping_the_workspace(self) -> None:
         (self.workspace / "link").symlink_to(self.home)
         self.assertEqual(self.run_guard("echo hi > link/out.txt").returncode, 2)

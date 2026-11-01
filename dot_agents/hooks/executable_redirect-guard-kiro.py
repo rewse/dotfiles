@@ -9,8 +9,11 @@ permissions.yaml lets Kiro write without asking, which sends the model to the
 write tool, where Kiro asks for approval.
 
 Targets it cannot resolve statically (variables, command substitution, globs,
-process substitution) are blocked too. A command that does not tokenize, such
-as one with an unbalanced quote, passes because bash rejects it anyway.
+process substitution) are blocked too, and so is a command that contains `>`
+but does not tokenize, such as one with an unbalanced quote: bash may still
+run it, because a quote inside a comment (`> ~/.zshrc #'`) does not start a
+string. An untokenizable command without `>`, such as a heredoc whose body has
+an apostrophe, cannot redirect output and passes.
 
 The allowed working directory is the session's cwd from the harness. The
 model can set tool_input.cwd, so that value only resolves relative targets and
@@ -82,7 +85,7 @@ def blocked_targets(command, root_cwd, cwd=None):
     try:
         tokens = list(lexer)
     except ValueError:
-        return []
+        return [command] if ">" in command else []
     blocked = []
     for index, token in enumerate(tokens):
         operator = redirect_operator(token)
