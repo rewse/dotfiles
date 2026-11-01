@@ -16,6 +16,12 @@ output = yaml
 
 {{- if eq .chezmoi.hostname "7cf34ded5d65" }}
 
+[profile cloudfront-waf-deploy]
+region = us-east-1
+output = yaml
+role_arn = arn:aws:iam::070392599442:role/cloudfront-waf-deploy
+source_profile = admin
+
 [profile rewse-blog-deploy]
 region = ap-northeast-1
 output = yaml
@@ -23,6 +29,12 @@ role_arn = arn:aws:iam::070392599442:role/rewse-blog-deploy
 source_profile = admin
 {{- end }}
 {{- if has .chezmoi.hostname (list "fox" "hotel" "youth") }}
+
+[profile cloudfront-waf-deploy]
+region = us-east-1
+output = yaml
+role_arn = arn:aws:iam::070392599442:role/cloudfront-waf-deploy
+source_profile = default
 
 [profile rewse-blog-deploy]
 region = ap-northeast-1
