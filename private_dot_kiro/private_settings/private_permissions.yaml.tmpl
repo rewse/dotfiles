@@ -448,7 +448,9 @@ rules:
     # These commands write a file through an output option, which falls through
     # to a prompt. Shell patterns support only *, so "* -*o *" also catches a
     # short -o combined with other flags (sort -uo x), at the cost of prompting
-    # when a file name after a flag ends in "o".
+    # when a file name after a flag ends in "o". sort and base64 accept
+    # abbreviated long options (sort --o=x, sort --compress-prog=sh), so any
+    # long option to them starting with c (sort) or o prompts too.
     match:
       - "base64 *"
       - "defuddle *"
@@ -469,6 +471,9 @@ rules:
       - "* -*o *"
       - "* -o*"
       - "*--output*"
+      - "base64 *--o*"
+      - "sort *--c*"
+      - "sort *--o*"
   - capability: shell
     effect: allow
     # These read-only commands also take options that run a program or write a
