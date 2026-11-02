@@ -159,6 +159,8 @@ Do not create `CLAUDE.md` unless the user asks for one. Claude Code reads `AGENT
 ## Planning File Standards
 
 - Store design specs under `docs/superpowers/specs/` and implementation plans under `docs/superpowers/plans/`, named with a `YYYY-MM-DD-` date prefix.
+- Move a spec or plan whose implementation is complete to `docs/superpowers/archive/specs/` or `docs/superpowers/archive/plans/`, keeping its file name, in the commit that merges the implementation into the default branch.
+- Leave archived specs and plans unchanged as a historical record, even when later code changes make them outdated. The only allowed edit is fixing paths and links that the move breaks.
 - Use Japanese plain form (常体).
 - Commit a spec or plan after saving it, without asking first.
 - Prefer Mermaid for architecture diagrams.
