@@ -1,0 +1,5 @@
+{{- if eq .chezmoi.hostname "fox" -}}
+# Kiro CLI API key for unattended jobs, such as the monthly WAF report. Jobs
+# source this file explicitly; interactive shells keep their own Kiro login.
+export KIRO_API_KEY="{{ onepasswordRead "op://chezmoi/l2kqwiv5em4t4j2kxaat2py5fy/credential" }}"
+{{- end }}
