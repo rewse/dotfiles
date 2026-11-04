@@ -15,7 +15,11 @@ fi
 # <<< Environment Variables
 
 # GitLab
-export GITLAB_TOKEN="{{ onepasswordRead "op://chezmoi/jkabbr5qyohfo2osy3ffbe7guu/credential" }}"
+gitlab_environment="${XDG_CONFIG_HOME}/environment/gitlab.sh"
+if [[ -r "${gitlab_environment}" ]]; then
+  source "${gitlab_environment}"
+fi
+unset gitlab_environment
 
 # >>>
 # <<< Shell Options

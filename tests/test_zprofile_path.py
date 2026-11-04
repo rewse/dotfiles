@@ -4,6 +4,7 @@ import pathlib
 import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
+ENVIRONMENT = REPO_ROOT / "dot_config" / "environment"
 ZPROFILE = REPO_ROOT / "dot_zprofile.tmpl"
 ZSHENV = REPO_ROOT / "dot_zshenv.tmpl"
 ZSHRC = REPO_ROOT / "dot_zshrc.tmpl"
@@ -32,8 +33,21 @@ class ZshStartupTest(unittest.TestCase):
                 self.assertNotIn(variable, zprofile)
 
         self.assertNotIn("GITHUB_TOKEN", zprofile + zshenv + zshrc)
-        self.assertIn("GITLAB_TOKEN", zshrc)
-        self.assertNotIn("GITLAB_TOKEN", zprofile + zshenv)
+        self.assertIn("environment/gitlab.sh", zshrc)
+        self.assertNotIn("environment/gitlab.sh", zprofile + zshenv)
+        self.assertIn("environment/teslamate.sh", zshenv)
+
+    def test_startup_files_hold_no_secrets(self) -> None:
+        # The startup files deploy with mode 0644, so secrets live in
+        # dot_config/environment/private_*.sh.tmpl and are sourced from there.
+        for template in (ZPROFILE, ZSHENV, ZSHRC):
+            with self.subTest(template=template.name):
+                self.assertNotIn("onepasswordRead", template.read_text())
+
+        for name in ("gitlab", "kiro", "teslamate"):
+            with self.subTest(name=name):
+                source = ENVIRONMENT / f"private_{name}.sh.tmpl"
+                self.assertIn("onepasswordRead", source.read_text())
 
     def test_zshenv_sections_follow_dependency_order(self) -> None:
         template = ZSHENV.read_text()

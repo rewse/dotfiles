@@ -8,6 +8,7 @@ Keep this file limited to repository-specific constraints that cannot be inferre
 - Use `System - Consumer` only when both parts identify the credential. Use the complete product or service name for System and a stable username or service account for Consumer. Omit a part instead of filling it with a generic purpose, category, access key ID, client ID, UUID, MAC address, or other machine identifier.
 - Use one-part names when appropriate: `Zabbix MCP Server` has no distinguishing Consumer, while `Tats Shibata` and `id_rsa` have no meaningful System.
 - Use item IDs in committed Secret References so item renames do not break templates.
+- Put a secret exported as an environment variable in `dot_config/environment/private_<system>.sh.tmpl`, one file per system, and source it from `dot_zshenv.tmpl` or `dot_zshrc.tmpl`. Do not write secrets into those two files, because they deploy with mode 0644. A secret only for unattended jobs, such as `kiro.sh`, is read by the job and not sourced by the shell, because `KIRO_API_KEY` would replace the interactive Kiro login.
 
 ## Agent assets
 
