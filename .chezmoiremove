@@ -8,3 +8,6 @@
 # Kiro reports its own state to Otty with OSC 7501, and an otty tab badge hides it.
 .kiro/hooks/otty-state.json
 .kiro/hooks/otty-state.sh
+
+# The WAF report Kiro API key lives in ~/.config/cloudfront-waf-report/kiro-api-key.
+.config/environment/kiro.sh

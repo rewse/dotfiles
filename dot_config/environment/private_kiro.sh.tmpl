@@ -1,7 +1,0 @@
-{{- if eq .chezmoi.hostname "fox" -}}
-# Kiro CLI API key for unattended jobs, such as the weekly WAF report. Jobs
-# read this file explicitly; interactive shells keep their own Kiro login.
-# cloudfront-waf-report in ansible-playbooks parses the export line with a
-# regex, so keep it as a single double-quoted export.
-export KIRO_API_KEY="{{ onepasswordRead "op://chezmoi/l2kqwiv5em4t4j2kxaat2py5fy/credential" }}"
-{{- end }}

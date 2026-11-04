@@ -46,3 +46,8 @@ Library
 .local/bin/container
 Library/LaunchAgents/local.cleanup-local-cache-fallbacks.plist
 {{- end }}
+
+{{- /* cloudfront-waf-report runs only on fox. */}}
+{{- if ne .chezmoi.hostname "fox" }}
+.config/cloudfront-waf-report
+{{- end }}
