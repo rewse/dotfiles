@@ -111,6 +111,10 @@ On macOS, use `mdfind` for file searches. Spotlight indexing makes broad paths l
 
 The shell aliases `cp`, `ln`, `mv`, and `rm` to their `-i` forms, so a non-interactive call prompts before overwriting or deleting, reads no answer, and silently leaves the target unchanged. Run them as `command cp`, `command ln`, `command mv`, and `command rm` to bypass the alias; adding `-f` is not enough, because `cp -i -f` still prompts in this shell.
 
+### Kiro CLI in Scripts
+
+When a script or job runs `kiro-cli chat --no-interactive`, set `KIRO_HOME` to a temporary directory, created with `mktemp -d` or Python's `tempfile` so that only its owner can open it (mode 0700), that holds only the agent the job needs, at `$KIRO_HOME/agents/<name>.json`, select it with `--agent`, and run from an empty working directory. Otherwise kiro-cli loads `~/.kiro` and any workspace `.kiro`, including the `main` agent, whose `read-only-shell` policy approves commands such as `cat ~/.aws/credentials` without asking, along with its MCP servers and hooks. Give the agent `"tools": []` and pass `--trust-tools=` unless the job needs a tool. Omit `permissions` from the agent, because kiro-cli 3 fails with "Mode not found" when its `policies` list is empty.
+
 ### Pager Prevention
 
 When a CLI command might invoke a pager, pipe its output to `cat` or supply a flag such as `--no-pager`; an interactive pager hangs the process indefinitely.
