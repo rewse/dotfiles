@@ -18,6 +18,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: rewse/actions/trufflehog@27dd72c4d9cd7def26e267caba0e11ff87ec6f49  # v1.1.6
+      - uses: rewse/actions/trufflehog@90d01bd07cb0cb6f5fb1dcb89a01b3165bb50c2b  # v1.1.8
         with:
           extra-args: --exclude-detectors=lob --exclude-paths=.trufflehog-exclude-paths.txt --results=verified,unknown
