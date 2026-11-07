@@ -9,6 +9,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -161,7 +162,9 @@ class JapaneseGuardKiroTest(unittest.TestCase):
 
 class RedirectGuardKiroTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.tmp = pathlib.Path(tempfile.mkdtemp()).resolve()
+        # /tmp is an allowed root, so the fake home must live elsewhere; Linux
+        # puts tempfile's default directory under /tmp.
+        self.tmp = pathlib.Path(tempfile.mkdtemp(dir="/var/tmp")).resolve()
         self.addCleanup(shutil.rmtree, self.tmp)
         self.home = self.tmp / "home"
         self.workspace = self.home / "project"
@@ -546,8 +549,16 @@ class KiroWrapperTest(unittest.TestCase):
             if k not in ("KIRO_OTTY_TTY", "KIRO_OTTY_ARGS")
         }
         env.update(PATH=self.path, FAKE_STATUS=str(fake_status))
+        command = ["zsh", "-fc", code, "zsh", *args]
+        if sys.platform == "darwin":
+            script = ["script", "-q", "/dev/null", *command]
+        else:
+            # util-linux script(1) runs one command string through $SHELL,
+            # whose startup files could put the real kiro-cli back on PATH.
+            env["SHELL"] = "/bin/sh"
+            script = ["script", "-q", "-c", shlex.join(command), "/dev/null"]
         result = subprocess.run(
-            ["script", "-q", "/dev/null", "zsh", "-fc", code, "zsh", *args],
+            script,
             stdin=subprocess.DEVNULL,
             capture_output=True,
             env=env,
@@ -557,7 +568,7 @@ class KiroWrapperTest(unittest.TestCase):
 
     def test_wrapper_passes_tty_and_quoted_arguments(self) -> None:
         out = self.run_wrapper("chat", "--agent", "my agent")
-        self.assertRegex(out, rb"KIRO_OTTY_TTY=/dev/ttys\d+\n")
+        self.assertRegex(out, rb"KIRO_OTTY_TTY=/dev/(ttys|pts/)\d+\n")
         self.assertIn(b"KIRO_OTTY_ARGS=chat --agent 'my agent'\n", out)
 
     def test_wrapper_clears_and_keeps_exit_status(self) -> None:
@@ -567,7 +578,7 @@ class KiroWrapperTest(unittest.TestCase):
 
     def test_wrapper_treats_no_arguments_as_chat(self) -> None:
         out = self.run_wrapper()
-        self.assertRegex(out, rb"KIRO_OTTY_TTY=/dev/ttys\d+\n")
+        self.assertRegex(out, rb"KIRO_OTTY_TTY=/dev/(ttys|pts/)\d+\n")
         self.assertIn(b"KIRO_OTTY_ARGS=\n", out)
 
     def test_wrapper_passes_other_subcommands_through(self) -> None:

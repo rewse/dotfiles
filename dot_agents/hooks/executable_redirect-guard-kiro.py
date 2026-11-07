@@ -49,12 +49,20 @@ def resolve(target, cwd):
     # ~user expands to another account's home, which this hook does not look up.
     if target.startswith("~") and target != "~" and not target.startswith("~/"):
         return None
-    path = os.path.expanduser(target)
-    return os.path.realpath(os.path.join(cwd, path))
+    path = os.path.join(cwd, os.path.expanduser(target))
+    # Linux links /dev/stdout and /dev/fd/N into /proc, so match devices
+    # before following symlinks.
+    if is_device(os.path.normpath(path)):
+        return os.path.normpath(path)
+    return os.path.realpath(path)
+
+
+def is_device(path):
+    return path in DEVICES or path.startswith("/dev/fd/")
 
 
 def is_allowed(path, root_cwd):
-    if path in DEVICES or path.startswith("/dev/fd/"):
+    if is_device(path):
         return True
     return any(
         path == root or path.startswith(root + os.sep)
