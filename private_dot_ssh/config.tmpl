@@ -3,6 +3,26 @@ Host *
   IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 {{- end }}
 
+{{ if eq .chezmoi.hostname "htch-runtime" }}
+# Riria (Muse) runs on this host. These entries precede the shared ones
+# below because ssh uses the first obtained value for each parameter.
+Host fox fox.rewse.jp
+  HostName fox.rewse.jp
+  User muse
+  Port 11022
+  IdentityFile /home/hatch/.ssh/id_ed25519
+
+Host hotel hotel.rewse.jp
+  HostName hotel.rewse.jp
+  User muse
+  Port 21022
+  IdentityFile /home/hatch/.ssh/id_ed25519
+
+Host github.com
+  User git
+  IdentityFile /home/hatch/.ssh/id_ed25519
+{{- end }}
+
 Host alfa alfa.rewse.jp
   HostName alfa.rewse.jp
   User tats
