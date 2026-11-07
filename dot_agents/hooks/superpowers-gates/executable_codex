@@ -10,7 +10,8 @@ sg_disabled && exit 0
 trap 'exit 0' ERR
 
 event=${1:-}
-input=$(< /dev/stdin)
+# Linux cannot open /dev/stdin when fd 0 is a socket, so read with a builtin.
+IFS= read -r -d '' input || :
 session_id=$(sg_json_get "$input" session_id) || session_id=
 cwd=$(sg_json_get "$input" cwd) || cwd=
 tool=$(sg_json_get "$input" tool_name) || tool=

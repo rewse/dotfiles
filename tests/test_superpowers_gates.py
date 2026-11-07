@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import shutil
+import socket
 import subprocess
 import tempfile
 import time
@@ -22,6 +23,7 @@ SKILLS = ("writing-plans", "brainstorming", "subagent-driven-development")
 PLAN = "docs/superpowers/plans/x.md"
 LEDGER = ".superpowers/sdd/p/progress.md"
 GATES = "/home/u/.agents/hooks/superpowers-gates/claude"
+PLUTIL = pathlib.Path("/usr/bin/plutil")
 
 
 def git_init(path: pathlib.Path) -> pathlib.Path:
@@ -43,6 +45,7 @@ def hook_repo(path: pathlib.Path) -> pathlib.Path:
     return path
 
 
+@unittest.skipUnless(PLUTIL.exists(), "the gates parse hook input with plutil")
 class GatesTestCase(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
@@ -414,6 +417,28 @@ class SkipTest(GatesTestCase):
         self.assertTrue(current.is_dir())
         self.assertTrue((current / "read-writing-plans").exists())
         self.assertEqual(self.write(PLAN).returncode, 0)
+
+
+class SocketStdinTest(unittest.TestCase):
+    def test_entry_points_read_a_socket_stdin(self):
+        # Linux cannot open /dev/stdin when fd 0 is a socket.
+        payload = json.dumps({"session_id": SESSION_ID, "prompt": "hi"}).encode()
+        for script in (CLAUDE, CODEX, KIRO):
+            with self.subTest(script=script.name):
+                ours, theirs = socket.socketpair()
+                with ours, theirs:
+                    ours.sendall(payload)
+                    ours.shutdown(socket.SHUT_WR)
+                    with tempfile.TemporaryDirectory() as home:
+                        result = subprocess.run(
+                            ["/bin/bash", str(script), "user-prompt-submit"],
+                            stdin=theirs.fileno(),
+                            capture_output=True,
+                            text=True,
+                            env={"HOME": home, "PATH": "/usr/bin:/bin"},
+                            check=False,
+                        )
+                self.assertEqual((result.returncode, result.stderr), (0, ""))
 
 
 class SettingsTemplateTest(unittest.TestCase):
