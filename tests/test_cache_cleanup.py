@@ -1,11 +1,12 @@
 """Regression tests for local fallback cache cleanup."""
 
-import json
 import os
 import pathlib
 import subprocess
 import tempfile
 import unittest
+
+from chezmoi_template import execute_template
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CLEANUP = (
@@ -37,23 +38,7 @@ class LocalCacheCleanupTest(unittest.TestCase):
         chezmoi = {"hostname": hostname, "os": "darwin"}
         if home is not None:
             chezmoi["homeDir"] = str(home)
-        data = json.dumps({"chezmoi": chezmoi})
-        result = subprocess.run(
-            [
-                "env",
-                "-u",
-                "OP_SERVICE_ACCOUNT_TOKEN",
-                "chezmoi",
-                "execute-template",
-                "--override-data",
-                data,
-            ],
-            cwd=REPO_ROOT,
-            input=path.read_text(),
-            capture_output=True,
-            check=False,
-            text=True,
-        )
+        result = execute_template(path.read_text(), chezmoi)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result.stdout
 

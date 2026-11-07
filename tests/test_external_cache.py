@@ -1,11 +1,12 @@
 """Regression tests for externally stored cache configuration."""
 
-import json
 import os
 import pathlib
 import subprocess
 import tempfile
 import unittest
+
+from chezmoi_template import execute_template
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CACHE_ENV = REPO_ROOT / "dot_config" / "environment" / "cache.sh.tmpl"
@@ -29,22 +30,8 @@ class ExternalCacheConfigurationTest(unittest.TestCase):
     def render(self, path: pathlib.Path) -> str:
         # The templates render only for the host with ExternalHD, so render
         # as that host regardless of where the tests run.
-        data = json.dumps({"chezmoi": {"hostname": "youth", "os": "darwin"}})
-        result = subprocess.run(
-            [
-                "env",
-                "-u",
-                "OP_SERVICE_ACCOUNT_TOKEN",
-                "chezmoi",
-                "execute-template",
-                "--override-data",
-                data,
-            ],
-            cwd=REPO_ROOT,
-            input=path.read_text(),
-            capture_output=True,
-            check=False,
-            text=True,
+        result = execute_template(
+            path.read_text(), {"hostname": "youth", "os": "darwin"}
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result.stdout

@@ -1,11 +1,12 @@
 """Regression tests for the ExternalHD-backed Apple container wrapper."""
 
-import json
 import os
 import pathlib
 import subprocess
 import tempfile
 import unittest
+
+from chezmoi_template import execute_template
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 WRAPPER = REPO_ROOT / "dot_local" / "bin" / "executable_container.tmpl"
@@ -17,22 +18,7 @@ class ContainerWrapperTest(unittest.TestCase):
         chezmoi = {"hostname": "youth", "os": "darwin"}
         if home is not None:
             chezmoi["homeDir"] = str(home)
-        result = subprocess.run(
-            [
-                "env",
-                "-u",
-                "OP_SERVICE_ACCOUNT_TOKEN",
-                "chezmoi",
-                "execute-template",
-                "--override-data",
-                json.dumps({"chezmoi": chezmoi}),
-            ],
-            cwd=REPO_ROOT,
-            input=path.read_text(),
-            capture_output=True,
-            check=False,
-            text=True,
-        )
+        result = execute_template(path.read_text(), chezmoi)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result.stdout
 
