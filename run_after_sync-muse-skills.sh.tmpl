@@ -1,4 +1,4 @@
-{{- if eq .chezmoi.hostname "htch-runtime" }}
+{{- if eq .chezmoi.hostname "htch-runtime" -}}
 #!/bin/sh
 # Link the shared agent skills (~/.agents/skills, installed by
 # install-skills.sh) into Muse's custom-skills directory
@@ -39,7 +39,4 @@ for link in "$dest"/*; do
       ;;
   esac
 done
-{{- else }}
-#!/bin/sh
-# Muse skills are only linked on htch-runtime.
 {{- end }}
