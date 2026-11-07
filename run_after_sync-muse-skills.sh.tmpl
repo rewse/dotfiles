@@ -1,0 +1,45 @@
+{{- if eq .chezmoi.hostname "htch-runtime" }}
+#!/bin/sh
+# Link the shared agent skills (~/.agents/skills, installed by
+# install-skills.sh) into Muse's custom-skills directory
+# (~/workspace/custom-skills) so the Muse agent on this host can use
+# them too. The skills CLI has no Muse target, so the links are
+# maintained here instead, mirroring the ~/.kiro/skills symlinks.
+# Runs on every apply, after install-skills.sh, to follow skill
+# additions and removals. Destination entries that are not symlinks
+# into the shared directory (Muse's own custom skills) are never
+# touched.
+
+set -eu
+
+src="{{ .chezmoi.homeDir }}/.agents/skills"
+dest="{{ .chezmoi.homeDir }}/workspace/custom-skills"
+
+[ -d "$src" ] || exit 0
+mkdir -p "$dest"
+
+for dir in "$src"/*/; do
+  [ -f "${dir}SKILL.md" ] || continue
+  name=$(basename "$dir")
+  target="$dest/$name"
+  if [ -L "$target" ]; then
+    case "$(readlink "$target")" in
+      "$src"/*) ln -sfn "$src/$name" "$target" ;;
+    esac
+  elif [ ! -e "$target" ]; then
+    ln -s "$src/$name" "$target"
+  fi
+done
+
+for link in "$dest"/*; do
+  [ -L "$link" ] || continue
+  case "$(readlink "$link")" in
+    "$src"/*)
+      [ -e "$link" ] || rm "$link"
+      ;;
+  esac
+done
+{{- else }}
+#!/bin/sh
+# Muse skills are only linked on htch-runtime.
+{{- end }}
