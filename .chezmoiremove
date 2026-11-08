@@ -11,3 +11,8 @@
 
 # The WAF report Kiro API key lives in ~/.config/cloudfront-waf-report/kiro-api-key.
 .config/environment/kiro.sh
+
+# handling-continuum-reports replaces this skill for the Continuum issues in rewse/continuum.
+.agents/skills/handling-security-agent-reports
+.claude/skills/handling-security-agent-reports
+.kiro/skills/handling-security-agent-reports
