@@ -24,22 +24,64 @@ record_failure() {
   failures=$((failures + 1))
 }
 
+# Third-party skills install from the newest commit on the default branch that
+# is at least COOLDOWN_DAYS old, matching npm's min-release-age and uv's
+# exclude-newer, so a bad upstream push has time to be noticed and reverted
+# before it reaches this machine.
+COOLDOWN_DAYS=4
+cooldown_epoch=$(($(date +%s) - COOLDOWN_DAYS * 86400))
+# GNU date reads -d @EPOCH; BSD date reads -r EPOCH, which GNU takes as a file.
+COOLDOWN_UNTIL="$(date -u -d "@$cooldown_epoch" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null ||
+  date -u -r "$cooldown_epoch" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)"
+
+# Prints the `skills add` source for a repository: OWNER/REPO#COMMIT past the
+# cooldown, or OWNER/REPO for this account's own repositories, which track
+# their default branch. Fails when GitHub returns no such commit.
+skill_source() {
+  local repo="$1" commit
+  case "$repo" in
+    rewse/*)
+      echo "$repo"
+      return 0
+      ;;
+  esac
+  [ -n "$COOLDOWN_UNTIL" ] || return 1
+  commit="$(gh api "repos/$repo/commits?until=$COOLDOWN_UNTIL&per_page=1" \
+    --jq '.[0].sha // empty' < /dev/null)" || return 1
+  [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || return 1
+  echo "$repo#$commit"
+}
+
+# A source that does not resolve leaves the installed skills as they are rather
+# than falling back to the unvetted default branch.
+warn_kept() {
+  echo "Warning: kept the installed $1 skills; no commit at least $COOLDOWN_DAYS days old resolved" >&2
+}
+
 install_skills() {
-  local repo="$1"
+  local repo="$1" src
   shift
+  if ! src="$(skill_source "$repo")"; then
+    warn_kept "$repo"
+    return 0
+  fi
   for skill in "$@"; do
-    if ! skills add "$repo" --skill "$skill" -g "${AGENTS[@]}" -y < /dev/null; then
+    if ! skills add "$src" --skill "$skill" -g "${AGENTS[@]}" -y < /dev/null; then
       record_failure "update skill: $skill"
     fi
   done
 }
 
 install_skills_claude_only() {
-  local repo="$1"
+  local repo="$1" src
   shift
   "$has_claude" || return 0
+  if ! src="$(skill_source "$repo")"; then
+    warn_kept "$repo"
+    return 0
+  fi
   for skill in "$@"; do
-    if ! skills add "$repo" --skill "$skill" -g --agent claude-code -y < /dev/null; then
+    if ! skills add "$src" --skill "$skill" -g --agent claude-code -y < /dev/null; then
       record_failure "update Claude Code skill: $skill"
     fi
   done

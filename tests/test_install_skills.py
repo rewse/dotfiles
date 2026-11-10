@@ -1,13 +1,20 @@
 """Regression tests for run_install-skills.sh, run against fake commands."""
 
+import datetime
+import hashlib
+import json
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
+import urllib.parse
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 INSTALL_SKILLS = REPO_ROOT / "run_install-skills.sh"
+JQ = shutil.which("jq")
+COOLDOWN = datetime.timedelta(days=4)
 
 CLEAN_REQUIREMENTS = """\
 # Install / see https://pip.pypa.io/ for details
@@ -25,7 +32,48 @@ FAKE_LOGGER = """\
   echo; } >> "$FAKE_CALLS"
 """
 
+# Answers `gh api` from canned JSON per repository and applies --jq with the
+# real jq, so the script's filter is exercised too.
+FAKE_GH = """\
+#!{python}
+import hashlib, json, os, subprocess, sys
+args = sys.argv[1:]
+with open(os.environ["FAKE_CALLS"], "a") as f:
+    f.write("\\x1f".join(["gh", *args]) + "\\n")
+if args[:1] != ["api"]:
+    sys.exit(1)
+path = args[1].split("?", 1)[0]
+repo = path.removeprefix("repos/").removesuffix("/commits")
+behaviour = json.loads(os.environ.get("FAKE_GH", "{{}}")).get(repo)
+if behaviour == "fail":
+    print("gh: HTTP 502", file=sys.stderr)
+    sys.exit(1)
+if not path.endswith("/commits"):
+    sys.exit(1)
+if behaviour == "empty":
+    body = []
+elif behaviour == "bad-sha":
+    body = [{{"sha": "null"}}]
+else:
+    body = [{{"sha": hashlib.sha1(repo.encode()).hexdigest()}}]
+text = json.dumps(body)
+if "--jq" in args:
+    expression = args[args.index("--jq") + 1]
+    result = subprocess.run(
+        [os.environ["FAKE_JQ"], "-r", expression],
+        input=text, capture_output=True, text=True, check=False,
+    )
+    sys.stdout.write(result.stdout)
+    sys.exit(result.returncode)
+sys.stdout.write(text)
+"""
 
+
+def aged_commit(repo: str) -> str:
+    return hashlib.sha1(repo.encode()).hexdigest()
+
+
+@unittest.skipUnless(JQ, "needs jq to evaluate gh --jq filters")
 class InstallSkillsTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = pathlib.Path(tempfile.mkdtemp(dir="/var/tmp")).resolve()
@@ -39,6 +87,7 @@ class InstallSkillsTest(unittest.TestCase):
         self.calls = self.tmp / "calls"
         for name in ("skills", "uv"):
             self.write_executable(name, FAKE_LOGGER)
+        self.write_executable("gh", FAKE_GH.format(python=sys.executable))
         # Linux skips the darwin-only checks for agent-desktop and officecli.
         self.write_executable("uname", "#!/bin/sh\necho Linux\n")
 
@@ -47,14 +96,22 @@ class InstallSkillsTest(unittest.TestCase):
         path.write_text(content)
         path.chmod(0o755)
 
-    def run_script(self) -> tuple[subprocess.CompletedProcess[str], list[list[str]]]:
+    def run_script(
+        self, gh: dict[str, str] | None = None, script: str | None = None
+    ) -> tuple[subprocess.CompletedProcess[str], list[list[str]]]:
+        path = INSTALL_SKILLS
+        if script is not None:
+            path = self.tmp / "install-skills.sh"
+            path.write_text(script)
         env = {
             "FAKE_CALLS": str(self.calls),
+            "FAKE_GH": json.dumps(gh or {}),
+            "FAKE_JQ": str(JQ),
             "HOME": str(self.home),
             "PATH": f"{self.bin}:/usr/bin:/bin",
         }
         result = subprocess.run(
-            ["/bin/bash", str(INSTALL_SKILLS)],
+            ["/bin/bash", str(path)],
             capture_output=True,
             text=True,
             env=env,
@@ -66,8 +123,82 @@ class InstallSkillsTest(unittest.TestCase):
         return result, calls
 
     @staticmethod
+    def skill_adds(calls: list[list[str]]) -> list[list[str]]:
+        return [call for call in calls if call[:2] == ["skills", "add"]]
+
+    @staticmethod
     def pip_installs(calls: list[list[str]]) -> list[list[str]]:
         return [call for call in calls if call[:3] == ["uv", "pip", "install"]]
+
+    def test_third_party_skills_install_from_a_commit_past_the_cooldown(
+        self,
+    ) -> None:
+        before = datetime.datetime.now(datetime.UTC)
+        result, calls = self.run_script()
+        after = datetime.datetime.now(datetime.UTC)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        adds = self.skill_adds(calls)
+        sources = {call[2] for call in adds}
+        for repo in ("anthropics/skills", "blader/humanizer", "obra/superpowers"):
+            with self.subTest(repo=repo):
+                self.assertIn(f"{repo}#{aged_commit(repo)}", sources)
+        for source in sources:
+            with self.subTest(source=source):
+                repo, _, commit = source.partition("#")
+                self.assertEqual(commit, aged_commit(repo))
+
+        lookups = [call for call in calls if call[0] == "gh"]
+        self.assertTrue(lookups)
+        for call in lookups:
+            with self.subTest(call=call):
+                endpoint = urllib.parse.urlsplit(call[2])
+                self.assertRegex(endpoint.path, r"^repos/[\w.-]+/[\w.-]+/commits$")
+                query = urllib.parse.parse_qs(endpoint.query)
+                self.assertEqual(query["per_page"], ["1"])
+                until = datetime.datetime.strptime(
+                    query["until"][0], "%Y-%m-%dT%H:%M:%SZ"
+                ).replace(tzinfo=datetime.UTC)
+                self.assertGreaterEqual(
+                    until, (before - COOLDOWN).replace(microsecond=0)
+                )
+                self.assertLessEqual(until, after - COOLDOWN)
+
+    def test_claude_only_skills_use_the_same_commit(self) -> None:
+        self.write_executable("claude", "#!/bin/sh\nexit 0\n")
+        _, calls = self.run_script()
+        source = f"anthropics/skills#{aged_commit('anthropics/skills')}"
+        self.assertIn(
+            ["skills", "add", source, "--skill", "pdf", "-g", "--agent", "claude-code"]
+            + ["-y"],
+            self.skill_adds(calls),
+        )
+
+    def test_own_repositories_track_their_default_branch(self) -> None:
+        script = INSTALL_SKILLS.read_text().replace(
+            "install_skills blader/humanizer humanizer",
+            "install_skills rewse/humanizer humanizer",
+        )
+        self.assertIn("rewse/humanizer", script)
+        _, calls = self.run_script(script=script)
+        self.assertIn("rewse/humanizer", [call[2] for call in self.skill_adds(calls)])
+        self.assertFalse(
+            [call for call in calls if call[0] == "gh" and "rewse/" in call[2]]
+        )
+
+    def test_keeps_installed_skills_when_no_aged_commit_resolves(self) -> None:
+        for behaviour in ("bad-sha", "empty", "fail"):
+            with self.subTest(behaviour=behaviour):
+                self.calls.unlink(missing_ok=True)
+                result, calls = self.run_script(gh={"blader/humanizer": behaviour})
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("Warning", result.stderr)
+                self.assertIn("blader/humanizer", result.stderr)
+                sources = [call[2] for call in self.skill_adds(calls)]
+                self.assertFalse([s for s in sources if s.startswith("blader/")])
+                self.assertIn(
+                    f"obra/superpowers#{aged_commit('obra/superpowers')}", sources
+                )
 
     def test_ppt_master_requirements_install_wheels_only(self) -> None:
         result, calls = self.run_script()
