@@ -1,11 +1,15 @@
 """Regression tests for the Kiro CLI v3 default agent and CLI settings."""
 
+import json
 import pathlib
 import unittest
+
+from chezmoi_template import execute_template
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 AGENT = REPO_ROOT / "private_dot_kiro/private_agents/private_main.json.tmpl"
 CLI = REPO_ROOT / "private_dot_kiro/private_settings/private_cli.json.tmpl"
+MCP = REPO_ROOT / "private_dot_kiro/private_settings/private_mcp.json.tmpl"
 
 
 class KiroAgentTest(unittest.TestCase):
@@ -49,6 +53,27 @@ class KiroAgentTest(unittest.TestCase):
 
     def test_default_agent_auto_allows_read_only_shell(self) -> None:
         self.assertIn('"policies": ["read-only-shell"]', AGENT.read_text())
+
+
+class KiroMcpSettingsTest(unittest.TestCase):
+    def render(self) -> dict:
+        result = execute_template(
+            MCP.read_text(), {"homeDir": "/home/user", "hostname": "7cf34ded5d65"}
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_mcp_json_keeps_the_aim_arcc_server(self) -> None:
+        # AIM adds arcc-mcp in this form; any other form would drift from it.
+        self.assertEqual(
+            self.render()["mcpServers"]["arcc-mcp"],
+            {"command": "arcc-mcp", "args": []},
+        )
+
+    def test_mcp_json_is_only_deployed_to_the_business_mac(self) -> None:
+        ignore = (REPO_ROOT / ".chezmoiignore").read_text()
+        block = ignore.split('{{- if ne .chezmoi.hostname "7cf34ded5d65" }}', 1)[1]
+        self.assertIn(".kiro/settings/mcp.json", block.split("{{- end }}", 1)[0])
 
 
 class KiroCliSettingsTest(unittest.TestCase):
