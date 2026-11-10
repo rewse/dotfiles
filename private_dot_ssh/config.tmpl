@@ -4,6 +4,10 @@ Host *
 {{- end }}
 
 {{ if eq .chezmoi.hostname "htch-runtime" }}
+# known_hosts is kept under /home/hatch (durable across VM replacements).
+# /root/.ssh/known_hosts is ephemeral because exec runs as root.
+UserKnownHostsFile /home/hatch/.ssh/known_hosts
+
 # Muse runs on this host. These entries precede the shared ones
 # below because ssh uses the first obtained value for each parameter.
 Host fox fox.rewse.jp
