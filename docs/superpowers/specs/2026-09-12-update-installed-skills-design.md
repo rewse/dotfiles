@@ -2,11 +2,15 @@
 
 ## 目的
 
-`run_install-skills.sh` に定義されたすべての外部スキルを取得元の最新版へ更新し、`skills` CLI が参照する現行 lock に登録する。個別の更新に失敗しても残りを処理し、最後に失敗を通知する。
+`run_install-skills.sh` に定義されたすべての外部スキルを、取得元の既定ブランチで4日以上前の最新コミットへ更新し、`skills` CLI が参照する現行 lock に登録する。個別の更新に失敗しても残りを処理し、最後に失敗を通知する。
 
 ## 更新方式
 
 `install_skills` と `install_skills_claude_only` は、スキルディレクトリの存在を更新可否の判定に使わない。各呼び出しで `skills add` を実行し、取得元からスキルを再取得すると同時に現行 lock の source、skillPath、hash、更新日時を記録する。
+
+取得元が rewse 以外のリポジトリなら、GitHub の commits API に `until` を4日前として既定ブランチの最新コミットを1件問い合わせ、`OWNER/REPO#COMMIT` の形で `skills add` に渡す。日数は npm の `min-release-age` と uv の `exclude-newer` に合わせる。rewse が所有するリポジトリは既定ブランチをそのまま追う。コミットを解決できないときは、そのリポジトリのスキルを更新せずに警告を表示し、既定ブランチの先頭へは切り替えない。
+
+ppt-master の `requirements.txt` は、コメントを除いた行にオプション、URL、`@`、`git+` のいずれかがあれば依存関係を入れずに失敗とする。`uv pip install` には `--no-build` を付け、wheel だけを入れる。
 
 旧 `~/.agents/.skill-lock.json` は現行 lock への全対象登録を確認した後に削除する。`skills` CLI が `XDG_STATE_HOME` に作成する `~/.local/state/skills/.skill-lock.json` を唯一の管理台帳とする。
 
@@ -19,11 +23,11 @@
 - `bash -n run_install-skills.sh` が成功すること
 - スクリプト全体がゼロで終了すること
 - `skills` 経由の全対象が現行 lock に取得元付きで登録されること
-- 各スキルのローカル内容が取得元の最新版と一致すること
+- 各スキルのローカル内容が、取得元の既定ブランチで4日以上前の最新コミットと一致すること
 - Claude Code と Kiro CLI のリンクが `~/.agents/skills` を参照すること
 - Codex が直接参照する `~/.agents/skills` に実体があること
 - OfficeCLI の4スキルが配置されること
 
 ## 対象外
 
-旧 lock の移行、取得元リポジトリの固定バージョン化、スキル内容へのローカルパッチ、OfficeCLI 自体の更新は行わない。
+旧 lock の移行、取得元リポジトリの手動でのバージョン固定、スキル内容へのローカルパッチ、OfficeCLI 自体の更新は行わない。
