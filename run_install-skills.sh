@@ -45,6 +45,14 @@ install_skills_claude_only() {
   done
 }
 
+# Prints the lines of a requirements file that are not a plain PyPI requirement:
+# an option (another index, a requirements or constraints file, an editable
+# install), a URL, or a VCS reference. Comments follow pip: # at the start of a
+# line or after whitespace.
+unsafe_requirements() {
+  sed -E 's/(^|[[:space:]])#.*$//' "$1" | grep -nE '(^|[[:space:]])-|://|@|git\+'
+}
+
 # Anthropic Skills
 install_skills anthropics/skills \
   canvas-design doc-coauthoring frontend-design mcp-builder
@@ -56,17 +64,23 @@ install_skills aws-samples/sample-agentcore-websearch-agent-skill agentcore-webs
 # hugohe3 PPT Master (paired with the ppt-master-aws wrapper skill).
 # Deps live in a dedicated uv venv so they stay out of the system python3;
 # the wrapper points ppt-master's scripts at it via PPT_MASTER_PYTHON.
-# --upgrade on every apply keeps the pinned-range deps current.
+# --upgrade on every apply keeps the pinned-range deps current. The upstream
+# requirements may name only PyPI packages, which uv's exclude-newer holds to
+# releases past the cooldown, and --no-build installs wheels only, so no
+# package build script runs.
 install_skills hugohe3/ppt-master ppt-master
 PPT_MASTER_VENV="${XDG_DATA_HOME:-$HOME/.local/share}/ppt-master/venv"
+PPT_MASTER_REQUIREMENTS="$SKILLS_DIR/ppt-master/requirements.txt"
 if [ ! -d "$PPT_MASTER_VENV" ]; then
   uv venv "$PPT_MASTER_VENV" --python 3.12 || record_failure "create ppt-master virtual environment"
 fi
-if [ -f "$SKILLS_DIR/ppt-master/requirements.txt" ]; then
-  uv pip install --python "$PPT_MASTER_VENV/bin/python" --upgrade \
-    -r "$SKILLS_DIR/ppt-master/requirements.txt" || record_failure "update ppt-master dependencies"
-else
+if [ ! -f "$PPT_MASTER_REQUIREMENTS" ]; then
   record_failure "find ppt-master requirements"
+elif unsafe_requirements "$PPT_MASTER_REQUIREMENTS" >&2; then
+  record_failure "accept ppt-master requirements: the lines above are not plain PyPI requirements"
+else
+  uv pip install --python "$PPT_MASTER_VENV/bin/python" --upgrade --no-build \
+    -r "$PPT_MASTER_REQUIREMENTS" || record_failure "update ppt-master dependencies"
 fi
 
 install_skills_claude_only anthropics/skills pdf
