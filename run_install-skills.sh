@@ -24,10 +24,10 @@ record_failure() {
   failures=$((failures + 1))
 }
 
-# Third-party skills install from the newest commit on the default branch that
-# is at least COOLDOWN_DAYS old, matching npm's min-release-age and uv's
-# exclude-newer, so a bad upstream push has time to be noticed and reverted
-# before it reaches this machine.
+# Third-party skills install from the commit that the default branch pointed
+# at COOLDOWN_DAYS ago, matching npm's min-release-age and uv's exclude-newer,
+# so a bad upstream push has time to be noticed and reverted before it reaches
+# this machine.
 COOLDOWN_DAYS=4
 cooldown_epoch=$(($(date +%s) - COOLDOWN_DAYS * 86400))
 # GNU date reads -d @EPOCH; BSD date reads -r EPOCH, which GNU takes as a file.
@@ -37,8 +37,13 @@ COOLDOWN_UNTIL="$(date -u -d "@$cooldown_epoch" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null 
 # Prints the `skills add` source for a repository: OWNER/REPO#COMMIT past the
 # cooldown, or OWNER/REPO for this account's own repositories, which track
 # their default branch. Fails when GitHub returns no such commit.
+#
+# The commit comes from the repository activity, which records when GitHub
+# moved the branch by a push or a merge, rather than from commit dates, which
+# the publisher writes and can backdate. Only the newest 100 activities are
+# read, so a branch that moved more often than that within the cooldown fails.
 skill_source() {
-  local repo="$1" commit
+  local repo="$1" branch commit
   case "$repo" in
     rewse/*)
       echo "$repo"
@@ -46,8 +51,16 @@ skill_source() {
       ;;
   esac
   [ -n "$COOLDOWN_UNTIL" ] || return 1
-  commit="$(gh api "repos/$repo/commits?until=$COOLDOWN_UNTIL&per_page=1" \
-    --jq '.[0].sha // empty' < /dev/null)" || return 1
+  branch="$(gh api "repos/$repo" --jq '.default_branch // empty' < /dev/null)" || return 1
+  [ -n "$branch" ] || return 1
+  # The timestamps share the cutoff's format, so they compare as strings. An
+  # activity that left the branch at no commit, such as a deletion, is skipped.
+  commit="$(gh api "repos/$repo/activity?ref=refs/heads/$branch&per_page=100" \
+    --jq "[.[] | select(.activity_type != \"branch_deletion\"
+      and .timestamp <= \"$COOLDOWN_UNTIL\"
+      and (.after | tostring | test(\"^[0-9a-f]{40}$\") and (test(\"^0+$\") | not)))]
+      | max_by(.timestamp) | .after // empty" \
+    < /dev/null)" || return 1
   [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || return 1
   echo "$repo#$commit"
 }

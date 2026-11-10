@@ -1,6 +1,5 @@
 """Regression tests for run_install-skills.sh, run against fake commands."""
 
-import datetime
 import hashlib
 import json
 import pathlib
@@ -14,7 +13,6 @@ import urllib.parse
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 INSTALL_SKILLS = REPO_ROOT / "run_install-skills.sh"
 JQ = shutil.which("jq")
-COOLDOWN = datetime.timedelta(days=4)
 
 CLEAN_REQUIREMENTS = """\
 # Install / see https://pip.pypa.io/ for details
@@ -33,29 +31,52 @@ FAKE_LOGGER = """\
 """
 
 # Answers `gh api` from canned JSON per repository and applies --jq with the
-# real jq, so the script's filter is exercised too.
+# real jq, so the script's filter is exercised too. Each repository's default
+# branch is "trunk", whose activity is a fresh push, a branch deletion and a
+# zero SHA that must be skipped, the aged merge, and an older push.
 FAKE_GH = """\
 #!{python}
-import hashlib, json, os, subprocess, sys
+import datetime, hashlib, json, os, subprocess, sys
 args = sys.argv[1:]
 with open(os.environ["FAKE_CALLS"], "a") as f:
     f.write("\\x1f".join(["gh", *args]) + "\\n")
 if args[:1] != ["api"]:
     sys.exit(1)
 path = args[1].split("?", 1)[0]
-repo = path.removeprefix("repos/").removesuffix("/commits")
+parts = path.split("/")
+if parts[:1] != ["repos"] or len(parts) not in (3, 4):
+    sys.exit(1)
+repo = "/".join(parts[1:3])
 behaviour = json.loads(os.environ.get("FAKE_GH", "{{}}")).get(repo)
 if behaviour == "fail":
     print("gh: HTTP 502", file=sys.stderr)
     sys.exit(1)
-if not path.endswith("/commits"):
+now = datetime.datetime.now(datetime.UTC)
+def at(days):
+    return (now - datetime.timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+def sha(label):
+    return hashlib.sha1(f"{{label}}:{{repo}}".encode()).hexdigest()
+def activity(kind, days, after):
+    return {{"activity_type": kind, "ref": "refs/heads/trunk",
+            "timestamp": at(days), "after": after}}
+if len(parts) == 3:
+    body = {{"default_branch": "trunk"}}
+elif parts[3] != "activity":
     sys.exit(1)
-if behaviour == "empty":
+elif behaviour == "empty":
     body = []
+elif behaviour == "fresh-only":
+    body = [activity("push", 1, sha("fresh"))]
 elif behaviour == "bad-sha":
-    body = [{{"sha": "null"}}]
+    body = [activity("push", 5, "null")]
 else:
-    body = [{{"sha": hashlib.sha1(repo.encode()).hexdigest()}}]
+    body = [
+        activity("push", 1, sha("fresh")),
+        activity("branch_deletion", 4.5, "0" * 40),
+        activity("force_push", 4.6, "0" * 40),
+        activity("pr_merge", 5, sha("aged")),
+        activity("push", 9, sha("older")),
+    ]
 text = json.dumps(body)
 if "--jq" in args:
     expression = args[args.index("--jq") + 1]
@@ -70,7 +91,7 @@ sys.stdout.write(text)
 
 
 def aged_commit(repo: str) -> str:
-    return hashlib.sha1(repo.encode()).hexdigest()
+    return hashlib.sha1(f"aged:{repo}".encode()).hexdigest()
 
 
 @unittest.skipUnless(JQ, "needs jq to evaluate gh --jq filters")
@@ -133,9 +154,7 @@ class InstallSkillsTest(unittest.TestCase):
     def test_third_party_skills_install_from_a_commit_past_the_cooldown(
         self,
     ) -> None:
-        before = datetime.datetime.now(datetime.UTC)
         result, calls = self.run_script()
-        after = datetime.datetime.now(datetime.UTC)
         self.assertEqual(result.returncode, 0, result.stderr)
 
         adds = self.skill_adds(calls)
@@ -148,21 +167,23 @@ class InstallSkillsTest(unittest.TestCase):
                 repo, _, commit = source.partition("#")
                 self.assertEqual(commit, aged_commit(repo))
 
-        lookups = [call for call in calls if call[0] == "gh"]
+        lookups = [
+            urllib.parse.urlsplit(call[2])
+            for call in calls
+            if call[0] == "gh" and call[2].split("?", 1)[0].endswith("/activity")
+        ]
         self.assertTrue(lookups)
-        for call in lookups:
-            with self.subTest(call=call):
-                endpoint = urllib.parse.urlsplit(call[2])
-                self.assertRegex(endpoint.path, r"^repos/[\w.-]+/[\w.-]+/commits$")
+        for endpoint in lookups:
+            with self.subTest(endpoint=endpoint):
+                # GitHub records when the branch moved; a commit date is
+                # whatever the publisher wrote.
+                self.assertRegex(endpoint.path, r"^repos/[\w.-]+/[\w.-]+/activity$")
                 query = urllib.parse.parse_qs(endpoint.query)
-                self.assertEqual(query["per_page"], ["1"])
-                until = datetime.datetime.strptime(
-                    query["until"][0], "%Y-%m-%dT%H:%M:%SZ"
-                ).replace(tzinfo=datetime.UTC)
-                self.assertGreaterEqual(
-                    until, (before - COOLDOWN).replace(microsecond=0)
-                )
-                self.assertLessEqual(until, after - COOLDOWN)
+                self.assertEqual(query["ref"], ["refs/heads/trunk"])
+                self.assertEqual(query["per_page"], ["100"])
+        self.assertFalse(
+            [call for call in calls if call[0] == "gh" and "/commits" in call[2]]
+        )
 
     def test_claude_only_skills_use_the_same_commit(self) -> None:
         self.write_executable("claude", "#!/bin/sh\nexit 0\n")
@@ -187,7 +208,7 @@ class InstallSkillsTest(unittest.TestCase):
         )
 
     def test_keeps_installed_skills_when_no_aged_commit_resolves(self) -> None:
-        for behaviour in ("bad-sha", "empty", "fail"):
+        for behaviour in ("bad-sha", "empty", "fail", "fresh-only"):
             with self.subTest(behaviour=behaviour):
                 self.calls.unlink(missing_ok=True)
                 result, calls = self.run_script(gh={"blader/humanizer": behaviour})
