@@ -251,6 +251,60 @@ class RedirectGuardKiroTest(unittest.TestCase):
         (self.workspace / "link").symlink_to(self.home)
         self.assertEqual(self.run_guard("echo hi > link/out.txt").returncode, 2)
 
+    def test_blocks_symlink_created_in_the_same_command(self) -> None:
+        # The link does not exist when the hook runs, so its target resolves
+        # inside the workspace; bash then writes through it.
+        (self.workspace / "out.txt").write_text("")
+        for command in (
+            "ln -s ~ l; echo x > l/.zshrc",
+            "ln -s ~/.zshrc f; echo x > f",
+            "ln -s ~/.zshrc f && echo x >> f",
+            "ln -s ~/.zshrc f || echo x > f",
+            "ln -s ~/.zshrc f & echo x > f",
+            "ln -s ~/.zshrc f | echo x > f",
+            "(ln -s ~/.zshrc f); echo x > f",
+            "echo $(ln -s ~/.zshrc f) > f",
+            "echo `ln -s ~/.zshrc f` > f",
+            "ln -s ~/.zshrc f\necho x > f",
+            "ln -s ~ /tmp/redirect-guard-test-link; echo x > /tmp/redirect-guard-test-link/.zshrc",
+            "cat <<EOF > f\n$(ln -s ~/.zshrc f)\nEOF",
+            "cat <<'EOF' > out.txt\nhi\nEOF\nln -s ~/.zshrc f\necho x > f",
+            'echo "<<EOF"\nln -s ~/.zshrc f\necho x > f\nEOF',
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("write tool", result.stderr)
+
+    def test_blocks_relative_redirect_after_cd(self) -> None:
+        # The workspace has its own .zshrc, so only the directory change matters.
+        (self.workspace / ".zshrc").write_text("")
+        for command in (
+            "cd ~ && echo x > .zshrc",
+            "pushd ~; echo x > .zshrc",
+            "popd && echo x > .zshrc",
+            "cd ~\necho x > .zshrc",
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 2)
+
+    def test_allows_existing_targets_in_compound_commands(self) -> None:
+        (self.workspace / "sub").mkdir()
+        (self.workspace / "out.txt").write_text("")
+        for command in (
+            "rg x > out.txt; wc -l out.txt",
+            "rg x 2>&1 | head > sub/../out.txt",
+            "cd sub && rg x > /dev/null",
+            "echo a \\\n  b > new.txt",
+            "python3 -c 'a = 1\nprint(a)' > new.json",
+            "cat > new.py <<'EOF'\nprint('hi'); x = (1 | 2) & 3\ncd ~\nEOF",
+            "cat > new.md <<EOF\nplain; text | here\nEOF",
+            "cat <<-EOF > new.txt\n\tbody\n\tEOF\n",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_blocks_redirects_hidden_by_hash_or_fused_punctuation(self) -> None:
         # Bash starts a comment only at a word boundary, so x#y is one word.
         for command in (
@@ -264,9 +318,12 @@ class RedirectGuardKiroTest(unittest.TestCase):
                 self.assertEqual(self.run_guard(command).returncode, 2)
 
     def test_allows_fused_punctuation_inside_allowed_paths(self) -> None:
-        for command in ("echo hi;> out.txt", "(echo hi)>/tmp/out.txt", "echo a;>&2"):
-            with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 0)
+        # Fused punctuation makes a compound command, so the targets must exist.
+        (self.workspace / "out.txt").write_text("")
+        with tempfile.NamedTemporaryFile(dir="/tmp") as out:
+            for command in ("echo hi;> out.txt", f"(echo hi)>{out.name}", "echo a;>&2"):
+                with self.subTest(command=command):
+                    self.assertEqual(self.run_guard(command).returncode, 0)
 
     def test_tool_cwd_does_not_widen_allowed_paths(self) -> None:
         for command, tool_cwd in (
