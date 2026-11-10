@@ -24,9 +24,10 @@ an apostrophe, cannot redirect output and passes.
 A target can also resolve elsewhere once earlier parts of the command run. A
 relative target is blocked when the command contains cd, pushd, or popd. In a
 compound command (one with ;, &&, ||, |, &, a subshell, a command
-substitution, or a second line outside a here-document body), a target that
-does not exist yet, or that has a missing parent below its allowed root, is
-blocked too, because an earlier part could create it as a symlink. A path that
+substitution, or a second line outside a here-document body) that also runs
+a command able to create a symlink (LINK_COMMANDS), a target that does not
+exist yet, or that has a missing parent below its allowed root, is blocked
+too, because that part could create it as a symlink first. A path that
 exists but is replaced earlier in the same command, as with rm and then ln, is
 out of scope: Kiro prompts for such commands, since rm and ln are not
 auto-approved.
@@ -181,6 +182,19 @@ REDIRECT_ONLY = re.compile(r"&>>?|>>?|>\||>&|<<<|<<|<>|<&|<")
 # A here-document operator and its delimiter, which may be quoted.
 HEREDOC = re.compile(r"(?<!<)<<(?!<)(-?)\s*(['\"]?)([^\s'\"();<>|&]+)\2")
 DIRECTORY_CHANGES = {"cd", "popd", "pushd"}
+# Commands that can create a symlink from their arguments, or run code or
+# other commands that can. Kiro asks before running any command it does not
+# auto-approve, so the list is defense in depth for those and matters most for
+# the auto-approved ones (git, tar, unzip, docker, npx, chezmoi). A command
+# missing from it, such as rg or mkdir, cannot turn a missing redirect target
+# into a link before bash opens it.
+LINK_COMMANDS = re.compile(
+    r"(?:ln|cp|mv|install|rsync|ditto|g?tar|bsdtar|unzip|cpio|pax|git|docker"
+    r"|docker-compose|chezmoi|npx|npm|pnpm|yarn|uvx?|pip[0-9.]*|python[0-9.]*"
+    r"|node|deno|bun|perl|ruby|php|osascript|g?awk|find|xargs|env|exec|eval"
+    r"|sudo|command|builtin|source|\.|(?:ba|z|da|fi|k)?sh|make|tvly|mcporter"
+    r"|agent-browser)"
+)
 
 
 def split_lines(text):
@@ -226,8 +240,12 @@ def without_heredoc_bodies(command):
 
 
 def command_shape(command):
-    """Returns (compound, changes_directory) for the command.
+    """Returns (may_link, changes_directory) for the command.
 
+    may_link is whether another part of the command could create a symlink
+    before a redirect opens its target: the command is compound and some word
+    in it names one of LINK_COMMANDS, or it runs text this hook cannot read
+    (backticks, or a here-document body that expands commands or never ends).
     Separators and words inside a here-document body are data, so they count
     for neither. A command it cannot split counts as both.
     """
@@ -238,15 +256,16 @@ def command_shape(command):
         tokens = split_lines(text)
     except ValueError:
         return True, True
-    compound = (
-        not certain
-        or "`" in text
-        or any(
-            set(t) <= PUNCTUATION | {"\n"} and not REDIRECT_ONLY.fullmatch(t)
-            for t in tokens
-        )
+    if not certain or "`" in text:
+        return True, bool(DIRECTORY_CHANGES & set(tokens))
+    compound = any(
+        set(t) <= PUNCTUATION | {"\n"} and not REDIRECT_ONLY.fullmatch(t)
+        for t in tokens
     )
-    return compound, bool(DIRECTORY_CHANGES & set(tokens))
+    may_link = compound and any(
+        LINK_COMMANDS.fullmatch(os.path.basename(t)) for t in tokens
+    )
+    return may_link, bool(DIRECTORY_CHANGES & set(tokens))
 
 
 def missing_below_root(path, root_cwd):
@@ -272,7 +291,7 @@ def blocked_targets(command, root_cwd, cwd=None):
         tokens = list(lexer)
     except ValueError:
         return [command] if ">" in command else []
-    compound, changes_directory = command_shape(command)
+    may_link, changes_directory = command_shape(command)
     blocked = []
     for index, token in enumerate(tokens):
         operator = redirect_operator(token)
@@ -291,7 +310,7 @@ def blocked_targets(command, root_cwd, cwd=None):
             path is None
             or not is_allowed(path, root_cwd)
             or (changes_directory and not os.path.isabs(os.path.expanduser(target)))
-            or (compound and missing_below_root(path, root_cwd))
+            or (may_link and missing_below_root(path, root_cwd))
         ):
             blocked.append(target)
     return blocked
