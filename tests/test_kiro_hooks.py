@@ -270,11 +270,32 @@ class RedirectGuardKiroTest(unittest.TestCase):
             "cat <<EOF > f\n$(ln -s ~/.zshrc f)\nEOF",
             "cat <<'EOF' > out.txt\nhi\nEOF\nln -s ~/.zshrc f\necho x > f",
             'echo "<<EOF"\nln -s ~/.zshrc f\necho x > f\nEOF',
+            "cp -s ~/.zshrc f; echo x > f",
+            'python3 -c \'import os; os.symlink("/etc", "f")\'; echo x > f/x',
+            "bash -c 'ln -s ~ l' && echo x > l/.zshrc",
+            "npx some-tool; echo x > f",
         ):
             with self.subTest(command=command):
                 result = self.run_guard(command)
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("write tool", result.stderr)
+
+    def test_allows_new_targets_when_no_part_can_create_a_link(self) -> None:
+        # Logging to a new file and reading it back is common, and none of
+        # these commands can create a symlink from their arguments.
+        (self.workspace / "sub").mkdir()
+        log = f"/tmp/redirect-guard-new-{os.getpid()}.log"
+        self.addCleanup(lambda: pathlib.Path(log).unlink(missing_ok=True))
+        for command in (
+            f"rg x > {log} 2>&1; tail {log}",
+            "rg x > new.txt; wc -l new.txt",
+            "mkdir -p d && echo x > d/f",
+            "echo a | sort > sub/new.txt",
+            "echo $(date) > new.txt; cat new.txt",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_blocks_relative_redirect_after_cd(self) -> None:
         # The workspace has its own .zshrc, so only the directory change matters.
