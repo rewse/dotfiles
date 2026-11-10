@@ -1,20 +1,35 @@
 """Regression tests for the Kiro CLI v3 permissions template."""
 
 import fnmatch
+import importlib.util
 import pathlib
 import re
 import unittest
+
+from chezmoi_template import execute_template
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PERMISSIONS = (
     REPO_ROOT / "private_dot_kiro/private_settings/private_permissions.yaml.tmpl"
 )
+REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOST_GATE = '{{- if eq .chezmoi.hostname "7cf34ded5d65" }}'
+
+
+def secret_patterns() -> tuple[str, ...]:
+    spec = importlib.util.spec_from_file_location("redirect_guard", REDIRECT_GUARD_KIRO)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return tuple(module.SECRET_PATTERNS)
 
 
 class KiroPermissionsTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.text = PERMISSIONS.read_text()
+        self.raw = PERMISSIONS.read_text()
+        result = execute_template(self.raw, {"hostname": "7cf34ded5d65"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.text = result.stdout
 
     def rules(self) -> list[dict[str, list[str]]]:
         rules = []
@@ -115,12 +130,15 @@ class KiroPermissionsTest(unittest.TestCase):
             "chezmoi cat *",
             "chezmoi dump *",
             "curl *",
+            "env",
             "env *",
             "fuser *",
             "mcporter *",
             "mcporter call *",
             "mount *",
             "open *",
+            "printenv",
+            "printenv *",
             "sed *",
             "tar *",
             "tee *",
@@ -216,7 +234,6 @@ class KiroPermissionsTest(unittest.TestCase):
         for pattern in (
             "chezmoi --no-pager diff *",
             "chezmoi status *",
-            "env",
             "mcporter list *",
             "mount",
             "tar -t*",
@@ -231,11 +248,77 @@ class KiroPermissionsTest(unittest.TestCase):
             rule for rule in self.rules_for("shell") if "sysctl -n *" in rule["match"]
         ]
         self.assertEqual(rule["match"], ["sysctl -a *", "sysctl -n *"])
-        self.assertEqual(rule["exclude"], ["*=*"])
+        self.assertEqual(rule["exclude"], ["*=*", *secret_patterns()])
 
-    def test_general_shell_rule_has_no_exclude(self) -> None:
-        # Kiro strips redirections before matching, so an exclude cannot catch them.
-        self.assertEqual(self.rules_for("shell")[0]["exclude"], [])
+    def test_general_shell_rule_excludes_only_secret_locations(self) -> None:
+        # Kiro strips redirections before matching, so an exclude cannot catch
+        # them; redirect-guard-kiro.py checks those instead.
+        self.assertEqual(self.rules_for("shell")[0]["exclude"], list(secret_patterns()))
+
+    def test_every_shell_rule_excludes_secret_locations(self) -> None:
+        # A command substitution can feed a secret to any allowed command.
+        patterns = secret_patterns()
+        self.assertIn("*.aws/*", patterns)
+        for rule in self.rules_for("shell"):
+            with self.subTest(match=rule["match"][0]):
+                self.assertEqual(rule["exclude"][-len(patterns) :], list(patterns))
+
+    def test_reading_secret_locations_is_not_allowed(self) -> None:
+        for command in (
+            "cat ~/.aws/credentials",
+            # Kiro strips this redirect before matching; the redirect guard
+            # hook blocks the stripped form.
+            "cat < ~/.aws/credentials",
+            "base64 ~/.ssh/id_rsa",
+            "cat /proc/self/environ",
+            "cat ~/.claude/.credentials.json",
+            "cat ~/.config/cloudfront-waf-report/kiro-api-key",
+            "cat ~/.config/mcporter/mcporter.json",
+            "cat ~/.config/op/config",
+            "cat ~/.docker/config.json",
+            "cat ~/.kube/config",
+            "cat ~/.mcporter/mcporter.json",
+            "cat ~/.netrc",
+            "cat ~/.op/config",
+            "cat ~/.ss?/id_rsa",
+            "cat ~/.tavily/config.json",
+            "echo $(cat ~/.aws/credentials)",
+            "git -P show HEAD:.aws/credentials",
+            "grep -r x ~/.ssh",
+            "head -c 100 ~/.midway/cookie",
+            "jq . ~/.aws/cli/cache/x.json",
+            "ls ~/.aws",
+            "ls ~/.config/mcporter",
+            "rg -n token ~/.config/environment",
+            "sort ~/.aws/config",
+            "sysctl -n $(cat ~/.aws/credentials)",
+            "tail -n 5 ~/.config/environment/gitlab.sh",
+            "tree ~/.gnupg",
+            "tree ~/.kube -L 1",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+
+    def test_everyday_reads_stay_allowed(self) -> None:
+        for command in (
+            "cat .dockerignore",
+            "cat README.md",
+            "grep -r foo src",
+            "jq . package.json",
+            "ls ~/.config",
+            "mcporter call slack-mcp.search_messages query=x",
+            "mcporter list",
+            "rg -n op src",
+            "tail -n 20 /tmp/test.log",
+            "tvly extract https://docs.aws.amazon.com/cli/latest/index.html",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
+
+    def test_environment_dumps_are_not_allowed(self) -> None:
+        for command in ("env", "printenv", "printenv AWS_SECRET_ACCESS_KEY"):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
 
     def test_read_paths_include_cwd(self) -> None:
         self.assertEqual(
@@ -267,12 +350,14 @@ class KiroPermissionsTest(unittest.TestCase):
         self.assertNotIn("effect: deny", self.text)
 
     def test_builder_mcp_rule_is_host_gated(self) -> None:
-        gate = self.text.index(HOST_GATE)
-        end = self.text.index("{{- end }}", gate)
+        gate = self.raw.index(HOST_GATE)
+        end = self.raw.index("{{- end }}", gate)
         # User scope applies to every agent, so only the read tool main uses.
-        self.assertIn('"builder-mcp/ReadInternalWebsites"', self.text[gate:end])
-        self.assertNotIn("builder-mcp/*", self.text)
-        self.assertNotIn("builder-mcp/", self.text[:gate] + self.text[end:])
+        self.assertIn('"builder-mcp/ReadInternalWebsites"', self.raw[gate:end])
+        self.assertNotIn("builder-mcp/*", self.raw)
+        self.assertNotIn("builder-mcp/", self.raw[:gate] + self.raw[end:])
+        other_host = execute_template(self.raw, {"hostname": "other"})
+        self.assertNotIn("builder-mcp/", other_host.stdout)
 
 
 if __name__ == "__main__":

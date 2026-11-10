@@ -1,3 +1,40 @@
+{{- /* Locations that may hold credentials. Every shell rule excludes them, so
+       a command that names one prompts even inside a command substitution.
+       Kiro strips redirections before matching, so redirect-guard-kiro.py
+       checks `<` targets against the same list, kept in SECRET_PATTERNS. */}}
+{{- $secretPaths := list
+      "*.aws"
+      "*.aws *"
+      "*.aws/*"
+      "*.config/environment*"
+      "*.config/op"
+      "*.config/op *"
+      "*.config/op/*"
+      "*.docker"
+      "*.docker *"
+      "*.docker/*"
+      "*.gnupg*"
+      "*.kube"
+      "*.kube *"
+      "*.kube/*"
+      "*.mcporter*"
+      "*.midway*"
+      "*.netrc*"
+      "*.op"
+      "*.op *"
+      "*.op/*"
+      "*.ssh*"
+      "*.tavily*"
+      "*/environ*"
+      "*/mcporter"
+      "*/mcporter *"
+      "*/mcporter/*"
+      "*cloudfront-waf-report*"
+      "*credentials*"
+      "*id_ed25519*"
+      "*id_rsa*"
+      "*mcporter.json*"
+-}}
 rules:
   - capability: shell
     effect: allow
@@ -196,7 +233,6 @@ rules:
       - "dscacheutil *"
       - "du *"
       - "echo *"
-      - "env"
       - "file *"
       - "free *"
       - "gh issue list *"
@@ -395,7 +431,6 @@ rules:
       - "ping *"
       - "ping6 *"
       - "pmset -g *"
-      - "printenv *"
       - "printf *"
       - "ps *"
       - "pwd *"
@@ -443,6 +478,10 @@ rules:
       - "which *"
       - "whoami *"
       - "whois *"
+    exclude:
+{{- range $secretPaths }}
+      - {{ quote . }}
+{{- end }}
   - capability: shell
     effect: allow
     # These commands write a file through an output option, which falls through
@@ -474,6 +513,9 @@ rules:
       - "base64 *--o*"
       - "sort *--c*"
       - "sort *--o*"
+{{- range $secretPaths }}
+      - {{ quote . }}
+{{- end }}
   - capability: shell
     effect: allow
     # These read-only commands also take options that run a program or write a
@@ -495,6 +537,9 @@ rules:
       - "tar -t*:*"
       - "tar -t*F*"
       - "tar -t*I*"
+{{- range $secretPaths }}
+      - {{ quote . }}
+{{- end }}
   - capability: shell
     effect: allow
     match:
@@ -502,6 +547,9 @@ rules:
       - "sysctl -n *"
     exclude:
       - "*=*"
+{{- range $secretPaths }}
+      - {{ quote . }}
+{{- end }}
   - capability: fs_read
     effect: allow
     match:

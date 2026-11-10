@@ -287,6 +287,41 @@ class RedirectGuardKiroTest(unittest.TestCase):
         self.assertEqual(self.run_guard("echo hi > ../out.txt", "sub").returncode, 0)
         self.assertEqual(self.run_guard("echo hi > ../../out.txt", "sub").returncode, 2)
 
+    def test_blocks_input_from_secret_locations(self) -> None:
+        # Kiro strips `<` before matching, so the shell excludes never see it.
+        aws = self.home / ".aws"
+        aws.mkdir()
+        (aws / "credentials").write_text("")
+        (self.workspace / "creds").symlink_to(aws / "credentials")
+        for command in (
+            "cat < ~/.aws/credentials",
+            "cat <~/.ssh/id_rsa",
+            f"cat < {aws}/credentials",
+            "cat < creds",
+            "cat < ~/.a*/cred*",
+            "cat 0< ~/.netrc",
+            "rg x;<~/.aws/credentials cat",
+            "cat < $HOME/.aws/credentials",
+            "tr '\\0' '\\n' < /proc/self/environ",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("read tool", result.stderr)
+
+    def test_allows_input_from_other_files(self) -> None:
+        for command in (
+            "cat < input.txt",
+            "wc -l < ~/notes.txt",
+            "sort < /etc/hosts",
+            "cat <<< 'credentials'",
+            "cat <&3",
+            "diff <(echo a) <(echo b)",
+            'while read -r l; do echo "$l"; done < "$f"',
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 0)
+
 
 def hook_file(name: str) -> dict:
     return json.loads(
