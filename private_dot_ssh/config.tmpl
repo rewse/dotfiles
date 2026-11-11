@@ -30,7 +30,18 @@ Host github.com
 Host alfa alfa.rewse.jp
   HostName alfa.rewse.jp
   User tats
+
+# Tunnels through alfa, opened with `ssh -N <alias>`. Only these aliases
+# forward ports, so Ansible and ordinary logins to alfa leave the local ports
+# free for them.
+Host alfa-vnc
+  HostName alfa.rewse.jp
+  User tats
   LocalForward 5901 localhost:5901
+
+Host alfa-rewse-pg
+  HostName alfa.rewse.jp
+  User tats
   LocalForward 15432 rewse-pg.rewse.jp:5432
 
 Host fox fox.rewse.jp
