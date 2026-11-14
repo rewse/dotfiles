@@ -1,0 +1,32 @@
+theme = "One Light"
+{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
+theme-dark = "One Dark"
+auto-theme-dark-mode = true
+{{- else }}
+auto-theme-dark-mode = false
+{{- end }}
+adjust-cell-height = "20%"
+auto-hide-tabs-panel = "always"
+autocomplete-tab-resolve-path = true
+cli-allow-overwrite = true
+cursor-style = "bar"
+font-family = "HackGen Console"
+ipc-allow-send-keys = true
+keybind = "cmd+6=details_tab_info"
+keybind = "cmd+7=details_tab_outline"
+keybind = "cmd+8=details_tab_git"
+keybind = "cmd+9=details_tab_files"
+keybind = "cmd+down=focus_pane_down"
+keybind = "cmd+e=compose_overlay"
+keybind = "cmd+left=focus_pane_left"
+keybind = "cmd+r=rename_tab"
+keybind = "cmd+right=focus_pane_right"
+keybind = "cmd+shift+down=move_divider_down"
+keybind = "cmd+shift+left=move_divider_left"
+keybind = "cmd+shift+right=move_divider_right"
+keybind = "cmd+shift+space=toggle_vi_mode"
+keybind = "cmd+shift+up=move_divider_up"
+keybind = "cmd+up=focus_pane_up"
+keybind = "shift+enter=unbind"
+notification-foreground = "tab-unfocused"
+omit-otty-prefix = true
