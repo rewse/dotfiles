@@ -49,6 +49,12 @@ output = yaml
 role_arn = arn:aws:iam::070392599442:role/rewse-blog-deploy
 source_profile = {{ $sourceProfile }}
 
+[profile security-findings-waf-writer]
+region = us-east-1
+output = yaml
+role_arn = arn:aws:iam::070392599442:role/security-findings-waf-writer
+source_profile = {{ $sourceProfile }}
+
 [profile sslcert]
 region = us-east-1
 output = yaml
