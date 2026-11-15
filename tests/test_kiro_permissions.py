@@ -272,7 +272,6 @@ class KiroPermissionsTest(unittest.TestCase):
             "base64 ~/.ssh/id_rsa",
             "cat /proc/self/environ",
             "cat ~/.claude/.credentials.json",
-            "cat ~/.config/cloudfront-waf-report/kiro-api-key",
             "cat ~/.config/mcporter/mcporter.json",
             "cat ~/.config/op/config",
             "cat ~/.docker/config.json",

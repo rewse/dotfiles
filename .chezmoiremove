@@ -9,8 +9,9 @@
 .kiro/hooks/otty-state.json
 .kiro/hooks/otty-state.sh
 
-# The WAF report Kiro API key lives in ~/.config/cloudfront-waf-report/kiro-api-key.
+# cloudfront-waf-report calls Bedrock, so it reads no Kiro API key.
 .config/environment/kiro.sh
+.config/cloudfront-waf-report/kiro-api-key
 
 # handling-continuum-reports replaces this skill for the Continuum issues in rewse/continuum.
 .agents/skills/handling-security-agent-reports

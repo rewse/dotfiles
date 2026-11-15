@@ -78,7 +78,6 @@ SECRET_PATTERNS = (
     "*/mcporter",
     "*/mcporter *",
     "*/mcporter/*",
-    "*cloudfront-waf-report*",
     "*credentials*",
     "*id_ed25519*",
     "*id_rsa*",

@@ -49,18 +49,12 @@ class ZshStartupTest(unittest.TestCase):
                 source = ENVIRONMENT / f"private_{name}.sh.tmpl"
                 self.assertIn("onepasswordRead", source.read_text())
 
-    def test_report_key_is_fox_only(self) -> None:
-        key = REPO_ROOT / "dot_config/cloudfront-waf-report/private_kiro-api-key.tmpl"
-        text = key.read_text()
-        self.assertIn("op://chezmoi/l2kqwiv5em4t4j2kxaat2py5fy/credential", text)
-        self.assertNotIn("export", text)
-
-        ignore = (REPO_ROOT / ".chezmoiignore").read_text()
-        start = ignore.index('{{- if ne .chezmoi.hostname "fox" }}')
-        block = ignore[start : ignore.index("{{- end }}", start)]
-        self.assertIn(".config/cloudfront-waf-report", block)
-
+    def test_no_kiro_api_key_is_deployed(self) -> None:
+        self.assertFalse((REPO_ROOT / "dot_config/cloudfront-waf-report").exists())
         self.assertFalse((ENVIRONMENT / "private_kiro.sh.tmpl").exists())
+        remove = (REPO_ROOT / ".chezmoiremove").read_text().splitlines()
+        self.assertIn(".config/cloudfront-waf-report/kiro-api-key", remove)
+        self.assertIn(".config/environment/kiro.sh", remove)
 
     def test_zshenv_sections_follow_dependency_order(self) -> None:
         template = ZSHENV.read_text()
