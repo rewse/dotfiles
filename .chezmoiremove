@@ -13,7 +13,12 @@
 .config/environment/kiro.sh
 .config/cloudfront-waf-report/kiro-api-key
 
-# handling-continuum-reports replaces this skill for the Continuum issues in rewse/continuum.
+# security-findings replaces this skill for the finding issues in rewse/security-findings.
 .agents/skills/handling-security-agent-reports
 .claude/skills/handling-security-agent-reports
 .kiro/skills/handling-security-agent-reports
+
+# security-findings is the new name of this skill, after the repository it handles.
+.agents/skills/handling-continuum-reports
+.claude/skills/handling-continuum-reports
+.kiro/skills/handling-continuum-reports
