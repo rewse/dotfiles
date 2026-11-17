@@ -24,6 +24,11 @@ only at a word boundary, so `x#y > f` still redirects. shlex can treat `#` as
 always or never starting a comment, so every check runs in both modes
 (COMMENT_MODES) and combines the results.
 
+sort and base64 write the file named by -o or --output. permissions.yaml
+sends those options to a prompt, but its globs cannot tell an output option
+attached to other short flags (sort -uo/f) from a file name, so this hook
+checks that file like a redirect target (OUTPUT_OPTIONS).
+
 A target can also resolve elsewhere once earlier parts of the command run. A
 relative target is blocked when the command contains cd, pushd, or popd. In a
 compound command (one with ;, &&, ||, |, &, a subshell, a command
@@ -197,6 +202,13 @@ REDIRECT_ONLY = re.compile(r"&>>?|>>?|>\||>&|<<<|<<|<>|<&|<")
 # A here-document operator and its delimiter, which may be quoted.
 HEREDOC = re.compile(r"(?<!<)<<(?!<)(-?)\s*(['\"]?)([^\s'\"();<>|&]+)\2")
 DIRECTORY_CHANGES = {"cd", "popd", "pushd"}
+# Auto-approved commands whose -o option writes a file, and their short
+# options that take an argument: BSD and GNU sort, macOS and GNU base64.
+OUTPUT_OPTIONS = {"base64": "biow", "sort": "STkot"}
+# A word that sets a variable for the command after it.
+ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*", re.DOTALL)
+# An output option after an OUTPUT_OPTIONS command, for text that does not split.
+HIDDEN_OUTPUT_OPTION = re.compile(r"\b(?:base64|sort)\b[^\n]*\s(?:--o|-[^\s-]*o)")
 # Commands that can create a symlink from their arguments, or run code or
 # other commands that can. Kiro asks before running any command it does not
 # auto-approve, so the list is defense in depth for those and matters most for
@@ -328,6 +340,71 @@ def command_words(command, commenters):
         return set(re.findall(r"[\w.-]+", command))
 
 
+def output_targets(command, commenters):
+    """Returns the files that OUTPUT_OPTIONS commands write through -o.
+
+    The option may share a word with other short flags and take its argument
+    in the same word (sort -uo/f) or the next one, and GNU tools accept it
+    after operands and as any abbreviation of --output. A command that does
+    not split counts as writing the whole command if it looks like one.
+    """
+    try:
+        tokens = split_lines(command, commenters)
+    except ValueError:
+        return [command] if HIDDEN_OUTPUT_OPTION.search(command) else []
+    targets, index, at_command = [], 0, True
+    while index < len(tokens):
+        token = tokens[index]
+        index += 1
+        if set(token) <= PUNCTUATION | {"\n"}:
+            if REDIRECT_ONLY.fullmatch(token):
+                index += 1
+            else:
+                at_command = True
+        elif at_command and not ASSIGNMENT.fullmatch(token):
+            at_command = False
+            with_arguments = OUTPUT_OPTIONS.get(os.path.basename(token))
+            if with_arguments:
+                found, index = option_targets(tokens, index, with_arguments)
+                targets += found
+    return targets
+
+
+def option_targets(tokens, index, with_arguments):
+    """Returns (targets, index): the -o arguments from tokens[index] on.
+
+    index ends at the first word that is not an option or operand.
+    """
+    targets = []
+    while index < len(tokens):
+        token = tokens[index]
+        if set(token) <= PUNCTUATION | {"\n"}:
+            if not REDIRECT_ONLY.fullmatch(token):
+                break
+            index += 2
+            continue
+        index += 1
+        if token == "--":
+            break
+        if token.startswith("--"):
+            name, equals, value = token.partition("=")
+            if len(name) > 2 and "--output".startswith(name):
+                if not equals and index < len(tokens):
+                    value, index = tokens[index], index + 1
+                targets.append(value)
+        elif token.startswith("-"):
+            for position, flag in enumerate(token[1:], start=2):
+                if flag not in with_arguments:
+                    continue
+                value = token[position:]
+                if not value and index < len(tokens):
+                    value, index = tokens[index], index + 1
+                if flag == "o":
+                    targets.append(value)
+                break
+    return targets, index
+
+
 def missing_below_root(path, root_cwd):
     """Returns whether the path, or a parent below its allowed root, is missing."""
     roots = [r for r in allowed_roots(root_cwd) if path.startswith(r + os.sep)]
@@ -344,19 +421,31 @@ def missing_below_root(path, root_cwd):
 def blocked_targets(command, root_cwd, cwd=None):
     cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
     may_link, changes_directory = command_shape(command)
+
+    def is_blocked(target):
+        path = resolve(target, cwd)
+        return (
+            path is None
+            or not is_allowed(path, root_cwd)
+            or (changes_directory and not os.path.isabs(os.path.expanduser(target)))
+            or (may_link and missing_below_root(path, root_cwd))
+        )
+
     blocked = []
     for commenters in COMMENT_MODES:
+        outputs = output_targets(command, commenters)
         try:
             tokens = tokenize(command, commenters)
         except ValueError:
-            if ">" in command:
+            if ">" in command or outputs:
                 blocked.append(command)
             continue
-        blocked += redirect_targets(tokens, root_cwd, cwd, may_link, changes_directory)
+        blocked += redirect_targets(tokens, is_blocked)
+        blocked += [t for t in outputs if is_blocked(t)]
     return list(dict.fromkeys(blocked))
 
 
-def redirect_targets(tokens, root_cwd, cwd, may_link, changes_directory):
+def redirect_targets(tokens, is_blocked):
     """Returns the redirect targets in the tokens that the guard blocks."""
     blocked = []
     for index, token in enumerate(tokens):
@@ -371,13 +460,7 @@ def redirect_targets(tokens, root_cwd, cwd, may_link, changes_directory):
         target = tokens[index + 1]
         if operator.endswith("&") and (target.isdigit() or target == "-"):
             continue
-        path = resolve(target, cwd)
-        if (
-            path is None
-            or not is_allowed(path, root_cwd)
-            or (changes_directory and not os.path.isabs(os.path.expanduser(target)))
-            or (may_link and missing_below_root(path, root_cwd))
-        ):
+        if is_blocked(target):
             blocked.append(target)
     return blocked
 
@@ -400,7 +483,7 @@ def main():
     if not blocked:
         return 0
     print(
-        f"Blocked: this command redirects output to {', '.join(blocked)}, which is"
+        f"Blocked: this command writes output to {', '.join(blocked)}, which is"
         " outside the paths Kiro may write without asking (the working"
         " directory, /tmp, ~/Desktop, ~/Downloads) or may resolve there once"
         " earlier parts of the command run. Use the write tool for that file so"

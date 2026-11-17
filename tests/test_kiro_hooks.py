@@ -402,6 +402,53 @@ class RedirectGuardKiroTest(unittest.TestCase):
                 with self.subTest(command=command):
                     self.assertEqual(self.run_guard(command).returncode, 0)
 
+    def test_blocks_output_options_outside_allowed_paths(self) -> None:
+        # Kiro auto-approves sort and base64 and cannot see an output option
+        # whose argument is attached to a cluster of short flags.
+        (self.workspace / ".zshrc").write_text("")
+        for command in (
+            f"sort -uo{self.home}/.zshrc x",
+            "sort x -uo/etc/hosts",
+            "sort -o /etc/hosts x",
+            "sort -uo /etc/hosts x",
+            "sort --output=/etc/hosts x",
+            "sort --out /etc/hosts x",
+            "base64 -i x -o/etc/hosts",
+            "base64 -Do /etc/hosts x",
+            "/usr/bin/sort -uo/etc/hosts x",
+            "rg x; sort -uo/etc/hosts y",
+            "rg x\nLC_ALL=C sort -uo/etc/hosts y",
+            "echo $(sort -uo/etc/hosts y)",
+            "sort -uo$HOME/.zshrc x",
+            "cd ~ && sort -uo.zshrc x",
+            "sort -uo/etc/hosts x #'",
+            "echo a # don't\nsort -uo/etc/hosts y # can't",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("write tool", result.stderr)
+
+    def test_allows_output_options_inside_allowed_paths(self) -> None:
+        for command in (
+            "sort -uo out.txt x",
+            "sort -uoout.txt x",
+            f"sort -uo{self.workspace}/out.txt x",
+            "sort --output=/tmp/out.txt x",
+            "base64 -i x -o out.b64",
+            "sort -k2o /etc/hosts",
+            "sort -t o -k 2 /etc/hosts",
+            "sort -- -o/etc/hosts",
+            "base64 -io/etc/hosts",
+            "base64 -D x.b64",
+            "rg sort -o /etc/hosts",
+            "echo sort -uo/etc/hosts",
+            "sort /etc/hosts > out.txt",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_tool_cwd_does_not_widen_allowed_paths(self) -> None:
         for command, tool_cwd in (
             ("echo hi > /etc/hosts", "/"),
