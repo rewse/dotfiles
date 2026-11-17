@@ -233,15 +233,34 @@ def heredoc_operators(line, commenters):
     return [t for t in tokens if set(t) <= PUNCTUATION and t.lstrip(";)|&") == "<<"]
 
 
+def without_arithmetic(line, depth):
+    """Returns (text, depth): the line without $((...)) and ((...)) contents.
+
+    `<<` inside arithmetic shifts bits and starts no here-document. depth is
+    the parenthesis depth of arithmetic still open at the start of the line.
+    """
+    kept, index = [], 0
+    while index < len(line):
+        if not depth and line.startswith("((", index):
+            depth, index = 2, index + 2
+            continue
+        if depth:
+            depth += {"(": 1, ")": -1}.get(line[index], 0)
+        else:
+            kept.append(line[index])
+        index += 1
+    return "".join(kept), depth
+
+
 def without_heredoc_bodies(command, commenters):
     """Returns (text, certain): the command without here-document bodies.
 
     certain is False when a body expands $(...) or backticks, which run before
     the command's redirects, or when a body has no closing delimiter. A `<<`
-    that the lexer does not see as an operator, such as one inside quotes,
-    starts no body.
+    that the lexer does not see as an operator, such as one inside quotes or
+    arithmetic, starts no body.
     """
-    kept, pending, certain = [], [], True
+    kept, pending, certain, depth = [], [], True, 0
     for line in command.split("\n"):
         if pending:
             strip_tabs, quoted, delimiter = pending[0]
@@ -251,6 +270,7 @@ def without_heredoc_bodies(command, commenters):
                 certain = False
             continue
         kept.append(line)
+        line, depth = without_arithmetic(line, depth)
         found = HEREDOC.findall(line)
         operators = heredoc_operators(line, commenters) if found else []
         if found and operators is not None and len(operators) == len(found):
@@ -265,9 +285,11 @@ def command_shape(command):
     before a redirect opens its target: the command is compound and some word
     in it names one of LINK_COMMANDS, or it runs text this hook cannot read
     (backticks, or a here-document body that expands commands or never ends).
-    Separators and words inside a here-document body are data, so they count
-    for neither. A command it cannot split counts as both. Each value is true
-    if it is true in either of COMMENT_MODES.
+    Separators and words inside a here-document body are data, so they do not
+    count for may_link. changes_directory counts every word, bodies included,
+    so that a misread here-document operator cannot hide a directory change. A
+    command it cannot split counts as both. Each value is true if it is true in
+    either of COMMENT_MODES.
     """
     shapes = [split_shape(command, commenters) for commenters in COMMENT_MODES]
     return any(link for link, _ in shapes), any(cd for _, cd in shapes)
@@ -281,8 +303,9 @@ def split_shape(command, commenters):
         tokens = split_lines(text, commenters)
     except ValueError:
         return True, True
+    changes_directory = bool(DIRECTORY_CHANGES & command_words(command, commenters))
     if not certain or "`" in text:
-        return True, bool(DIRECTORY_CHANGES & set(tokens))
+        return True, changes_directory
     compound = any(
         set(t) <= PUNCTUATION | {"\n"} and not REDIRECT_ONLY.fullmatch(t)
         for t in tokens
@@ -290,7 +313,19 @@ def split_shape(command, commenters):
     may_link = compound and any(
         LINK_COMMANDS.fullmatch(os.path.basename(t)) for t in tokens
     )
-    return may_link, bool(DIRECTORY_CHANGES & set(tokens))
+    return may_link, changes_directory
+
+
+def command_words(command, commenters):
+    """Returns the words of the whole command, here-document bodies included.
+
+    A body need not tokenize, as with an apostrophe in prose, so a command that
+    does not split falls back to every run of word characters.
+    """
+    try:
+        return set(split_lines(command, commenters))
+    except ValueError:
+        return set(re.findall(r"[\w.-]+", command))
 
 
 def missing_below_root(path, root_cwd):
