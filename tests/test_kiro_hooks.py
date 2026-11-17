@@ -240,6 +240,33 @@ class RedirectGuardKiroTest(unittest.TestCase):
         # Bash reads #' as a comment, so the redirect still runs.
         self.assertEqual(self.run_guard("echo x > ~/.zshrc #'").returncode, 2)
 
+    def test_blocks_redirects_hidden_by_quotes_in_comments(self) -> None:
+        # Bash ignores quotes inside comments, so an apostrophe in each of two
+        # comments must not join the lines between them into one string.
+        (self.workspace / ".zshrc").write_text("")
+        for command, tool in (
+            ("echo a # don't\necho x > ~/.zshrc # can't\n", "write tool"),
+            ("echo a # don't\ncat < ~/.ssh/id_rsa # can't\n", "read tool"),
+            ("echo a # don't\ncd ~\necho x > .zshrc # can't", "write tool"),
+            ("echo a # don't\nln -s ~/.zshrc f # can't\necho x > f", "write tool"),
+            ("echo x#y; ln -s ~/.zshrc f # it's\necho z > f # it's", "write tool"),
+            ("echo a # <<EOF\nln -s ~/.zshrc f\necho x > f\nEOF", "write tool"),
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(tool, result.stderr)
+
+    def test_allows_comments_around_allowed_redirects(self) -> None:
+        for command in (
+            "echo hi > out.txt # note",
+            "# note\necho hi > out.txt",
+            "echo a # it's\necho b > out.txt # isn't",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_allows_untokenizable_commands_without_a_redirect(self) -> None:
         command = "git commit -F - <<'EOF'\nfix: don't stop\nEOF"
         self.assertEqual(self.run_guard(command).returncode, 0)
