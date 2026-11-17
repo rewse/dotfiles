@@ -19,7 +19,10 @@ process substitution) are blocked too, and so is a command that contains `>`
 but does not tokenize, such as one with an unbalanced quote: bash may still
 run it, because a quote inside a comment (`> ~/.zshrc #'`) does not start a
 string. An untokenizable command without `>`, such as a heredoc whose body has
-an apostrophe, cannot redirect output and passes.
+an apostrophe, cannot redirect output and passes. Bash also starts a comment
+only at a word boundary, so `x#y > f` still redirects. shlex can treat `#` as
+always or never starting a comment, so every check runs in both modes
+(COMMENT_MODES) and combines the results.
 
 A target can also resolve elsewhere once earlier parts of the command run. A
 relative target is blocked when the command contains cd, pushd, or popd. In a
@@ -83,6 +86,10 @@ SECRET_PATTERNS = (
     "*id_rsa*",
     "*mcporter.json*",
 )
+# shlex comment characters for each tokenizing pass. Without comments, an
+# apostrophe in each of two comments joins the lines between them into one
+# string; with them, `x#y` loses the rest of its line.
+COMMENT_MODES = ("", "#")
 
 
 def allowed_roots(cwd):
@@ -137,6 +144,13 @@ def input_paths(target, cwd):
     return [target, *found, *(os.path.realpath(p) for p in found)]
 
 
+def tokenize(command, commenters):
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    lexer.commenters = commenters
+    return list(lexer)
+
+
 def secret_inputs(command, root_cwd, cwd=None):
     """Returns the `<` targets of the command that may hold credentials.
 
@@ -144,21 +158,23 @@ def secret_inputs(command, root_cwd, cwd=None):
     read no named file; `<>` also writes, so blocked_targets checks it.
     """
     cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
-    lexer.whitespace_split = True
-    lexer.commenters = ""
-    try:
-        tokens = list(lexer)
-    except ValueError:
-        return [command] if "<" in command and is_secret(command) else []
-    # Python 3.9, which Kiro may run hooks with, lacks itertools.pairwise.
-    return [
-        tokens[index + 1]
-        for index, token in enumerate(tokens[:-1])
-        if set(token) <= PUNCTUATION
-        and token.lstrip(";)|&") == "<"
-        and any(is_secret(path) for path in input_paths(tokens[index + 1], cwd))
-    ]
+    found = []
+    for commenters in COMMENT_MODES:
+        try:
+            tokens = tokenize(command, commenters)
+        except ValueError:
+            if "<" in command and is_secret(command):
+                found.append(command)
+            continue
+        # Python 3.9, which Kiro may run hooks with, lacks itertools.pairwise.
+        found += [
+            tokens[index + 1]
+            for index, token in enumerate(tokens[:-1])
+            if set(token) <= PUNCTUATION
+            and token.lstrip(";)|&") == "<"
+            and any(is_secret(path) for path in input_paths(tokens[index + 1], cwd))
+        ]
+    return list(dict.fromkeys(found))
 
 
 def redirect_operator(token):
@@ -196,24 +212,28 @@ LINK_COMMANDS = re.compile(
 )
 
 
-def split_lines(text):
+def split_lines(text, commenters=""):
     """Splits text like blocked_targets does, but keeps newlines as tokens."""
+    if commenters:
+        # shlex drops the newline that ends a comment; doubling every newline
+        # keeps one as a separator.
+        text = text.replace("\n", "\n\n")
     lexer = shlex.shlex(text, posix=True, punctuation_chars="();<>|&\n")
     lexer.whitespace_split = True
     lexer.whitespace = " \t\r"
-    lexer.commenters = ""
+    lexer.commenters = commenters
     return list(lexer)
 
 
-def heredoc_operators(line):
+def heredoc_operators(line, commenters):
     try:
-        tokens = split_lines(line)
+        tokens = split_lines(line, commenters)
     except ValueError:
         return None
     return [t for t in tokens if set(t) <= PUNCTUATION and t.lstrip(";)|&") == "<<"]
 
 
-def without_heredoc_bodies(command):
+def without_heredoc_bodies(command, commenters):
     """Returns (text, certain): the command without here-document bodies.
 
     certain is False when a body expands $(...) or backticks, which run before
@@ -232,7 +252,7 @@ def without_heredoc_bodies(command):
             continue
         kept.append(line)
         found = HEREDOC.findall(line)
-        operators = heredoc_operators(line) if found else []
+        operators = heredoc_operators(line, commenters) if found else []
         if found and operators is not None and len(operators) == len(found):
             pending = [(dash == "-", bool(quote), word) for dash, quote, word in found]
     return "\n".join(kept), certain and not pending
@@ -246,13 +266,19 @@ def command_shape(command):
     in it names one of LINK_COMMANDS, or it runs text this hook cannot read
     (backticks, or a here-document body that expands commands or never ends).
     Separators and words inside a here-document body are data, so they count
-    for neither. A command it cannot split counts as both.
+    for neither. A command it cannot split counts as both. Each value is true
+    if it is true in either of COMMENT_MODES.
     """
-    text, certain = without_heredoc_bodies(command)
+    shapes = [split_shape(command, commenters) for commenters in COMMENT_MODES]
+    return any(link for link, _ in shapes), any(cd for _, cd in shapes)
+
+
+def split_shape(command, commenters):
+    text, certain = without_heredoc_bodies(command, commenters)
     # Bash joins a line that ends with a backslash to the next one.
     text = text.replace("\\\n", "").rstrip()
     try:
-        tokens = split_lines(text)
+        tokens = split_lines(text, commenters)
     except ValueError:
         return True, True
     if not certain or "`" in text:
@@ -282,15 +308,21 @@ def missing_below_root(path, root_cwd):
 
 def blocked_targets(command, root_cwd, cwd=None):
     cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
-    lexer.whitespace_split = True
-    # Bash starts a comment only at a word boundary, so `x#y > f` is a redirect.
-    lexer.commenters = ""
-    try:
-        tokens = list(lexer)
-    except ValueError:
-        return [command] if ">" in command else []
     may_link, changes_directory = command_shape(command)
+    blocked = []
+    for commenters in COMMENT_MODES:
+        try:
+            tokens = tokenize(command, commenters)
+        except ValueError:
+            if ">" in command:
+                blocked.append(command)
+            continue
+        blocked += redirect_targets(tokens, root_cwd, cwd, may_link, changes_directory)
+    return list(dict.fromkeys(blocked))
+
+
+def redirect_targets(tokens, root_cwd, cwd, may_link, changes_directory):
+    """Returns the redirect targets in the tokens that the guard blocks."""
     blocked = []
     for index, token in enumerate(tokens):
         operator = redirect_operator(token)
