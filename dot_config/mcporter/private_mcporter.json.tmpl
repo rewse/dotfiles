@@ -82,7 +82,7 @@
       "command": "aws-agent-registry-gateway-mcp"
     },
     "aws-gitlab-mcp" : {
-      "command" : "aws-gitlab-mcp"
+      "command" : "{{ .chezmoi.homeDir }}/.local/bin/aws-gitlab-mcp-with-token"
     },
     "aws-insights-mcp": {
       "command": "aws-insights-mcp"
