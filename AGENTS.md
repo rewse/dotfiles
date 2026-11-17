@@ -8,7 +8,7 @@ Keep this file limited to repository-specific constraints that cannot be inferre
 - Use `System - Consumer` only when both parts identify the credential. Use the complete product or service name for System and a stable username or service account for Consumer. Omit a part instead of filling it with a generic purpose, category, access key ID, client ID, UUID, MAC address, or other machine identifier.
 - Use one-part names when appropriate: `Zabbix MCP Server` has no distinguishing Consumer, while `Tats Shibata` and `id_rsa` have no meaningful System.
 - Use item IDs in committed Secret References so item renames do not break templates.
-- Put a secret exported as an environment variable in `dot_config/environment/private_<system>.sh.tmpl`, one file per system, and source it from `dot_zshenv.tmpl` or `dot_zshrc.tmpl`. Do not write secrets into those two files, because they deploy with mode 0644. Put a secret that only an unattended job reads in a key-only file under `dot_config/<job>/private_<name>.tmpl`, and list the directory in `.chezmoiignore` for hosts that do not run the job.
+- Put a secret that a tool reads from an environment variable in `dot_config/environment/private_<system>.sh.tmpl`, one file per system, and have that tool's script or wrapper source it, so other commands never inherit it. `dot_zshenv.tmpl` and `dot_zshrc.tmpl` source only the files every shell needs (currently `cache.sh`), and must not hold secrets themselves, because they deploy with mode 0644. Put a secret that only an unattended job reads in a key-only file under `dot_config/<job>/private_<name>.tmpl`, and list the directory in `.chezmoiignore` for hosts that do not run the job.
 
 ## Agent assets
 

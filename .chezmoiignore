@@ -32,6 +32,7 @@ Library
 .claude
 .claude.json
 .config/git/ignore
+.local/bin/aws-gitlab-mcp-with-token
 .local/bin/check-midway-key
 .agents/skills/github-push-via-fox
 .agents/skills/outlook-todo

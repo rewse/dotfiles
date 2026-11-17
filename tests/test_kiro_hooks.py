@@ -336,6 +336,35 @@ class RedirectGuardKiroTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(self.run_guard(command).returncode, 2)
 
+    def test_blocks_lines_after_arithmetic_shifts(self) -> None:
+        # << inside $((...)) or ((...)) shifts bits and starts no here-document,
+        # so the lines after it are commands.
+        (self.workspace / ".zshrc").write_text("")
+        for command in (
+            "echo $((1<<mount))\ncd ~\necho x > .zshrc\nmount",
+            "echo $(( (1) << mount ))\ncd ~\necho x > .zshrc\nmount",
+            "((a<<b))\nln -s ~/.zshrc f\necho x > f\nb",
+            "echo $((1\n<<x))\nln -s ~/.zshrc f\necho x > f\nx",
+            "echo a # don't\necho $((1<<m))\ncd ~\necho x > .zshrc # can't\nm",
+        ):
+            with self.subTest(command=command):
+                self.assertEqual(self.run_guard(command).returncode, 2)
+
+    def test_blocks_relative_redirect_after_cd_in_a_here_document(self) -> None:
+        # A misread here-document operator must not hide a directory change,
+        # so a cd counts even inside a body.
+        command = "cat <<'EOF' > out.txt\ncd ~\nEOF"
+        self.assertEqual(self.run_guard(command).returncode, 2)
+
+    def test_allows_arithmetic_shifts_with_allowed_redirects(self) -> None:
+        for command in (
+            "echo $((1<<2)) > out.txt",
+            "((x = 1 << 2)); echo $x > out.txt",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_allows_existing_targets_in_compound_commands(self) -> None:
         (self.workspace / "sub").mkdir()
         (self.workspace / "out.txt").write_text("")
@@ -345,7 +374,7 @@ class RedirectGuardKiroTest(unittest.TestCase):
             "cd sub && rg x > /dev/null",
             "echo a \\\n  b > new.txt",
             "python3 -c 'a = 1\nprint(a)' > new.json",
-            "cat > new.py <<'EOF'\nprint('hi'); x = (1 | 2) & 3\ncd ~\nEOF",
+            "cat > new.py <<'EOF'\nprint('hi'); x = (1 | 2) & 3\nln -s ~ l\nEOF",
             "cat > new.md <<EOF\nplain; text | here\nEOF",
             "cat <<-EOF > new.txt\n\tbody\n\tEOF\n",
         ):

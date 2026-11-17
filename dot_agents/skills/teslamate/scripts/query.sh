@@ -15,13 +15,15 @@ set -euo pipefail
 
 readonly DATASOURCE_UID="PC98BA2F4D77E1A42"
 
-# A shell started before ~/.zshenv gained these exports lacks them; a
-# non-interactive zsh reads ~/.zshenv without the zshrc output noise.
+# Shells do not export these, so other commands never inherit the token;
+# read them from the file chezmoi renders.
+environment="${XDG_CONFIG_HOME:-${HOME}/.config}/environment/teslamate.sh"
+if [[ -r "${environment}" ]]; then
+  # shellcheck source=/dev/null  # rendered from a template by chezmoi apply
+  source "${environment}"
+fi
 for var in TESLAMATE_GRAFANA_URL TESLAMATE_GRAFANA_TOKEN; do
   if [[ -z "${!var:-}" ]]; then
-    printf -v "${var}" '%s' "$(zsh -c "print -r -- \$${var}")"
-  fi
-  if [[ -z "${!var}" ]]; then
     echo "error: ${var} is not set; run chezmoi apply" >&2
     exit 1
   fi

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Start aws-gitlab-mcp with GITLAB_TOKEN. Shells do not export the token, so
+# other commands never inherit it; mcporter starts the server through this.
+set -eu
+
+# shellcheck source=/dev/null  # rendered from a template by chezmoi apply
+. "${XDG_CONFIG_HOME:-${HOME}/.config}/environment/gitlab.sh"
+exec aws-gitlab-mcp "$@"
