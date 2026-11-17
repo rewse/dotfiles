@@ -488,7 +488,9 @@ rules:
     # short -o combined with other flags (sort -uo x), at the cost of prompting
     # when a file name after a flag ends in "o". sort and base64 accept
     # abbreviated long options (sort --o=x, sort --compress-prog=sh), so any
-    # long option to them starting with c (sort) or o prompts too.
+    # long option to them starting with c (sort) or o prompts too. A glob cannot
+    # tell an attached output argument (sort -uo/f) from a file name, so the
+    # redirect guard hook checks the file that sort or base64 writes instead.
     match:
       - "base64 *"
       - "defuddle *"
