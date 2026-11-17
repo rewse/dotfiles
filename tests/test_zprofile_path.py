@@ -1,6 +1,7 @@
 """Regression tests for zsh startup-file responsibilities."""
 
 import pathlib
+import re
 import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -33,13 +34,19 @@ class ZshStartupTest(unittest.TestCase):
                 self.assertNotIn(variable, zprofile)
 
         self.assertNotIn("GITHUB_TOKEN", zprofile + zshenv + zshrc)
-        self.assertIn("environment/gitlab.sh", zshrc)
-        self.assertNotIn("environment/gitlab.sh", zprofile + zshenv)
-        self.assertIn("environment/teslamate.sh", zshenv)
+
+    def test_startup_files_source_only_shared_environment_files(self) -> None:
+        # A tool's script or wrapper loads the secrets it needs, so other
+        # commands, including every command an agent runs, never inherit them.
+        for template in (ZPROFILE, ZSHENV, ZSHRC):
+            with self.subTest(template=template.name):
+                sourced = re.findall(r"environment/([\w.-]+)", template.read_text())
+                self.assertLessEqual(set(sourced), {"cache.sh"})
+        self.assertIn("environment/cache.sh", ZSHENV.read_text())
 
     def test_startup_files_hold_no_secrets(self) -> None:
         # The startup files deploy with mode 0644, so secrets live in
-        # dot_config/environment/private_*.sh.tmpl and are sourced from there.
+        # dot_config/environment/private_*.sh.tmpl.
         for template in (ZPROFILE, ZSHENV, ZSHRC):
             with self.subTest(template=template.name):
                 self.assertNotIn("onepasswordRead", template.read_text())

@@ -9,7 +9,7 @@ TeslaMate logs one Tesla (Model Y, `car_id = 1`) to PostgreSQL. The only way in 
 
 ## Access
 
-Use the bundled scripts for every request. They load `TESLAMATE_GRAFANA_URL` and `TESLAMATE_GRAFANA_TOKEN` even when the current shell lacks them. Never print the token or read the files that define it (`~/.zshenv`); to diagnose access, run a script and read its error.
+Use the bundled scripts for every request. They read `TESLAMATE_GRAFANA_URL` and `TESLAMATE_GRAFANA_TOKEN` from `~/.config/environment/teslamate.sh` themselves, because the shell does not export them. Never print the token or read that file; to diagnose access, run a script and read its error.
 
 ```bash
 bash ~/.agents/skills/teslamate/scripts/query.sh "SELECT id, start_date, distance FROM drives ORDER BY start_date DESC LIMIT 5"
