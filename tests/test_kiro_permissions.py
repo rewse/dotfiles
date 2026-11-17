@@ -14,6 +14,18 @@ PERMISSIONS = (
 )
 REDIRECT_GUARD_KIRO = REPO_ROOT / "dot_agents/hooks/executable_redirect-guard-kiro.py"
 HOST_GATE = '{{- if eq .chezmoi.hostname "7cf34ded5d65" }}'
+SKILLS = REPO_ROOT / "dot_agents/skills"
+
+
+def operation_tools() -> set[str]:
+    """Returns the MCP tools that skills call with an operation= argument."""
+    return {
+        tool
+        for path in SKILLS.rglob("*.md*")
+        for tool in re.findall(
+            r"mcporter call ([a-z0-9-]+\.[A-Za-z0-9_-]+) operation=", path.read_text()
+        )
+    }
 
 
 def secret_patterns() -> tuple[str, ...]:
@@ -69,7 +81,7 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_shell_patterns_start_with_a_command(self) -> None:
         for value in self.matches("shell"):
             with self.subTest(value=value):
-                self.assertRegex(value, r"^[a-z][\w-]*\*?( [\w./@:*-]+)*$")
+                self.assertRegex(value, r"^[a-z][\w-]*\*?( [\w./@:=*-]+)*$")
 
     def test_mcporter_read_tools_are_allowed(self) -> None:
         shell = self.matches("shell")
@@ -88,12 +100,26 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_mcporter_call_patterns_pin_server_and_read_verb(self) -> None:
         # A glob * spans spaces, so the selector before it must fix both the
         # server and a read verb; otherwise arguments could smuggle a write tool.
+        # A tool that dispatches on operation= is allowed only with a read
+        # operation and no *, which would admit a second operation=.
         writes = {"create", "delete", "post", "send", "set", "update", "write"}
+        reads = {"get", "list", "read", "search", "view"}
+        dispatched = operation_tools()
+        self.assertIn("aws-outlook-mcp.todo_lists", dispatched)
         calls = [p for p in self.matches("shell") if p.startswith("mcporter call ")]
         self.assertGreater(len(calls), 50)
         for pattern in calls:
             with self.subTest(pattern=pattern):
                 selector = pattern.removeprefix("mcporter call ")
+                tool, _, operation = selector.partition(" operation=")
+                stem = tool.removesuffix("*")
+                if operation or any(
+                    d == stem or (tool != stem and d.startswith(stem))
+                    for d in dispatched
+                ):
+                    self.assertIn(tool, dispatched)
+                    self.assertIn(operation, reads)
+                    continue
                 self.assertRegex(selector, r"^[a-z0-9-]+\.[A-Za-z0-9_-]+\*$")
                 words = {
                     w.lower()
