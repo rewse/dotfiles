@@ -18,13 +18,6 @@ export PAGER="less"
 # AgentCore Web Search gateway; access is controlled by IAM.
 export AGENTCORE_GATEWAY_URL="https://websearchgateway-ujegxqs0ed.gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp"
 
-# TeslaMate Grafana
-teslamate_environment="${XDG_CONFIG_HOME}/environment/teslamate.sh"
-if [[ -r "${teslamate_environment}" ]]; then
-  source "${teslamate_environment}"
-fi
-unset teslamate_environment
-
 # XDG-compliant locations for tools that default to $HOME
 export ANSIBLE_HOME="${XDG_DATA_HOME}/ansible"
 export DOTNET_CLI_HOME="${XDG_DATA_HOME}/dotnet"
