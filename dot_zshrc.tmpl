@@ -72,6 +72,11 @@ if [ -x "$(command -v direnv)" ]; then
 fi
 
 # Zsh Vi Mode
+# Initialize while sourcing, not from the first precmd. Otty's SSH prompt marks
+# re-take zle-line-init in every precmd and call the previous widget, so a
+# lazily initialized zsh-vi-mode would wrap Otty's widget, be wrapped by it in
+# turn, and recurse until FUNCNEST.
+ZVM_INIT_MODE=sourcing
 {{- if eq .chezmoi.os "darwin" }}
 if [[ -f "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh" ]]; then
   builtin source "$(brew --prefix)/opt/zsh-vi-mode/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
