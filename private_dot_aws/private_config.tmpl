@@ -49,12 +49,6 @@ output = yaml
 role_arn = arn:aws:iam::070392599442:role/data-playground-deploy
 source_profile = {{ $sourceProfile }}
 
-[profile northwind-psql-deploy]
-region = ap-northeast-1
-output = yaml
-role_arn = arn:aws:iam::070392599442:role/northwind-psql-deploy
-source_profile = {{ $sourceProfile }}
-
 [profile rewse-blog-deploy]
 region = ap-northeast-1
 output = yaml
