@@ -43,6 +43,12 @@ output = yaml
 role_arn = arn:aws:iam::070392599442:role/cyberduck
 source_profile = {{ $sourceProfile }}
 
+[profile data-playground-deploy]
+region = ap-northeast-1
+output = yaml
+role_arn = arn:aws:iam::070392599442:role/data-playground-deploy
+source_profile = {{ $sourceProfile }}
+
 [profile northwind-psql-deploy]
 region = ap-northeast-1
 output = yaml
