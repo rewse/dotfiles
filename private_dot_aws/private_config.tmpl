@@ -19,6 +19,12 @@ credential_process = isengardcli credentials --role Admin --awscli 070392599442
 
 {{- if $sourceProfile }}
 
+[profile alfa-ssm]
+region = ap-northeast-1
+output = yaml
+role_arn = arn:aws:iam::070392599442:role/alfa-ssm
+source_profile = {{ $sourceProfile }}
+
 [profile bedrock]
 region = us-west-2
 output = yaml
