@@ -100,6 +100,23 @@ install_skills_claude_only() {
   done
 }
 
+# Removes the named global skills that are installed. `skills remove` warns
+# about every name it cannot find, so names that an earlier apply already
+# removed are filtered out first.
+remove_skills() {
+  local installed skill targets=()
+  if ! installed="$(skills list -g --json < /dev/null | jq -r '.[].name')"; then
+    record_failure "list skills to remove: $*"
+    return 0
+  fi
+  for skill in "$@"; do
+    grep -qxF "$skill" <<< "$installed" && targets+=("$skill")
+  done
+  [ "${#targets[@]}" -eq 0 ] && return 0
+  skills remove -g -y "${targets[@]}" < /dev/null ||
+    record_failure "remove skills: ${targets[*]}"
+}
+
 # Prints the lines of a requirements file that are not a plain PyPI requirement:
 # an option (another index, a requirements or constraints file, an editable
 # install), a URL, or a VCS reference. Comments follow pip: # at the start of a
@@ -163,8 +180,7 @@ install_skills nicobailon/visual-explainer visual-explainer
 # next apply; the skills cross-reference each other, so a partial set leaves
 # dangling references. diagnosing-superpowers only debugs the plugin itself.
 install_skills obra/superpowers '*'
-skills remove -g -y diagnosing-superpowers < /dev/null ||
-  record_failure "remove skill: diagnosing-superpowers"
+remove_skills diagnosing-superpowers
 
 # oharu121 Commands Skills Gems
 install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
@@ -179,8 +195,7 @@ install_skills oracle/skills db
 # tavily-best-practices covers the SDKs, not the CLI, and is left out.
 install_skills tavily-ai/skills \
   tavily-entity tavily-list tavily-monitor tavily-research tavily-search
-skills remove -g -y tavily-cli tavily-crawl tavily-extract tavily-map < /dev/null ||
-  record_failure "remove skills: tavily-cli tavily-crawl tavily-extract tavily-map"
+remove_skills tavily-cli tavily-crawl tavily-extract tavily-map
 
 # Upstash Context7
 install_skills upstash/context7 find-docs
