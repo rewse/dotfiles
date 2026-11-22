@@ -64,9 +64,9 @@ if [[ -d "${HOME}/.local/bin" ]]; then
 fi
 
 {{ if eq .chezmoi.os "darwin" -}}
-# .NET tools
-if [[ -d "${DOTNET_CLI_HOME}/tools" ]]; then
-  path+=("${DOTNET_CLI_HOME}/tools")
+# .NET tools; dotnet installs global tools under ${DOTNET_CLI_HOME}/.dotnet.
+if [[ -d "${DOTNET_CLI_HOME}/.dotnet/tools" ]]; then
+  path+=("${DOTNET_CLI_HOME}/.dotnet/tools")
 fi
 
 # Homebrew
