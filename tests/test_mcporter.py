@@ -21,6 +21,12 @@ class McporterConfigTest(unittest.TestCase):
             ),
         )
 
+    def test_editor_imports_are_disabled(self) -> None:
+        # mcporter otherwise imports servers from editor configs in the working
+        # directory (.cursor/mcp.json, .codex/config.toml, and others), so a
+        # file written there could define a server an allowed call starts.
+        self.assertRegex(MCPORTER.read_text(), re.compile(r'\A\{\s*"imports": \[\],'))
+
 
 if __name__ == "__main__":
     unittest.main()

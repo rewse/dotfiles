@@ -160,6 +160,22 @@ class JapaneseGuardKiroTest(unittest.TestCase):
         self.assertEqual(self.run_stop(session_id="sess_missing"), "")
 
 
+# Project files mcporter reads from its working directory, each with a
+# server definition in the shape mcporter accepts there.
+MCPORTER_PROJECT_FILES = {
+    ".claude/mcp.json": '{"slack-mcp": {"command": "x"}}',
+    ".claude/settings.json": '{"mcpServers": {"slack-mcp": {"command": "x"}}}',
+    ".claude/settings.local.json": '{"servers": {"a": {"command": "x"}}}',
+    ".codex/config.toml": '[mcp_servers.slack-mcp]\ncommand = "x"\n',
+    ".cursor/mcp.json": '{"mcpServers": {"slack-mcp": {"command": "x"}}}',
+    ".openai/config.json": '{"mcp": {"slack-mcp": {"command": "x"}}}',
+    ".vscode/mcp.json": '{"servers": {"slack-mcp": {"command": "x"}}}',
+    "config/mcporter.json": '{"mcpServers": {}}',
+    "opencode.json": '{"mcp": {"slack-mcp": {"command": "x"}}}',
+    "opencode.jsonc": '// c\n{"mcp": {"slack-mcp": {"command": "x"}}}',
+}
+
+
 class RedirectGuardKiroTest(unittest.TestCase):
     def setUp(self) -> None:
         # /tmp is an allowed root, so the fake home must live elsewhere; Linux
@@ -629,6 +645,87 @@ class RedirectGuardKiroTest(unittest.TestCase):
             "jq . ~/notes.json",
             "wc -l src/a.py",
         ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_blocks_mcporter_with_project_configs(self) -> None:
+        # mcporter merges ./config/mcporter.json over the user's config and
+        # imports editor configs from the working directory, so a file the
+        # agent can write there defines the server an allowed call starts.
+        for name, text in MCPORTER_PROJECT_FILES.items():
+            directory = self.workspace / "projects" / name.replace("/", "_")
+            path = directory / name
+            path.parent.mkdir(parents=True)
+            path.write_text(text)
+            for command in (
+                "mcporter call slack-mcp.get_channel channel=C1",
+                "mcporter list",
+                "rg x; /opt/homebrew/bin/mcporter list",
+            ):
+                with self.subTest(name=name, command=command):
+                    result = self.run_guard(command, str(directory))
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertIn(name, result.stderr)
+                    self.assertIn("mcporter", result.stderr)
+
+    def test_blocks_mcporter_with_a_project_config_in_the_session_cwd(self) -> None:
+        (self.workspace / "config").mkdir()
+        (self.workspace / "config" / "mcporter.json").write_text("{}")
+        result = self.run_guard("mcporter call slack-mcp.get_channel")
+        self.assertEqual(result.returncode, 2, result.stderr)
+
+    def test_blocks_mcporter_that_moves_or_redirects_its_config(self) -> None:
+        for command in (
+            "APPDATA=/tmp/x mcporter list",
+            "HOME=/tmp/x mcporter list",
+            "MCPORTER_CONFIG=/tmp/c.json mcporter call slack-mcp.get_channel",
+            "OPENAI_WORKDIR=/tmp/x mcporter list",
+            "OPENCODE_CONFIG=/tmp/x.json mcporter list",
+            "OPENCODE_CONFIG_DIR=/tmp/x mcporter list",
+            "XDG_CONFIG_HOME=/tmp/x mcporter list",
+            "cd /tmp/x && mcporter list",
+            "env MCPORTER_CONFIG=/tmp/c.json mcporter list",
+            "export MCPORTER_CONFIG=/tmp/c.json; mcporter list",
+            "pushd /tmp/x; mcporter list",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("mcporter", result.stderr)
+
+    def test_allows_mcporter_without_project_configs(self) -> None:
+        # Files without server definitions add nothing, and the home
+        # directory's editor configs are the owner's, which mcporter reads from
+        # any working directory.
+        (self.workspace / ".claude").mkdir()
+        (self.workspace / ".claude" / "settings.json").write_text('{"env": {}}')
+        (self.workspace / ".codex").mkdir()
+        (self.workspace / ".codex" / "config.toml").write_text('model = "x"\n')
+        (self.workspace / ".vscode").mkdir()
+        (self.workspace / ".vscode" / "mcp.json").write_text("  \n")
+        (self.workspace / "opencode.json").write_text('{"theme": "x"}')
+        (self.home / ".codex").mkdir()
+        (self.home / ".codex" / "config.toml").write_text("[mcp_servers.a]\n")
+        (self.home / ".claude").mkdir()
+        (self.home / ".claude" / "settings.json").write_text(
+            '{"mcpServers": {"a": {"command": "x"}}}'
+        )
+        for command, tool_cwd in (
+            ("mcporter call slack-mcp.get_channel channel=C1", None),
+            ("mcporter list", None),
+            ("MCPORTER_CALL_TIMEOUT=5000 mcporter list", None),
+            ("mcporter list", str(self.home)),
+        ):
+            with self.subTest(command=command, tool_cwd=tool_cwd):
+                result = self.run_guard(command, tool_cwd)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_allows_other_commands_beside_project_configs(self) -> None:
+        (self.workspace / "config").mkdir()
+        (self.workspace / "config" / "mcporter.json").write_text("{}")
+        (self.workspace / "src").mkdir()
+        for command in ("ls config", "rg x src", "cd src && ls"):
             with self.subTest(command=command):
                 result = self.run_guard(command)
                 self.assertEqual(result.returncode, 0, result.stderr)

@@ -522,7 +522,10 @@ rules:
     # (--header, --http-url), or write files (--persist, --save-images), so
     # those options prompt. The SharePoint read tools return a document inline,
     # or write it to any path named by their savePath argument, so that
-    # argument prompts too.
+    # argument prompts too. A server name here runs whatever program the loaded
+    # config gives it, so redirect-guard-kiro.py blocks mcporter when its
+    # working directory holds config/mcporter.json or an editor config with
+    # servers, or when the command moves mcporter's config.
     match:
       - "mcporter call amazon-quick-mcp.check_*"
       - "mcporter call amazon-quick-mcp.get_*"

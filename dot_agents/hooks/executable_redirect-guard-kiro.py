@@ -50,6 +50,14 @@ auto-approved.
 The allowed working directory is the session's cwd from the harness. The
 model can set tool_input.cwd, so that value only resolves relative targets and
 never widens the allowed paths.
+
+It blocks any command that runs mcporter where mcporter could load servers
+from files other than the owner's config: config/mcporter.json or an editor
+config with server definitions in the effective working directory (the
+session's cwd joined with tool_input.cwd), a variable that moves its config, or
+a directory change before it runs (mcporter_problems). Kiro auto-approves read
+calls by server name, and mcporter starts whatever program the loaded config
+gives that name.
 """
 
 import collections
@@ -806,6 +814,123 @@ def redirect_targets(tokens, is_blocked):
     return blocked
 
 
+MCPORTER_PROJECT_CONFIG = "config/mcporter.json"
+# Editor configs mcporter imports servers from, relative to its working
+# directory, each with the keys whose objects it reads server definitions from.
+# "" stands for the file's root object, and every JSON file also has
+# projects.<path>.mcpServers. TOML files have mcp_servers tables instead.
+MCPORTER_IMPORTS = {
+    ".claude/mcp.json": ("", "mcp", "mcpServers", "servers"),
+    ".claude/settings.json": ("mcp", "mcpServers", "servers"),
+    ".claude/settings.local.json": ("mcp", "mcpServers", "servers"),
+    ".codex/config.toml": (),
+    ".cursor/mcp.json": ("", "mcp", "mcpServers", "servers"),
+    ".openai/config.json": ("mcp",),
+    ".vscode/mcp.json": ("", "mcp", "mcpServers", "servers"),
+    "opencode.json": ("mcp",),
+    "opencode.jsonc": ("mcp",),
+}
+# Imports mcporter also reads from the home directory whatever its working
+# directory, so from the home directory they are the owner's own files.
+MCPORTER_HOME_IMPORTS = frozenset(
+    {
+        ".claude/mcp.json",
+        ".claude/settings.json",
+        ".claude/settings.local.json",
+        ".codex/config.toml",
+        ".cursor/mcp.json",
+    }
+)
+# Variables that move the config mcporter reads or the editor configs it
+# imports.
+MCPORTER_CONFIG_VARIABLES = re.compile(
+    r"(?:APPDATA|HOME|MCPORTER_CONFIG|OPENAI_WORKDIR|OPENCODE_CONFIG(?:_DIR)?"
+    r"|XDG_CONFIG_HOME)=.*",
+    re.DOTALL,
+)
+
+
+def defines_servers(path, keys):
+    """Returns whether an editor config may define servers mcporter imports.
+
+    A JSON file that does not parse as strict JSON, such as one with comments,
+    counts as defining them, because mcporter accepts JSON with comments.
+    """
+    try:
+        with open(path, encoding="utf-8") as config:
+            text = config.read()
+    except (OSError, UnicodeDecodeError):
+        return os.path.lexists(path)
+    if not text.strip():
+        return False
+    if path.endswith(".toml"):
+        return "mcp_servers" in text
+    try:
+        data = json.loads(text)
+    except ValueError:
+        return True
+    if not isinstance(data, dict):
+        return False
+    containers = [data.get(key) if key else data for key in keys]
+    projects = data.get("projects")
+    if isinstance(projects, dict):
+        containers += [
+            p.get("mcpServers") for p in projects.values() if isinstance(p, dict)
+        ]
+    return any(
+        isinstance(container, dict)
+        and any(isinstance(entry, dict) for entry in container.values())
+        for container in containers
+    )
+
+
+def mcporter_project_configs(directory):
+    """Returns the files in directory that would add servers to mcporter."""
+    found = []
+    if os.path.lexists(os.path.join(directory, MCPORTER_PROJECT_CONFIG)):
+        found.append(MCPORTER_PROJECT_CONFIG)
+    home = os.path.realpath(os.path.expanduser("~"))
+    for name, keys in sorted(MCPORTER_IMPORTS.items()):
+        if name in MCPORTER_HOME_IMPORTS and os.path.realpath(directory) == home:
+            continue
+        path = os.path.join(directory, name)
+        if os.path.lexists(path) and defines_servers(path, keys):
+            found.append(name)
+    return found
+
+
+def mcporter_problems(command, root_cwd, cwd=None):
+    """Returns why mcporter in this command could load servers the owner did not set.
+
+    mcporter merges config/mcporter.json from its working directory over the
+    owner's config and imports servers from editor configs there, so a file
+    the agent writes could define the server an auto-approved call starts.
+    MCPORTER_CONFIG and the variables that locate the owner's config or the
+    imports redirect it the same way. A directory change earlier in the
+    command moves the working directory to one this hook does not check.
+    """
+    cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
+    words = set()
+    for commenters in COMMENT_MODES:
+        try:
+            words |= set(split_lines(command, commenters))
+        except ValueError:
+            words |= set(re.findall(r"[^\s;&|()<>]+", command))
+    if not any(os.path.basename(word) == "mcporter" for word in words):
+        return []
+    problems = [
+        f"sets {word.split('=', 1)[0]}"
+        for word in sorted(words)
+        if MCPORTER_CONFIG_VARIABLES.fullmatch(word)
+    ]
+    if DIRECTORY_CHANGES & words:
+        problems.append("changes directory first")
+    problems += [
+        f"would load {name} from {cwd}" for name in mcporter_project_configs(cwd)
+    ]
+    return list(dict.fromkeys(problems))
+
+
 def main():
     data = json.load(sys.stdin)
     tool_input = data.get("tool_input") or {}
@@ -827,6 +952,16 @@ def main():
             " hold credentials, after expanding a glob or walking a directory"
             " that the shell rules cannot see. Use the read tool for that file so"
             " Kiro can ask for approval.",
+            file=sys.stderr,
+        )
+        return 2
+    mcporter = mcporter_problems(command, root_cwd, tool_input.get("cwd"))
+    if mcporter:
+        print(
+            f"Blocked: this mcporter command {'; '.join(mcporter)}, so it could"
+            " start servers that the owner's mcporter config does not define."
+            " Run mcporter from a working directory without those files and"
+            " without changing its config location, or ask the owner to run it.",
             file=sys.stderr,
         )
         return 2
