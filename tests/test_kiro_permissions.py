@@ -301,6 +301,29 @@ class KiroPermissionsTest(unittest.TestCase):
             with self.subTest(pattern=pattern):
                 self.assertIn(pattern, shell)
 
+    def test_anydoc_options_that_send_documents_off_the_host_are_not_allowed(
+        self,
+    ) -> None:
+        # --ocr hosted uploads the document to Firecrawl Parse, and --api-key
+        # and --api-url pick the account and endpoint it goes to.
+        for command in (
+            "npx -y @firecrawl/anydoc scan.pdf --ocr hosted",
+            "npx -y @firecrawl/anydoc scan.pdf --ocr=hosted",
+            "npx @firecrawl/anydoc --ocr hosted scan.pdf",
+            "npx -y @firecrawl/anydoc scan.pdf --api-key x",
+            "npx -y @firecrawl/anydoc scan.pdf --api-url=https://example.com",
+            "FIRECRAWL_API_URL=https://example.com npx -y @firecrawl/anydoc a.pdf",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+        for command in (
+            "npx -y @firecrawl/anydoc - --format csv",
+            "npx -y @firecrawl/anydoc a.docx -f docx",
+            "npx @firecrawl/anydoc slides.pptx",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
+
     def test_chezmoi_options_that_change_source_or_config_are_not_allowed(
         self,
     ) -> None:

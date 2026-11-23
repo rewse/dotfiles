@@ -387,7 +387,10 @@ rules:
     # config, destination, cache, state, or data set, run a pager, or recreate
     # the config prompt too. The excludes start with chezmoi so that sort -c
     # and base64 -D stay allowed, and the hook catches -c, -D, -S, and -W after
-    # other short flags in one word (-vS dir), which "* -S*" cannot see.
+    # other short flags in one word (-vS dir), which "* -S*" cannot see. anydoc
+    # --ocr hosted uploads the document to Firecrawl, and --api-key and
+    # --api-url choose where it goes, so those prompt too; anydoc matches its
+    # options exactly and takes no clusters.
     match:
       - "base64 *"
       - "chezmoi --no-pager cat-config *"
@@ -447,6 +450,8 @@ rules:
       - "chezmoi *--source *"
       - "chezmoi *--source=*"
       - "chezmoi *--working-tree*"
+      - "npx *@firecrawl/anydoc *--api-*"
+      - "npx *@firecrawl/anydoc *--ocr*"
       - "sort *--c*"
       - "sort *--o*"
 {{- range $secretPaths }}
