@@ -22,3 +22,8 @@
 .agents/skills/handling-continuum-reports
 .claude/skills/handling-continuum-reports
 .kiro/skills/handling-continuum-reports
+
+# The initMAX Zabbix AI Skills files have no SKILL.md, so no agent loads them.
+.agents/skills/zabbix-ai-skills
+.claude/skills/zabbix-ai-skills
+.kiro/skills/zabbix-ai-skills
