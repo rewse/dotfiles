@@ -14,6 +14,12 @@ patterns from auto-approval, but cannot see a redirect once Kiro strips it. A
 target matches as written, with `~` and globs expanded, and with symlinks
 resolved; a target built from a variable matches only as written.
 
+It blocks reader commands (cat, grep, rg, tree, and the rest of READERS) whose
+arguments reach a credential store in a way the shell excludes miss: a glob
+that only expands to a secret path once bash runs it (`cat ~/.a?s/cred*`), or a
+recursive reader aimed at a directory that holds one (`grep -r x ~`, `rg x ~`).
+The excludes match the command's literal text, so neither form trips them.
+
 Targets it cannot resolve statically (variables, command substitution, globs,
 process substitution) are blocked too, and so is a command that contains `>`
 but does not tokenize, such as one with an unbalanced quote: bash may still
@@ -65,7 +71,15 @@ SECRET_PATTERNS = (
     "*.aws",
     "*.aws *",
     "*.aws/*",
+    "*.claude.json*",
+    "*.codex/auth.json*",
     "*.config/environment*",
+    "*.config/gcloud",
+    "*.config/gcloud *",
+    "*.config/gcloud/*",
+    "*.config/gh",
+    "*.config/gh *",
+    "*.config/gh/*",
     "*.config/op",
     "*.config/op *",
     "*.config/op/*",
@@ -79,11 +93,14 @@ SECRET_PATTERNS = (
     "*.mcporter*",
     "*.midway*",
     "*.netrc*",
+    "*.npmrc*",
     "*.op",
     "*.op *",
     "*.op/*",
+    "*.pypirc*",
     "*.ssh*",
     "*.tavily*",
+    "*.zsh_history*",
     "*/environ*",
     "*/mcporter",
     "*/mcporter *",
@@ -92,6 +109,7 @@ SECRET_PATTERNS = (
     "*id_ed25519*",
     "*id_rsa*",
     "*mcporter.json*",
+    "*zsh/history*",
 )
 # shlex comment characters for each tokenizing pass. Without comments, an
 # apostrophe in each of two comments joins the lines between them into one
@@ -139,6 +157,239 @@ def is_allowed(path, root_cwd):
 
 def is_secret(path):
     return any(fnmatch.fnmatchcase(path, pattern) for pattern in SECRET_PATTERNS)
+
+
+# Credential stores as concrete paths below the home directory, plus the
+# process environment on Linux. Used to decide whether a directory a recursive
+# reader walks is an ancestor of a credential store; SECRET_PATTERNS covers the
+# per-file match. Keep this list in step with SECRET_PATTERNS.
+SECRET_SUFFIXES = (
+    ".aws",
+    ".claude.json",
+    ".claude/.credentials.json",
+    ".codex/auth.json",
+    ".config/environment",
+    ".config/gcloud",
+    ".config/gh",
+    ".config/mcporter",
+    ".config/op",
+    ".docker",
+    ".git-credentials",
+    ".gnupg",
+    ".kube",
+    ".local/state/zsh/history",
+    ".mcporter",
+    ".midway",
+    ".netrc",
+    ".npmrc",
+    ".op",
+    ".pypirc",
+    ".ssh",
+    ".tavily",
+    ".zsh_history",
+)
+
+
+def secret_roots():
+    home = os.path.realpath(os.path.expanduser("~"))
+    roots = [os.path.realpath(os.path.join(home, s)) for s in SECRET_SUFFIXES]
+    roots.append("/proc/self/environ")
+    return roots
+
+
+def under_secret_root(path, roots):
+    return any(path == root or path.startswith(root + os.sep) for root in roots)
+
+
+def endangers_secrets(directory, roots):
+    """Returns whether a tree walk rooted at directory would reach a secret.
+
+    True when a credential store lies below the directory, or the directory
+    itself lies inside one.
+    """
+    return any(
+        root == directory
+        or root.startswith(directory + os.sep)
+        or directory.startswith(root + os.sep)
+        for root in roots
+    )
+
+
+# Auto-approved commands that read the files named in their arguments. An
+# argument that resolves, after ~ and glob expansion, to a credential store is
+# blocked, because its literal form can slip past the shell excludes.
+FILE_READERS = frozenset(
+    {
+        "base64",
+        "bat",
+        "cat",
+        "cmp",
+        "column",
+        "comm",
+        "cut",
+        "diff",
+        "egrep",
+        "fgrep",
+        "file",
+        "grep",
+        "head",
+        "hexdump",
+        "jq",
+        "less",
+        "md5",
+        "md5sum",
+        "more",
+        "nl",
+        "od",
+        "readlink",
+        "realpath",
+        "rev",
+        "rg",
+        "sha1sum",
+        "sha256sum",
+        "shasum",
+        "sort",
+        "stat",
+        "tac",
+        "tail",
+        "uniq",
+        "wc",
+        "xxd",
+        "zcat",
+    }
+)
+# Commands whose first operand is a search pattern, not a path.
+GREP_LIKE = frozenset({"egrep", "fgrep", "grep", "rg"})
+# Commands that walk a directory tree. For these, a directory argument (or the
+# working directory, when none is given) that is an ancestor of a credential
+# store is blocked. ls only recurses with -R, so RECURSIVE_ALWAYS omits it.
+TREE_READERS = frozenset({"du", "ls", "tree"})
+# Readers that recurse into a directory without a flag asking them to.
+RECURSIVE_ALWAYS = frozenset({"du", "rg", "tree"})
+
+
+def short_flags(word):
+    """Returns the letters of a combined short-option word such as -rn."""
+    if word.startswith("-") and len(word) > 1 and word[1] != "-":
+        return word[1:]
+    return ""
+
+
+def recursive_grep(words):
+    for word in words[1:]:
+        if word == "--":
+            break
+        if word.startswith("--"):
+            name, _, value = word.partition("=")
+            if name in ("--recursive", "--dereference-recursive"):
+                return True
+            if name == "--directories" and value == "recurse":
+                return True
+        elif "r" in short_flags(word) or "R" in short_flags(word):
+            return True
+    return False
+
+
+def ls_recursive(words):
+    for word in words[1:]:
+        if word == "--":
+            break
+        if word.startswith("--"):
+            if word.split("=", 1)[0] == "--recursive":
+                return True
+        elif "R" in short_flags(word):
+            return True
+    return False
+
+
+def file_operands(words):
+    """Returns the non-option arguments of a command's word list.
+
+    Options and their attached values are dropped. An option that takes its
+    value in the next word keeps that value in the list; a benign value such as
+    a search string resolves to a missing file that no secret check matches,
+    and a value that is itself a credential path is caught anyway.
+    """
+    operands, after_double_dash = [], False
+    for word in words[1:]:
+        if after_double_dash:
+            operands.append(word)
+        elif word == "--":
+            after_double_dash = True
+        elif word == "-" or word.startswith("-") or set(word) <= PUNCTUATION:
+            continue
+        else:
+            operands.append(word)
+    return operands
+
+
+def command_segments(tokens):
+    """Splits tokens into per-command word lists, dropping redirect targets."""
+    segments, current, skip_next = [], [], False
+    for token in tokens:
+        if skip_next:
+            skip_next = False
+            continue
+        if set(token) <= PUNCTUATION:
+            if current:
+                segments.append(current)
+                current = []
+            if "<" in token or ">" in token:
+                skip_next = True
+            continue
+        current.append(token)
+    if current:
+        segments.append(current)
+    return segments
+
+
+def segment_reads(words, cwd, roots):
+    """Returns the arguments of one command that read a credential store."""
+    if not words:
+        return []
+    name = os.path.basename(words[0])
+    if name not in FILE_READERS and name not in TREE_READERS:
+        return []
+    operands = file_operands(words)
+    path_operands = operands[1:] if name in GREP_LIKE else operands
+    hits, directories = [], []
+    for operand in path_operands:
+        paths = input_paths(operand, cwd)
+        if any(is_secret(p) or under_secret_root(p, roots) for p in paths):
+            hits.append(operand)
+        directories += [p for p in paths if os.path.isdir(p)]
+    recursive = (
+        name in RECURSIVE_ALWAYS
+        or (name in ("grep", "egrep", "fgrep") and recursive_grep(words))
+        or (name == "ls" and ls_recursive(words))
+    )
+    if recursive:
+        walked = directories if path_operands else [resolve(".", cwd)]
+        for directory in walked:
+            if directory and endangers_secrets(directory, roots):
+                hits.append(directory if path_operands else ".")
+    return list(dict.fromkeys(hits))
+
+
+def secret_reads(command, root_cwd, cwd=None):
+    """Returns the arguments of the command that read a credential store.
+
+    Covers the gaps the shell excludes cannot: a glob that only expands to a
+    credential path once bash runs it, and a recursive reader aimed at a
+    directory that holds one. Both pass the excludes, which match the command's
+    literal text.
+    """
+    cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
+    roots = secret_roots()
+    found = []
+    for commenters in COMMENT_MODES:
+        try:
+            tokens = tokenize(command, commenters)
+        except ValueError:
+            continue
+        for words in command_segments(tokens):
+            found += segment_reads(words, cwd, roots)
+    return list(dict.fromkeys(found))
 
 
 def input_paths(target, cwd):
@@ -566,6 +817,16 @@ def main():
             f"Blocked: this command reads {', '.join(secrets)} through an input"
             " redirect, a location that may hold credentials. Use the read tool"
             " for that file so Kiro can ask for approval.",
+            file=sys.stderr,
+        )
+        return 2
+    reads = secret_reads(command, root_cwd, tool_input.get("cwd"))
+    if reads:
+        print(
+            f"Blocked: this command reads {', '.join(reads)}, a location that may"
+            " hold credentials, after expanding a glob or walking a directory"
+            " that the shell rules cannot see. Use the read tool for that file so"
+            " Kiro can ask for approval.",
             file=sys.stderr,
         )
         return 2

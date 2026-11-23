@@ -47,6 +47,8 @@ class KiroPermissionsTest(unittest.TestCase):
         rules = []
         for block in self.text.split("  - capability: ")[1:]:
             rule = {"capability": [block.split("\n", 1)[0].strip()]}
+            effect = re.search(r"^    effect: (\w+)$", block, re.MULTILINE)
+            rule["effect"] = [effect[1]] if effect else []
             for key in ("exclude", "match"):
                 section = re.search(
                     rf"^    {key}:\n((?:      - .*\n)+)", block, re.MULTILINE
@@ -62,15 +64,38 @@ class KiroPermissionsTest(unittest.TestCase):
     def rules_for(self, capability: str) -> list[dict[str, list[str]]]:
         return [rule for rule in self.rules() if rule["capability"] == [capability]]
 
+    def allow_rules_for(self, capability: str) -> list[dict[str, list[str]]]:
+        return [
+            rule for rule in self.rules_for(capability) if rule["effect"] == ["allow"]
+        ]
+
     def matches(self, capability: str) -> list[str]:
-        return [value for rule in self.rules_for(capability) for value in rule["match"]]
+        return [
+            value
+            for rule in self.allow_rules_for(capability)
+            for value in rule["match"]
+        ]
+
+    def rule_matches(self, rule: dict[str, list[str]], command: str) -> bool:
+        # A Kiro glob * spans spaces and slashes, as fnmatch's does.
+        return any(fnmatch.fnmatchcase(command, p) for p in rule["match"]) and not any(
+            fnmatch.fnmatchcase(command, p) for p in rule["exclude"]
+        )
 
     def shell_allows(self, command: str) -> bool:
-        # A Kiro glob * spans spaces and slashes, as fnmatch's does.
+        # deny > ask > allow: a command is auto-approved only when an allow
+        # rule matches it and no ask or deny shell rule does.
+        shell = self.rules_for("shell")
+        if any(
+            self.rule_matches(rule, command)
+            for rule in shell
+            if rule["effect"] in (["ask"], ["deny"])
+        ):
+            return False
         return any(
-            any(fnmatch.fnmatchcase(command, p) for p in rule["match"])
-            and not any(fnmatch.fnmatchcase(command, p) for p in rule["exclude"])
-            for rule in self.rules_for("shell")
+            self.rule_matches(rule, command)
+            for rule in shell
+            if rule["effect"] == ["allow"]
         )
 
     def test_shell_patterns_are_globs(self) -> None:
@@ -288,11 +313,11 @@ class KiroPermissionsTest(unittest.TestCase):
         # them; redirect-guard-kiro.py checks those instead.
         self.assertEqual(self.rules_for("shell")[0]["exclude"], list(secret_patterns()))
 
-    def test_every_shell_rule_excludes_secret_locations(self) -> None:
+    def test_every_allow_shell_rule_excludes_secret_locations(self) -> None:
         # A command substitution can feed a secret to any allowed command.
         patterns = secret_patterns()
         self.assertIn("*.aws/*", patterns)
-        for rule in self.rules_for("shell"):
+        for rule in self.allow_rules_for("shell"):
             with self.subTest(match=rule["match"][0]):
                 self.assertEqual(rule["exclude"][-len(patterns) :], list(patterns))
 
@@ -492,9 +517,60 @@ class KiroPermissionsTest(unittest.TestCase):
             with self.subTest(capability=capability):
                 self.assertTrue(self.rules_for(capability))
 
-    def test_rules_allow_only(self) -> None:
-        self.assertNotIn("effect: ask", self.text)
+    def test_secret_patterns_cover_new_credential_stores(self) -> None:
+        patterns = secret_patterns()
+        for pattern in (
+            "*.claude.json*",
+            "*.codex/auth.json*",
+            "*.config/gcloud",
+            "*.config/gcloud/*",
+            "*.config/gh",
+            "*.config/gh/*",
+            "*.npmrc*",
+            "*.pypirc*",
+            "*.zsh_history*",
+            "*zsh/history*",
+        ):
+            with self.subTest(pattern=pattern):
+                self.assertIn(pattern, patterns)
+
+    def test_secret_patterns_are_sorted(self) -> None:
+        self.assertEqual(list(secret_patterns()), sorted(secret_patterns()))
+
+    def test_secret_patterns_match_template_list(self) -> None:
+        # $secretPaths in the template must stay identical to SECRET_PATTERNS so
+        # the excludes and the hook guard the same locations.
+        for pattern in secret_patterns():
+            with self.subTest(pattern=pattern):
+                self.assertIn(f'      "{pattern}"', self.raw)
+
+    def test_rules_have_no_deny(self) -> None:
         self.assertNotIn("effect: deny", self.text)
+
+    def test_secret_locations_have_a_standalone_ask_rule(self) -> None:
+        # A standalone ask rule beats every preset and session allow, because
+        # deny > ask > allow and an exclude on an allow never constrains another
+        # allow. The same patterns stay as excludes on the allow rules so a
+        # command that names a secret inside a command substitution also asks.
+        ask = [rule for rule in self.rules_for("shell") if rule["effect"] == ["ask"]]
+        self.assertEqual(len(ask), 1)
+        self.assertEqual(ask[0]["match"], list(secret_patterns()))
+        self.assertEqual(ask[0]["exclude"], [])
+        # The first shell rule stays the general allow, so the exclude tests
+        # keep inspecting it.
+        self.assertEqual(self.rules_for("shell")[0]["effect"], ["allow"])
+        for command in (
+            "cat ~/.aws/credentials",
+            "cat ~/.config/gh/hosts.yml",
+            "cat ~/.codex/auth.json",
+            "cat ~/.claude.json",
+            "cat ~/.npmrc",
+            "cat ~/.config/gcloud/credentials.db",
+            "tail ~/.local/state/zsh/history",
+            "cat ~/.zsh_history",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
 
     def test_builder_mcp_rule_is_host_gated(self) -> None:
         gate = self.raw.index(HOST_GATE)

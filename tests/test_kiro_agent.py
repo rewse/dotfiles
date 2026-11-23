@@ -51,8 +51,16 @@ class KiroAgentTest(unittest.TestCase):
         # standing resource puts it in context without a read step.
         self.assertNotIn("file://README.md", AGENT.read_text())
 
-    def test_default_agent_auto_allows_read_only_shell(self) -> None:
-        self.assertIn('"policies": ["read-only-shell"]', AGENT.read_text())
+    def test_default_agent_uses_read_workspace_preset(self) -> None:
+        # read-workspace only adds silent workspace reads, so a shell rule with
+        # effect: ask still prompts for credential reads. read-only-shell would
+        # instead auto-approve every read-only command, which the ask rule
+        # cannot override because an exclude on an allow never constrains a
+        # preset allow. The policies list must stay non-empty, or kiro-cli 3
+        # fails with "Mode not found".
+        agent = AGENT.read_text()
+        self.assertIn('"policies": ["read-workspace"]', agent)
+        self.assertNotIn("read-only-shell", agent)
 
 
 class KiroMcpSettingsTest(unittest.TestCase):
