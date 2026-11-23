@@ -1,12 +1,22 @@
-{{- /* Locations that may hold credentials. Every shell rule excludes them, so
-       a command that names one prompts even inside a command substitution.
-       Kiro strips redirections before matching, so redirect-guard-kiro.py
-       checks `<` targets against the same list, kept in SECRET_PATTERNS. */}}
+{{- /* Locations that may hold credentials. A standalone shell rule asks for
+       them (ask beats every preset and session allow), and every allow rule
+       also excludes them so a command that names one inside a command
+       substitution prompts too. Kiro strips redirections before matching, so
+       redirect-guard-kiro.py checks `<` targets, recursive readers, and globs
+       against the same list, kept in SECRET_PATTERNS. */}}
 {{- $secretPaths := list
       "*.aws"
       "*.aws *"
       "*.aws/*"
+      "*.claude.json*"
+      "*.codex/auth.json*"
       "*.config/environment*"
+      "*.config/gcloud"
+      "*.config/gcloud *"
+      "*.config/gcloud/*"
+      "*.config/gh"
+      "*.config/gh *"
+      "*.config/gh/*"
       "*.config/op"
       "*.config/op *"
       "*.config/op/*"
@@ -20,11 +30,14 @@
       "*.mcporter*"
       "*.midway*"
       "*.netrc*"
+      "*.npmrc*"
       "*.op"
       "*.op *"
       "*.op/*"
+      "*.pypirc*"
       "*.ssh*"
       "*.tavily*"
+      "*.zsh_history*"
       "*/environ*"
       "*/mcporter"
       "*/mcporter *"
@@ -33,6 +46,7 @@
       "*id_ed25519*"
       "*id_rsa*"
       "*mcporter.json*"
+      "*zsh/history*"
 -}}
 rules:
   - capability: shell
@@ -631,6 +645,19 @@ rules:
       - "sysctl -n *"
     exclude:
       - "*=*"
+{{- range $secretPaths }}
+      - {{ quote . }}
+{{- end }}
+  # A standalone ask rule for the same locations. deny > ask > allow and an
+  # exclude on an allow rule never constrains another allow, so this is what
+  # makes a credential read prompt even under a preset or a session "always
+  # allow". The excludes above still matter for a command that names a secret
+  # inside a command substitution, which this rule's command-prefix globs do
+  # not see. Recursive readers and globs that only reach a secret once bash
+  # runs them pass both; redirect-guard-kiro.py blocks those.
+  - capability: shell
+    effect: ask
+    match:
 {{- range $secretPaths }}
       - {{ quote . }}
 {{- end }}

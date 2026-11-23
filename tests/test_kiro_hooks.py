@@ -558,6 +558,81 @@ class RedirectGuardKiroTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(self.run_guard(command).returncode, 0)
 
+    def make_secret_stores(self) -> None:
+        aws = self.home / ".aws"
+        aws.mkdir()
+        (aws / "credentials").write_text("")
+        (aws / "config").write_text("")
+        ssh = self.home / ".ssh"
+        ssh.mkdir()
+        (ssh / "id_rsa").write_text("")
+        gh = self.home / ".config" / "gh"
+        gh.mkdir(parents=True)
+        (gh / "hosts.yml").write_text("")
+        (self.home / ".config" / "gcloud").mkdir()
+        (self.home / ".config" / "gcloud" / "credentials.db").write_text("")
+        (self.home / ".npmrc").write_text("")
+        (self.home / ".codex").mkdir()
+        (self.home / ".codex" / "auth.json").write_text("")
+        (self.home / ".claude.json").write_text("")
+        state = self.home / ".local" / "state" / "zsh"
+        state.mkdir(parents=True)
+        (state / "history").write_text("")
+        (self.home / ".zsh_history").write_text("")
+
+    def test_blocks_readers_that_reach_secret_locations(self) -> None:
+        # The shell excludes match a command's literal text, so a recursive
+        # reader over an ancestor directory, or a glob that only expands to a
+        # credential path once bash runs it, slips past them.
+        self.make_secret_stores()
+        for command in (
+            f"grep -rn aws_secret_access_key {self.home}",
+            "rg -uuu secret ~",
+            "rg secret ~",
+            "grep -r token ~/.config",
+            "cat ~/.a?s/cred*",
+            "head ~/.a*/c*",
+            "cat ~/.aws/credentials",
+            "tree ~/.aws",
+            "du ~/.ssh",
+            "ls -R ~/.config/gh",
+            "cat ~/.npmrc",
+            "cat ~/.codex/auth.json",
+            "cat ~/.claude.json",
+            "tail ~/.local/state/zsh/history",
+            "cat ~/.zsh_history",
+            "head ~/.config/gcl*/*",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("read tool", result.stderr)
+
+    def test_allows_readers_that_avoid_secret_locations(self) -> None:
+        self.make_secret_stores()
+        (self.workspace / "src").mkdir()
+        (self.workspace / "README.md").write_text("x")
+        (self.workspace / "src" / "a.py").write_text("secret = 1\n")
+        for command in (
+            "rg foo",
+            "rg -n foo src",
+            "rg -e credentials .",
+            "grep -r foo src",
+            "grep secret src/a.py",
+            "cat README.md",
+            "cat src/*",
+            "head README.md",
+            "tree -L 2 .",
+            "du -sh src",
+            "ls -R src",
+            "ls ~/.config",
+            "jq . ~/notes.json",
+            "wc -l src/a.py",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
 
 def hook_file(name: str) -> dict:
     return json.loads(
