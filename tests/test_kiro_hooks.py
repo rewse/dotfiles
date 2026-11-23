@@ -730,6 +730,41 @@ class RedirectGuardKiroTest(unittest.TestCase):
                 result = self.run_guard(command)
                 self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_blocks_chezmoi_source_options_inside_flag_clusters(self) -> None:
+        # pflag lets a short option that takes a value follow boolean ones in
+        # one word, where the permission globs cannot see it.
+        for command in (
+            "chezmoi diff -vS /tmp/s",
+            "chezmoi diff -vS/tmp/s",
+            "chezmoi --no-pager status -rc /tmp/c.yaml",
+            "chezmoi verify -nD /tmp/d",
+            "chezmoi diff -PW /tmp/w",
+            "chezmoi diff ~/.zshrc -kvS /tmp/s",
+            "rg x; chezmoi status -vS /tmp/s",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("chezmoi", result.stderr)
+
+    def test_allows_chezmoi_read_only_flags(self) -> None:
+        for command in (
+            "chezmoi diff -r ~/Documents",
+            "chezmoi status -xscripts",
+            "chezmoi status -x scripts",
+            "chezmoi managed -p source-absolute",
+            "chezmoi --no-pager managed -ti files",
+            "chezmoi diff -- -vS",
+            # A plain -S prompts through the permission rules, so the owner can
+            # still approve it.
+            "chezmoi diff -S /tmp/s",
+            "chezmoi -vS /tmp/s apply",
+            "echo chezmoi diff -vS /tmp/s",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
 
 def hook_file(name: str) -> dict:
     return json.loads(

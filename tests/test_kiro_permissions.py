@@ -301,6 +301,63 @@ class KiroPermissionsTest(unittest.TestCase):
             with self.subTest(pattern=pattern):
                 self.assertIn(pattern, shell)
 
+    def test_chezmoi_options_that_change_source_or_config_are_not_allowed(
+        self,
+    ) -> None:
+        # diff, status, and verify render source templates, which can run
+        # commands, so an option that picks another source, config, or data
+        # set, or that runs a pager or rewrites the config, prompts.
+        for command in (
+            "chezmoi --no-pager diff --cache /tmp/c",
+            "chezmoi --no-pager diff --pager 'sh -c id'",
+            "chezmoi --no-pager diff --source /tmp/s",
+            "chezmoi --no-pager diff -S /tmp/s",
+            "chezmoi data --override-data '{}'",
+            "chezmoi data --override-data-file /tmp/d.json",
+            "chezmoi diff --pager=less",
+            "chezmoi diff --persistent-state /tmp/p.boltdb",
+            "chezmoi diff --source=/tmp/s",
+            "chezmoi diff --working-tree /tmp/w",
+            "chezmoi diff -S/tmp/s",
+            "chezmoi diff -S=/tmp/s",
+            "chezmoi diff -W /tmp/w",
+            "chezmoi diff ~/.zshrc -S /tmp/s",
+            "chezmoi managed --destination /tmp/d",
+            "chezmoi status --config /tmp/c.yaml",
+            "chezmoi status --config-format yaml",
+            "chezmoi status --config=/tmp/c.yaml",
+            "chezmoi status --init",
+            "chezmoi status -c /tmp/c.yaml",
+            "chezmoi verify --init=true",
+            "chezmoi verify -D /tmp/d",
+            "HOME=/tmp/h chezmoi diff",
+            "XDG_CONFIG_HOME=/tmp/c chezmoi status",
+            "XDG_DATA_HOME=/tmp/d chezmoi verify",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+        for command in (
+            "chezmoi --no-pager data --format yaml",
+            "chezmoi --no-pager diff --reverse ~/.zshrc",
+            "chezmoi --no-pager managed --path-style source-absolute",
+            "chezmoi diff -r ~/Documents",
+            "chezmoi doctor --no-network",
+            "chezmoi help diff",
+            "chezmoi ignored -t",
+            "chezmoi managed --source-path ~/.local/share/chezmoi/dot_zshrc.tmpl",
+            "chezmoi managed -p source-absolute",
+            "chezmoi status -x scripts",
+            "chezmoi status --exclude=scripts,encrypted",
+            "chezmoi unmanaged -p absolute ~/.config",
+            "chezmoi verify --use-builtin-diff ~/.zshrc",
+            # The chezmoi excludes start with chezmoi, so the other commands in
+            # the rule keep their -c and -D flags.
+            "base64 -D x",
+            "sort -c x",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
+
     def test_sysctl_rule_excludes_assignments(self) -> None:
         (rule,) = [
             rule for rule in self.rules_for("shell") if "sysctl -n *" in rule["match"]

@@ -382,7 +382,12 @@ rules:
     # long option to them starting with c (sort) or o prompts too. A glob cannot
     # tell an attached output argument (sort -uo/f, tree -noC f) from a file
     # name, so the redirect guard hook checks the file each of these commands
-    # writes instead.
+    # writes instead. chezmoi diff, status, and verify render source templates,
+    # which can run commands, so the chezmoi options that pick another source,
+    # config, destination, cache, state, or data set, run a pager, or recreate
+    # the config prompt too. The excludes start with chezmoi so that sort -c
+    # and base64 -D stay allowed, and the hook catches -c, -D, -S, and -W after
+    # other short flags in one word (-vS dir), which "* -S*" cannot see.
     match:
       - "base64 *"
       - "chezmoi --no-pager cat-config *"
@@ -428,6 +433,20 @@ rules:
       - "* -o*"
       - "*--output*"
       - "base64 *--o*"
+      - "chezmoi * -D*"
+      - "chezmoi * -S*"
+      - "chezmoi * -W*"
+      - "chezmoi * -c*"
+      - "chezmoi *--cache*"
+      - "chezmoi *--config*"
+      - "chezmoi *--destination*"
+      - "chezmoi *--init*"
+      - "chezmoi *--override-data*"
+      - "chezmoi *--pager*"
+      - "chezmoi *--persistent-state*"
+      - "chezmoi *--source *"
+      - "chezmoi *--source=*"
+      - "chezmoi *--working-tree*"
       - "sort *--c*"
       - "sort *--o*"
 {{- range $secretPaths }}

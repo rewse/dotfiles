@@ -58,6 +58,12 @@ session's cwd joined with tool_input.cwd), a variable that moves its config, or
 a directory change before it runs (mcporter_problems). Kiro auto-approves read
 calls by server name, and mcporter starts whatever program the loaded config
 gives that name.
+
+It also blocks a read-only chezmoi command (CHEZMOI_READ_ONLY) that hides -c,
+-D, -S, or -W after other short flags in one word, such as -vS dir
+(chezmoi_hidden_options). permissions.yaml prompts for those options only at
+the start of a word, and diff, status, and verify render templates from the
+source they name.
 """
 
 import collections
@@ -931,6 +937,101 @@ def mcporter_problems(command, root_cwd, cwd=None):
     return list(dict.fromkeys(problems))
 
 
+# chezmoi subcommands that permissions.yaml auto-approves, with or without
+# --no-pager before them.
+CHEZMOI_READ_ONLY = frozenset(
+    {
+        "cat-config",
+        "data",
+        "diff",
+        "doctor",
+        "help",
+        "ignored",
+        "managed",
+        "source-path",
+        "status",
+        "target-path",
+        "unmanaged",
+        "verify",
+    }
+)
+# Short options that pick another source, config, destination, or working
+# tree, and every short option of those subcommands that takes a value, which
+# ends a cluster of short flags.
+CHEZMOI_SOURCE_FLAGS = frozenset("DSWc")
+CHEZMOI_VALUE_FLAGS = frozenset("DSWcfiopx")
+
+
+def is_separator(token):
+    return set(token) <= PUNCTUATION | {"\n"}
+
+
+def is_read_only_chezmoi(words):
+    """Returns whether words, from the command word on, start a CHEZMOI_READ_ONLY form."""
+    if os.path.basename(words[0]) != "chezmoi":
+        return False
+    rest = words[2:3] if words[1:2] == ["--no-pager"] else words[1:2]
+    return bool(rest) and rest[0] in CHEZMOI_READ_ONLY
+
+
+def hidden_source_flags(word):
+    """Returns whether a short-flag word has a CHEZMOI_SOURCE_FLAGS flag after its first.
+
+    A plain -S dir matches the permission excludes and prompts, so only a flag
+    that follows another one in the word counts.
+    """
+    if not word.startswith("-") or word.startswith("--"):
+        return False
+    for position, flag in enumerate(word[1:]):
+        if position and flag in CHEZMOI_SOURCE_FLAGS:
+            return True
+        if flag in CHEZMOI_VALUE_FLAGS or flag == "=":
+            return False
+    return False
+
+
+def chezmoi_hidden_options(command):
+    """Returns the short-flag words that pass a source option to read-only chezmoi.
+
+    pflag reads -vS dir as -v -S dir. The permission excludes match "-S" only
+    at the start of a word, so a source, config, destination, or working-tree
+    option after other short flags in one word would run an auto-approved
+    diff, status, or verify against a source the agent chose.
+    """
+    found = []
+    for commenters in COMMENT_MODES:
+        try:
+            tokens = split_lines(command, commenters)
+        except ValueError:
+            if re.search(r"\bchezmoi\b[^\n]*\s-[^\s-]+[DSWc]", command):
+                found.append(command)
+            continue
+        index, at_command = 0, True
+        while index < len(tokens):
+            token = tokens[index]
+            if is_separator(token):
+                if REDIRECT_ONLY.fullmatch(token):
+                    index += 1
+                else:
+                    at_command = True
+                index += 1
+                continue
+            index += 1
+            if not at_command or ASSIGNMENT.fullmatch(token):
+                continue
+            at_command = False
+            if not is_read_only_chezmoi(tokens[index - 1 : index + 2]):
+                continue
+            while index < len(tokens) and not is_separator(tokens[index]):
+                word = tokens[index]
+                index += 1
+                if word == "--":
+                    break
+                if hidden_source_flags(word):
+                    found.append(word)
+    return list(dict.fromkeys(found))
+
+
 def main():
     data = json.load(sys.stdin)
     tool_input = data.get("tool_input") or {}
@@ -962,6 +1063,16 @@ def main():
             " start servers that the owner's mcporter config does not define."
             " Run mcporter from a working directory without those files and"
             " without changing its config location, or ask the owner to run it.",
+            file=sys.stderr,
+        )
+        return 2
+    hidden = chezmoi_hidden_options(command)
+    if hidden:
+        print(
+            f"Blocked: {', '.join(hidden)} passes a source, config, destination,"
+            " or working-tree option to chezmoi inside a cluster of short flags,"
+            " which the permission rules cannot see. Write each flag as a"
+            " separate word so Kiro can ask for approval.",
             file=sys.stderr,
         )
         return 2
