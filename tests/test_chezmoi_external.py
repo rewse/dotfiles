@@ -43,6 +43,15 @@ class ChezmoiExternalTest(unittest.TestCase):
                 self.assertRegex(entry.get("checksum.sha256", ""), r'^"[0-9a-f]{64}"$')
                 self.assertNotIn("refreshPeriod", entry)
 
+    def test_every_entry_is_pinned_to_a_commit_and_checksum(self) -> None:
+        # Agents read skills and rules as instructions, so a moved branch must
+        # not change any fetched resource either.
+        for name, entry in entries().items():
+            with self.subTest(name=name):
+                self.assertRegex(entry["url"], r"/[0-9a-f]{40}[/.]")
+                self.assertRegex(entry.get("checksum.sha256", ""), r'^"[0-9a-f]{64}"$')
+                self.assertNotIn("refreshPeriod", entry)
+
 
 if __name__ == "__main__":
     unittest.main()

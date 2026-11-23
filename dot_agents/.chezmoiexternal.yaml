@@ -11,15 +11,3 @@ hooks/japanese-guard.py:
   checksum:
     sha256: "42a77c34a47a88fcfa2106252c7007f479539eef786c6cab91c0330f0e915547"
   executable: true
-
-## Skills not compatible with npx skills
-
-# initMAX Zabbix AI Skills (https://github.com/initMAX/zabbix-ai-skills)
-skills/zabbix-ai-skills:
-  type: archive
-  url: https://github.com/initMAX/zabbix-ai-skills/archive/refs/heads/main.tar.gz
-  stripComponents: 2
-  include:
-    - "*/skills/*.md"
-  exact: true
-  refreshPeriod: 168h
