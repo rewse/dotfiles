@@ -24,10 +24,11 @@ only at a word boundary, so `x#y > f` still redirects. shlex can treat `#` as
 always or never starting a comment, so every check runs in both modes
 (COMMENT_MODES) and combines the results.
 
-sort and base64 write the file named by -o or --output. permissions.yaml
-sends those options to a prompt, but its globs cannot tell an output option
-attached to other short flags (sort -uo/f) from a file name, so this hook
-checks that file like a redirect target (OUTPUT_OPTIONS).
+Some auto-approved commands, such as sort, tree, and tvly, write the file named
+by an output option. permissions.yaml sends those options to a prompt, but its
+globs cannot tell an output option attached to other short flags (sort -uo/f,
+tree -noC f) from a file name, so this hook checks that file like a redirect
+target (OUTPUT_OPTIONS).
 
 A target can also resolve elsewhere once earlier parts of the command run. A
 relative target is blocked when the command contains cd, pushd, or popd. In a
@@ -45,6 +46,7 @@ model can set tool_input.cwd, so that value only resolves relative targets and
 never widens the allowed paths.
 """
 
+import collections
 import fnmatch
 import glob
 import json
@@ -202,13 +204,51 @@ REDIRECT_ONLY = re.compile(r"&>>?|>>?|>\||>&|<<<|<<|<>|<&|<")
 # A here-document operator and its delimiter, which may be quoted.
 HEREDOC = re.compile(r"(?<!<)<<(?!<)(-?)\s*(['\"]?)([^\s'\"();<>|&]+)\2")
 DIRECTORY_CHANGES = {"cd", "popd", "pushd"}
-# Auto-approved commands whose -o option writes a file, and their short
-# options that take an argument: BSD and GNU sort, macOS and GNU base64.
-OUTPUT_OPTIONS = {"base64": "biow", "sort": "STkot"}
+
+
+class OutputOptions(
+    collections.namedtuple("OutputOptions", "with_arguments long separate")
+):
+    """How a command names the file it writes through -o.
+
+    with_arguments holds its short options that take an argument, o included.
+    long holds the long options that name an output file or directory. When
+    separate is false (getopt, commander, pflag, click), an option takes the
+    rest of its word as its argument, or the next word if nothing is left.
+    When it is true (tree), every option in a cluster takes the next unused
+    word, so `-Lo 1 f` writes f.
+    """
+
+    __slots__ = ()
+
+
+GETOPT_OUTPUT = ("--output",)
+# Auto-approved commands that write a file through -o, keyed by the words that
+# start them in permissions.yaml. A short option missing from with_arguments
+# only makes the hook stricter, except for tree, whose list must be complete.
+OUTPUT_OPTIONS = {
+    # macOS and GNU base64.
+    ("base64",): OutputOptions("biow", GETOPT_OUTPUT, False),
+    # Global options only; subcommand options are left out.
+    ("chezmoi",): OutputOptions("DSWco", GETOPT_OUTPUT, False),
+    ("defuddle",): OutputOptions("loup", GETOPT_OUTPUT, False),
+    ("docker", "compose", "config"): OutputOptions("fop", GETOPT_OUTPUT, False),
+    ("docker-compose", "config"): OutputOptions("fop", GETOPT_OUTPUT, False),
+    ("npx", "-y", "@firecrawl/anydoc"): OutputOptions("fo", GETOPT_OUTPUT, False),
+    ("npx", "@firecrawl/anydoc"): OutputOptions("fo", GETOPT_OUTPUT, False),
+    # BSD and GNU sort.
+    ("sort",): OutputOptions("STkot", GETOPT_OUTPUT, False),
+    ("tree",): OutputOptions("HILPTo", (), True),
+    ("tvly",): OutputOptions("o", ("--output", "--output-dir"), False),
+}
 # A word that sets a variable for the command after it.
 ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*", re.DOTALL)
 # An output option after an OUTPUT_OPTIONS command, for text that does not split.
-HIDDEN_OUTPUT_OPTION = re.compile(r"\b(?:base64|sort)\b[^\n]*\s(?:--o|-[^\s-]*o)")
+HIDDEN_OUTPUT_OPTION = re.compile(
+    r"\b(?:"
+    + "|".join(sorted({re.escape(p[-1].rsplit("/", 1)[-1]) for p in OUTPUT_OPTIONS}))
+    + r")\b[^\n]*\s(?:--o|-[^\s-]*o)"
+)
 # Commands that can create a symlink from their arguments, or run code or
 # other commands that can. Kiro asks before running any command it does not
 # auto-approve, so the list is defense in depth for those and matters most for
@@ -343,10 +383,10 @@ def command_words(command, commenters):
 def output_targets(command, commenters):
     """Returns the files that OUTPUT_OPTIONS commands write through -o.
 
-    The option may share a word with other short flags and take its argument
-    in the same word (sort -uo/f) or the next one, and GNU tools accept it
-    after operands and as any abbreviation of --output. A command that does
-    not split counts as writing the whole command if it looks like one.
+    The option may share a word with other short flags, and these tools accept
+    it after operands. GNU tools also accept any abbreviation of a long output
+    option, which this treats as true for all of them. A command that does not
+    split counts as writing the whole command if it looks like one.
     """
     try:
         tokens = split_lines(command, commenters)
@@ -355,25 +395,64 @@ def output_targets(command, commenters):
     targets, index, at_command = [], 0, True
     while index < len(tokens):
         token = tokens[index]
-        index += 1
         if set(token) <= PUNCTUATION | {"\n"}:
+            index += 1
             if REDIRECT_ONLY.fullmatch(token):
                 index += 1
             else:
                 at_command = True
         elif at_command and not ASSIGNMENT.fullmatch(token):
             at_command = False
-            with_arguments = OUTPUT_OPTIONS.get(os.path.basename(token))
-            if with_arguments:
-                found, index = option_targets(tokens, index, with_arguments)
-                targets += found
+            prefix = command_prefix(tokens, index)
+            if prefix is None:
+                index += 1
+                continue
+            found, index = option_targets(
+                tokens, index + len(prefix), OUTPUT_OPTIONS[prefix]
+            )
+            targets += found
+        else:
+            index += 1
     return targets
 
 
-def option_targets(tokens, index, with_arguments):
-    """Returns (targets, index): the -o arguments from tokens[index] on.
+def command_prefix(tokens, index):
+    """Returns the longest OUTPUT_OPTIONS key that starts tokens[index:]."""
+    words = (os.path.basename(tokens[index]), *tokens[index + 1 :])
+    found = [key for key in OUTPUT_OPTIONS if words[: len(key)] == key]
+    return max(found, key=len) if found else None
 
-    index ends at the first word that is not an option or operand.
+
+def argument(tokens, index):
+    """Returns (word, index): the next argument the command sees, and the index after it.
+
+    Bash removes redirections before the command runs. shlex splits `2>f`
+    into `2` and `>`, so a number right before a redirect operator counts as
+    its file descriptor; when it is an argument instead, the guard checks a
+    later word, which only makes it stricter. A missing argument is "".
+    """
+    while index < len(tokens):
+        token = tokens[index]
+        if REDIRECT_ONLY.fullmatch(token):
+            index += 2
+        elif (
+            token.isdigit()
+            and index + 1 < len(tokens)
+            and REDIRECT_ONLY.fullmatch(tokens[index + 1])
+        ):
+            index += 3
+        elif set(token) <= PUNCTUATION | {"\n"}:
+            break
+        else:
+            return token, index + 1
+    return "", index
+
+
+def option_targets(tokens, index, options):
+    """Returns (targets, index): the output arguments from tokens[index] on.
+
+    options is the command's OutputOptions. index ends at the first word that
+    is not an option or operand.
     """
     targets = []
     while index < len(tokens):
@@ -388,19 +467,30 @@ def option_targets(tokens, index, with_arguments):
             break
         if token.startswith("--"):
             name, equals, value = token.partition("=")
-            if len(name) > 2 and "--output".startswith(name):
-                if not equals and index < len(tokens):
-                    value, index = tokens[index], index + 1
+            if len(name) > 2 and any(long.startswith(name) for long in options.long):
+                if not equals:
+                    value, index = argument(tokens, index)
                 targets.append(value)
+        elif token.startswith("-") and options.separate:
+            flags = token[1:]
+            values = []
+            for _ in range(sum(flag in options.with_arguments for flag in flags)):
+                value, index = argument(tokens, index)
+                values.append(value)
+            if "o" in flags:
+                targets += values
         elif token.startswith("-"):
             for position, flag in enumerate(token[1:], start=2):
-                if flag not in with_arguments:
+                if flag not in options.with_arguments:
                     continue
                 value = token[position:]
-                if not value and index < len(tokens):
-                    value, index = tokens[index], index + 1
+                if not value:
+                    value, index = argument(tokens, index)
                 if flag == "o":
                     targets.append(value)
+                    # pflag drops an = between a short option and its value.
+                    if value.startswith("="):
+                        targets.append(value[1:])
                 break
     return targets, index
 

@@ -213,6 +213,10 @@ class KiroPermissionsTest(unittest.TestCase):
             "sort -S1 --compress-program=sh f",
             "sort --compress-prog=sh f",
             "base64 --o=~/.zshrc x",
+            "chezmoi --no-pager data -o ~/.zshrc",
+            "chezmoi --no-pager diff -o/etc/hosts",
+            "chezmoi data --output=/Users/u/.zshrc",
+            "chezmoi status -o ~/.zshrc",
             "tree -o ~/.zshrc .",
             "tvly crawl https://example.com --output-dir ~/x",
             "tvly extract https://example.com -o ~/.zshrc",
@@ -229,6 +233,8 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_read_only_uses_of_narrowed_commands_are_allowed(self) -> None:
         for command in (
             "chezmoi --no-pager diff ~/.zshrc",
+            "chezmoi --no-pager managed --include files",
+            "chezmoi status ~/.zshrc",
             "git -P diff HEAD~1",
             "git -P log --oneline -5",
             "git -P show HEAD:README.md",
