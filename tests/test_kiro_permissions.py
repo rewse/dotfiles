@@ -430,6 +430,38 @@ class KiroPermissionsTest(unittest.TestCase):
                 self.assertFalse(self.shell_allows(command))
         self.assertTrue(self.shell_allows(f"{tool} url=https://example.com/a.docx"))
 
+    def test_mcporter_options_that_run_or_redirect_servers_are_not_allowed(
+        self,
+    ) -> None:
+        # These options start a program, load another config, call a tool the
+        # selector does not name, send headers that expand environment
+        # variables, or write files.
+        get = "mcporter call slack-mcp.get_channel"
+        for command in (
+            f"{get} --config /tmp/c.json",
+            f"{get} --cwd /",
+            f"{get} --env A=1",
+            f"{get} --root /tmp",
+            f"{get} --server other",
+            f"{get} --stdio 'sh -c id'",
+            f"{get} --stdio-arg x",
+            f"{get} --tool post_message",
+            "mcporter call exa.web_search_exa query=x --save-images ~/x",
+            "mcporter list --http-url https://example.com --header A=$env:B",
+            "mcporter list --stdio 'touch /tmp/x'",
+            "mcporter list --stdio x --persist ~/.zshrc",
+            "mcporter resource docs --config /tmp/c.json",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+        for command in (
+            f"{get} channel=C1 --output json",
+            "mcporter list slack-mcp --schema",
+            "mcporter resource docs file:///repo/README.md",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
+
     def test_environment_dumps_are_not_allowed(self) -> None:
         for command in ("env", "printenv", "printenv AWS_SECRET_ACCESS_KEY"):
             with self.subTest(command=command):
