@@ -113,7 +113,7 @@ The shell aliases `cp`, `ln`, `mv`, and `rm` to their `-i` forms, so a non-inter
 
 ### Kiro CLI in Scripts
 
-When a script or job runs `kiro-cli chat --no-interactive`, set `KIRO_HOME` to a temporary directory, created with `mktemp -d` or Python's `tempfile` so that only its owner can open it (mode 0700), that holds only the agent the job needs, at `$KIRO_HOME/agents/<name>.json`, select it with `--agent`, and run from an empty working directory. Otherwise kiro-cli loads `~/.kiro` and any workspace `.kiro`, including the `main` agent and its `permissions.yaml`, which asks before reading credential stores but auto-approves most other read-only commands, along with its MCP servers and hooks. Give the agent `"tools": []` and pass `--trust-tools=` unless the job needs a tool. Omit `permissions` from the agent, because kiro-cli 3 fails with "Mode not found" when its `policies` list is empty.
+When a script or job runs `kiro-cli chat --no-interactive`, set `KIRO_HOME` to a temporary directory, created with `mktemp -d` or Python's `tempfile` so that only its owner can open it (mode 0700), that holds only the agent the job needs, at `$KIRO_HOME/agents/<name>.json`, select it with `--agent`, and run from an empty working directory. Otherwise kiro-cli loads `~/.kiro` and any workspace `.kiro`, including the `main` agent and its `permissions.yaml`, which lets approve-for-me judge commands and asks before reading credential stores, along with its MCP servers and hooks. Give the agent `"tools": []` and pass `--trust-tools=` unless the job needs a tool. Omit `permissions` from the agent, because kiro-cli 3 fails with "Mode not found" when its `policies` list is empty.
 
 ### Pager Prevention
 

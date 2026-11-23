@@ -160,22 +160,6 @@ class JapaneseGuardKiroTest(unittest.TestCase):
         self.assertEqual(self.run_stop(session_id="sess_missing"), "")
 
 
-# Project files mcporter reads from its working directory, each with a
-# server definition in the shape mcporter accepts there.
-MCPORTER_PROJECT_FILES = {
-    ".claude/mcp.json": '{"slack-mcp": {"command": "x"}}',
-    ".claude/settings.json": '{"mcpServers": {"slack-mcp": {"command": "x"}}}',
-    ".claude/settings.local.json": '{"servers": {"a": {"command": "x"}}}',
-    ".codex/config.toml": '[mcp_servers.slack-mcp]\ncommand = "x"\n',
-    ".cursor/mcp.json": '{"mcpServers": {"slack-mcp": {"command": "x"}}}',
-    ".openai/config.json": '{"mcp": {"slack-mcp": {"command": "x"}}}',
-    ".vscode/mcp.json": '{"servers": {"slack-mcp": {"command": "x"}}}',
-    "config/mcporter.json": '{"mcpServers": {}}',
-    "opencode.json": '{"mcp": {"slack-mcp": {"command": "x"}}}',
-    "opencode.jsonc": '// c\n{"mcp": {"slack-mcp": {"command": "x"}}}',
-}
-
-
 class RedirectGuardKiroTest(unittest.TestCase):
     def setUp(self) -> None:
         # /tmp is an allowed root, so the fake home must live elsewhere; Linux
@@ -185,93 +169,284 @@ class RedirectGuardKiroTest(unittest.TestCase):
         self.home = self.tmp / "home"
         self.workspace = self.home / "project"
         self.workspace.mkdir(parents=True)
+        (self.home / ".zshrc").write_text("")
 
     def run_guard(
-        self, command: str, tool_cwd: str | None = None
+        self,
+        command: str,
+        tool_cwd: str | None = None,
+        session_cwd: pathlib.Path | None = None,
     ) -> subprocess.CompletedProcess[str]:
         payload = kiro_payload(command)
-        payload["cwd"] = str(self.workspace)
+        payload["cwd"] = str(session_cwd or self.workspace)
         payload["tool_input"]["cwd"] = tool_cwd
+        return self.run_raw(json.dumps(payload))
+
+    def run_raw(self, stdin: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             ["python3", str(REDIRECT_GUARD_KIRO)],
-            input=json.dumps(payload),
+            input=stdin,
             capture_output=True,
             text=True,
             env=dict(os.environ, HOME=str(self.home)),
             check=False,
         )
 
-    def test_allows_writes_inside_allowed_paths(self) -> None:
-        for command in (
-            "echo hi > out.txt",
-            "echo hi >> sub/out.txt",
-            "echo hi > /tmp/out.txt",
-            "echo hi > ~/Desktop/out.txt",
-            "echo hi > ~/Downloads/out.txt",
-            f"echo hi > {self.workspace}/out.txt",
-        ):
-            with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 0)
+    def assert_blocked(self, command: str, tool_cwd: str | None = None) -> None:
+        result = self.run_guard(command, tool_cwd)
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("write tool", result.stderr)
+        self.assertEqual(result.stdout, "")
 
-    def test_allows_devices_fd_duplication_and_quoted_text(self) -> None:
-        for command in (
-            "rg x 2>/dev/null",
-            "rg x > /dev/stdout 2>&1",
-            "rg x >&2",
-            "echo 'a>b'",
-            'echo "a >> b"',
-            "cat < input.txt",
-            "cat <<EOF",
-        ):
-            with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 0)
+    def assert_silent(
+        self,
+        command: str,
+        tool_cwd: str | None = None,
+        session_cwd: pathlib.Path | None = None,
+    ) -> None:
+        result = self.run_guard(command, tool_cwd, session_cwd)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
 
-    def test_blocks_writes_outside_allowed_paths(self) -> None:
+    def assert_asks(self, command: str) -> None:
+        result = self.run_guard(command)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        output = json.loads(result.stdout)["hookSpecificOutput"]
+        self.assertEqual(output["permissionDecision"], "ask")
+        self.assertTrue(output["permissionDecisionReason"])
+
+    def test_blocks_redirects_outside_allowed_paths(self) -> None:
         for command in (
-            "echo hi > ~/out.txt",
+            "git log > ~/.zshrc",
+            "git log >> ~/.zshrc",
+            "git log &> ~/.zshrc",
+            "git log >| ~/.zshrc",
             "echo hi >> /etc/hosts",
-            "echo hi &> ~/out.txt",
-            "echo hi >| ~/out.txt",
             "echo hi > ../out.txt",
             "echo hi 2> ~/err.txt",
             "cat <> ~/out.txt",
             "rg x && echo hi > ~/out.txt",
             "echo $(echo hi > ~/out.txt)",
+            # zsh reads `!` after the operator as clobbering, not as the target.
+            "echo x >! ~/.zshrc",
+            "echo x >!~/.zshrc",
+            "echo x 2>! ~/.zshrc",
+            "echo x >! /etc/x",
+            "echo x >>! ~/.zshrc",
+            "echo x &>! ~/.zshrc",
+            "echo x >&! ~/.zshrc",
         ):
             with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2)
-                self.assertIn("write tool", result.stderr)
+                self.assert_blocked(command)
+
+    def test_allows_redirects_inside_allowed_paths(self) -> None:
+        for command in (
+            "git log > /tmp/x",
+            "git log > out.txt",
+            "git log > /dev/null",
+            "git log 2>&1",
+            "echo hi >> sub/out.txt",
+            "echo hi > ~/Desktop/out.txt",
+            "echo hi > ~/Downloads/out.txt",
+            f"echo hi > {self.workspace}/out.txt",
+            "rg x > /dev/stdout 2>&1",
+            "rg x >&2",
+            "cat <<EOF",
+            "git log >! /tmp/x",
+            "git log >!out.txt",
+        ):
+            with self.subTest(command=command):
+                self.assert_silent(command)
 
     def test_blocks_targets_it_cannot_resolve(self) -> None:
         for command in (
-            "echo hi > $HOME/out.txt",
-            "echo hi > `pwd`/out.txt",
+            "git log > $HOME/x",
+            "git log > `pwd`/x",
             "echo hi >(cat)",
         ):
             with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 2)
+                self.assert_blocked(command)
+
+    def test_blocks_writes_to_the_terminal(self) -> None:
+        self.assert_blocked("printf x > /dev/tty")
+
+    def test_allows_redirect_characters_inside_quotes(self) -> None:
+        for command in (
+            'echo "a > b"',
+            "git log --format='%h > %s'",
+            "echo 'a>b'",
+            'echo "a >> b"',
+        ):
+            with self.subTest(command=command):
+                self.assert_silent(command)
+
+    def test_ignores_here_document_bodies(self) -> None:
+        for command in (
+            "cat <<'EOF' > /tmp/x\na > ~/.zshrc\nit's\nEOF",
+            "git commit -F - <<'EOF'\nfix: don't stop\nEOF",
+            "cat > new.py <<'EOF'\nprint('hi'); x = (1 | 2) & 3\nln -s ~ l\nEOF",
+            "cat > new.md <<EOF\nplain; text | here\nEOF",
+            "cat <<-EOF > new.txt\n\tbody\n\tEOF\n",
+        ):
+            with self.subTest(command=command):
+                self.assert_silent(command)
+
+    def test_blocks_here_document_bodies_that_run_commands(self) -> None:
+        # An unquoted body expands $(...) before the command runs.
+        self.assert_blocked("cat <<EOF > /tmp/x\n$(echo x > ~/.zshrc)\nEOF")
+
+    def test_blocks_redirects_hidden_by_hash_or_fused_punctuation(self) -> None:
+        # Bash starts a comment only at a word boundary, so x#y is one word.
+        for command in (
+            "x#y > ~/f",
+            "printf x#y >> /etc/passwd",
+            "echo hi;> ~/out.txt",
+            "echo hi;>>~/out.txt",
+            "(echo hi)>~/out.txt",
+            "rg x;>(cat)",
+        ):
+            with self.subTest(command=command):
+                self.assert_blocked(command)
+
+    def test_allows_fused_punctuation_inside_allowed_paths(self) -> None:
+        for command in ("echo hi;> out.txt", "(echo hi)>/tmp/x", "echo a;>&2"):
+            with self.subTest(command=command):
+                self.assert_silent(command)
 
     def test_blocks_commands_it_cannot_tokenize(self) -> None:
         # Bash reads #' as a comment, so the redirect still runs.
-        self.assertEqual(self.run_guard("echo x > ~/.zshrc #'").returncode, 2)
+        for command in ("echo 'x > ~/f", "echo x > ~/.zshrc #'"):
+            with self.subTest(command=command):
+                self.assert_blocked(command)
 
     def test_blocks_redirects_hidden_by_quotes_in_comments(self) -> None:
         # Bash ignores quotes inside comments, so an apostrophe in each of two
         # comments must not join the lines between them into one string.
         (self.workspace / ".zshrc").write_text("")
-        for command, tool in (
-            ("echo a # don't\necho x > ~/.zshrc # can't\n", "write tool"),
-            ("echo a # don't\ncat < ~/.ssh/id_rsa # can't\n", "read tool"),
-            ("echo a # don't\ncd ~\necho x > .zshrc # can't", "write tool"),
-            ("echo a # don't\nln -s ~/.zshrc f # can't\necho x > f", "write tool"),
-            ("echo x#y; ln -s ~/.zshrc f # it's\necho z > f # it's", "write tool"),
-            ("echo a # <<EOF\nln -s ~/.zshrc f\necho x > f\nEOF", "write tool"),
+        for command in (
+            "echo a # don't\necho x > ~/.zshrc # can't\n",
+            "echo a # don't\ncd ~\necho x > .zshrc # can't",
         ):
             with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2)
-                self.assertIn(tool, result.stderr)
+                self.assert_blocked(command)
+
+    def test_blocks_redirects_hidden_by_here_document_operators_in_quotes(
+        self,
+    ) -> None:
+        # A << on a line that begins inside a quote opened earlier is part of
+        # the string, so the lines after it are commands.
+        for command in (
+            'echo "\n<<EOF\n"\necho x > ~/.zshrc\necho "\nEOF\n"',
+            "echo '\ncat <<EOF\n'\necho x > ~/.zshrc\necho '\nEOF\n'",
+        ):
+            with self.subTest(command=command):
+                self.assert_blocked(command)
+
+    def test_asks_for_secret_paths_hidden_by_here_document_operators_in_quotes(
+        self,
+    ) -> None:
+        self.assert_asks('echo "\n<<EOF\n"\ncat ~/.ssh/id_rsa\necho "\nEOF\n"')
+
+    def test_blocks_ansi_c_quoting_with_redirects(self) -> None:
+        # Bash reads \' inside $'...' as an escaped quote and shlex does not,
+        # so a $'...' command with > or << is blocked whatever its target.
+        for command in (
+            "echo $'\\'\n<<EOF\n'\necho x > ~/.zshrc\nEOF",
+            "echo $'a\\'b' > /tmp/x",
+            "echo $'\\'' > ~/.zshrc",
+            "cat $'a' <<EOF\nx\nEOF",
+        ):
+            with self.subTest(command=command):
+                self.assert_blocked(command)
+
+    def test_allows_ansi_c_quoting_without_redirects(self) -> None:
+        self.assert_silent("printf $'a\\\\n'")
+
+    def test_asks_for_secret_paths_hidden_by_ansi_c_quoting(self) -> None:
+        # Bash reads ~/.a?s/config as a word between two $'\'' strings, while
+        # shlex reads it inside a single-quoted string.
+        (self.home / ".aws").mkdir()
+        (self.home / ".aws" / "config").write_text("")
+        self.assert_asks("cat $'\\'' ~/.a?s/config $'\\''")
+
+    def test_blocks_redirects_inside_quoted_expansions(self) -> None:
+        # Bash parses $(...), ${...}, and backticks inside double quotes as
+        # nested code with quotes and redirects of their own.
+        for command in (
+            'echo "$(echo x > ~/.zshrc)"',
+            'echo "`echo x > ~/.zshrc`"',
+            'echo "$(echo " a " > ~/.zshrc)"',
+            'echo "${x:-"\'"}" > ~/.zshrc "${x:-"\'"}"',
+            'echo "$(echo " <<EOF ")"\necho x > ~/.zshrc\nEOF',
+        ):
+            with self.subTest(command=command):
+                self.assert_blocked(command)
+
+    def test_allows_quoted_expansions_with_allowed_redirects(self) -> None:
+        for command in (
+            'echo "$(date)" > out.txt',
+            'echo "${HOME}" > out.txt',
+            "git commit -m \"$(cat <<'EOF'\nfix: it's\nEOF\n)\"",
+        ):
+            with self.subTest(command=command):
+                self.assert_silent(command)
+
+    def test_allows_redirect_characters_in_literal_message_bodies(self) -> None:
+        # A quoted here-document delimiter makes the body literal data.
+        for delimiter in ("'EOF'", '"EOF"'):
+            for body in (
+                "feat: a -> b",
+                "x => y",
+                "requires foo >= 1.2",
+                "> quote",
+                'say "hi" > it\'s $(not run)',
+            ):
+                for prefix in ("git commit -m", "gh pr create --body"):
+                    command = f'{prefix} "$(cat <<{delimiter}\n{body}\nEOF\n)"'
+                    with self.subTest(command=command):
+                        self.assert_silent(command)
+        self.assert_silent(
+            'gh pr create --title "t" --body "$(cat <<\'A\'\n> a\nA\n)"'
+            " --label \"$(cat <<'B'\nb -> c\nB\n)\""
+        )
+
+    def test_blocks_redirects_around_literal_message_bodies(self) -> None:
+        for command in (
+            # Bash expands an unquoted delimiter's body.
+            'git commit -m "$(cat <<EOF\n$(echo x > ~/.zshrc)\nEOF\n)"',
+            'git commit -m "$(cat <<EOF\na -> b\nEOF\n)"',
+            # The body ends at the first delimiter line.
+            "git commit -m \"$(cat <<'EOF'\nx\nEOF\necho x > ~/.zshrc\nEOF\n)\"",
+            # Text after the span is still checked.
+            "git commit -m \"$(cat <<'EOF'\nx\nEOF\n)\" > ~/.zshrc",
+            'echo "$(cat <<\'EOF\'\nx\nEOF\n)" "$(echo x > ~/.zshrc)"',
+            # The span starts inside a comment, a string, or misplaced quotes.
+            "echo # \"$(cat <<'EOF'\necho x > ~/.zshrc\nEOF\n)\"",
+            "echo ' \"$(cat <<'EOF'\n' > ~/.zshrc\nEOF\n)\"",
+            'echo "$(echo " "$(cat <<\'EOF\'\n")" > ~/.zshrc\nEOF\n)"',
+            "echo $'\\'' \"$(cat <<'EOF'\n> ~/.zshrc\nEOF\n)\"",
+            "cat <<E\n\"$(cat <<'EOF'\nE\necho x > ~/.zshrc\nEOF\n)\"",
+            # Inside $(...), bash 5 ends the body at a line starting "EOF)".
+            'echo "$(cat <<\'EOF\'\nEOF)" > ~/.zshrc\nx\nEOF\n)"',
+            'echo "$(cat <<\'EOF\'\nEOF)"; echo x > ~/.zshrc; : "\nEOF\n)"',
+            # Any body line that starts with the delimiter is not trusted.
+            "echo \"$(cat <<'EOF'\nEOF \necho x > ~/.zshrc\nEOF\n)\"",
+            "echo \"$(cat <<'EOF'\n\tEOF\necho x > ~/.zshrc\nEOF\n)\"",
+            "echo \"$(cat <<'EOF'\nEOFX > ~/.zshrc\nEOF\n)\"",
+        ):
+            with self.subTest(command=command):
+                self.assert_blocked(command)
+
+    def test_ignores_bash_3_body_lines_that_close_the_substitution(self) -> None:
+        # Bash 3.2 ends $(...) at a body line starting `)"`; Kiro runs commands
+        # with zsh and bash 5, which read the line as body text, so it passes.
+        self.assert_silent('echo "$(cat <<\'EOF\'\n)" > ~/.zshrc\nEOF\n)"')
+
+    def test_asks_for_secret_paths_hidden_by_quoted_expansions(self) -> None:
+        (self.home / ".aws").mkdir()
+        (self.home / ".aws" / "config").write_text("")
+        self.assert_asks('echo "$(cat " x " ~/.a?s/config)"')
 
     def test_allows_comments_around_allowed_redirects(self) -> None:
         for command in (
@@ -280,77 +455,23 @@ class RedirectGuardKiroTest(unittest.TestCase):
             "echo a # it's\necho b > out.txt # isn't",
         ):
             with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_allows_untokenizable_commands_without_a_redirect(self) -> None:
-        command = "git commit -F - <<'EOF'\nfix: don't stop\nEOF"
-        self.assertEqual(self.run_guard(command).returncode, 0)
-
-    def test_blocks_writes_to_the_terminal(self) -> None:
-        self.assertEqual(self.run_guard("printf x > /dev/tty").returncode, 2)
-
-    def test_blocks_symlink_escaping_the_workspace(self) -> None:
-        (self.workspace / "link").symlink_to(self.home)
-        self.assertEqual(self.run_guard("echo hi > link/out.txt").returncode, 2)
-
-    def test_blocks_symlink_created_in_the_same_command(self) -> None:
-        # The link does not exist when the hook runs, so its target resolves
-        # inside the workspace; bash then writes through it.
-        (self.workspace / "out.txt").write_text("")
-        for command in (
-            "ln -s ~ l; echo x > l/.zshrc",
-            "ln -s ~/.zshrc f; echo x > f",
-            "ln -s ~/.zshrc f && echo x >> f",
-            "ln -s ~/.zshrc f || echo x > f",
-            "ln -s ~/.zshrc f & echo x > f",
-            "ln -s ~/.zshrc f | echo x > f",
-            "(ln -s ~/.zshrc f); echo x > f",
-            "echo $(ln -s ~/.zshrc f) > f",
-            "echo `ln -s ~/.zshrc f` > f",
-            "ln -s ~/.zshrc f\necho x > f",
-            "ln -s ~ /tmp/redirect-guard-test-link; echo x > /tmp/redirect-guard-test-link/.zshrc",
-            "cat <<EOF > f\n$(ln -s ~/.zshrc f)\nEOF",
-            "cat <<'EOF' > out.txt\nhi\nEOF\nln -s ~/.zshrc f\necho x > f",
-            'echo "<<EOF"\nln -s ~/.zshrc f\necho x > f\nEOF',
-            "cp -s ~/.zshrc f; echo x > f",
-            'python3 -c \'import os; os.symlink("/etc", "f")\'; echo x > f/x',
-            "bash -c 'ln -s ~ l' && echo x > l/.zshrc",
-            "npx some-tool; echo x > f",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2)
-                self.assertIn("write tool", result.stderr)
-
-    def test_allows_new_targets_when_no_part_can_create_a_link(self) -> None:
-        # Logging to a new file and reading it back is common, and none of
-        # these commands can create a symlink from their arguments.
-        (self.workspace / "sub").mkdir()
-        log = f"/tmp/redirect-guard-new-{os.getpid()}.log"
-        self.addCleanup(lambda: pathlib.Path(log).unlink(missing_ok=True))
-        for command in (
-            f"rg x > {log} 2>&1; tail {log}",
-            "rg x > new.txt; wc -l new.txt",
-            "mkdir -p d && echo x > d/f",
-            "echo a | sort > sub/new.txt",
-            "echo $(date) > new.txt; cat new.txt",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_silent(command)
 
     def test_blocks_relative_redirect_after_cd(self) -> None:
         # The workspace has its own .zshrc, so only the directory change matters.
         (self.workspace / ".zshrc").write_text("")
         for command in (
+            "cd /tmp && echo x > rel",
             "cd ~ && echo x > .zshrc",
             "pushd ~; echo x > .zshrc",
             "popd && echo x > .zshrc",
             "cd ~\necho x > .zshrc",
+            # A misread here-document operator must not hide a directory
+            # change, so a cd counts even inside a body.
+            "cat <<'EOF' > out.txt\ncd ~\nEOF",
         ):
             with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 2)
+                self.assert_blocked(command)
 
     def test_blocks_lines_after_arithmetic_shifts(self) -> None:
         # << inside $((...)) or ((...)) shifts bits and starts no here-document,
@@ -359,18 +480,11 @@ class RedirectGuardKiroTest(unittest.TestCase):
         for command in (
             "echo $((1<<mount))\ncd ~\necho x > .zshrc\nmount",
             "echo $(( (1) << mount ))\ncd ~\necho x > .zshrc\nmount",
-            "((a<<b))\nln -s ~/.zshrc f\necho x > f\nb",
-            "echo $((1\n<<x))\nln -s ~/.zshrc f\necho x > f\nx",
-            "echo a # don't\necho $((1<<m))\ncd ~\necho x > .zshrc # can't\nm",
+            "((a<<b))\necho x > ~/.zshrc\nb",
+            "echo $((1\n<<x))\necho x > ~/.zshrc\nx",
         ):
             with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 2)
-
-    def test_blocks_relative_redirect_after_cd_in_a_here_document(self) -> None:
-        # A misread here-document operator must not hide a directory change,
-        # so a cd counts even inside a body.
-        command = "cat <<'EOF' > out.txt\ncd ~\nEOF"
-        self.assertEqual(self.run_guard(command).returncode, 2)
+                self.assert_blocked(command)
 
     def test_allows_arithmetic_shifts_with_allowed_redirects(self) -> None:
         for command in (
@@ -378,147 +492,16 @@ class RedirectGuardKiroTest(unittest.TestCase):
             "((x = 1 << 2)); echo $x > out.txt",
         ):
             with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_silent(command)
 
-    def test_allows_existing_targets_in_compound_commands(self) -> None:
-        (self.workspace / "sub").mkdir()
-        (self.workspace / "out.txt").write_text("")
-        for command in (
-            "rg x > out.txt; wc -l out.txt",
-            "rg x 2>&1 | head > sub/../out.txt",
-            "cd sub && rg x > /dev/null",
-            "echo a \\\n  b > new.txt",
-            "python3 -c 'a = 1\nprint(a)' > new.json",
-            "cat > new.py <<'EOF'\nprint('hi'); x = (1 | 2) & 3\nln -s ~ l\nEOF",
-            "cat > new.md <<EOF\nplain; text | here\nEOF",
-            "cat <<-EOF > new.txt\n\tbody\n\tEOF\n",
-        ):
+    def test_blocks_symlinks_out_of_allowed_paths(self) -> None:
+        tmp_dir = pathlib.Path(tempfile.mkdtemp(dir="/tmp"))
+        self.addCleanup(shutil.rmtree, tmp_dir)
+        (tmp_dir / "zshrc").symlink_to(self.home / ".zshrc")
+        (self.workspace / "link").symlink_to(self.home)
+        for command in (f"git log > {tmp_dir}/zshrc", "echo hi > link/out.txt"):
             with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_blocks_redirects_hidden_by_hash_or_fused_punctuation(self) -> None:
-        # Bash starts a comment only at a word boundary, so x#y is one word.
-        for command in (
-            "printf x#y >> /etc/passwd",
-            "echo hi;> ~/out.txt",
-            "echo hi;>>~/out.txt",
-            "(echo hi)>~/out.txt",
-            "rg x;>(cat)",
-        ):
-            with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 2)
-
-    def test_allows_fused_punctuation_inside_allowed_paths(self) -> None:
-        # Fused punctuation makes a compound command, so the targets must exist.
-        (self.workspace / "out.txt").write_text("")
-        with tempfile.NamedTemporaryFile(dir="/tmp") as out:
-            for command in ("echo hi;> out.txt", f"(echo hi)>{out.name}", "echo a;>&2"):
-                with self.subTest(command=command):
-                    self.assertEqual(self.run_guard(command).returncode, 0)
-
-    def test_blocks_output_options_outside_allowed_paths(self) -> None:
-        # Kiro auto-approves sort and base64 and cannot see an output option
-        # whose argument is attached to a cluster of short flags.
-        (self.workspace / ".zshrc").write_text("")
-        for command in (
-            f"sort -uo{self.home}/.zshrc x",
-            "sort x -uo/etc/hosts",
-            "sort -o /etc/hosts x",
-            "sort -uo /etc/hosts x",
-            "sort --output=/etc/hosts x",
-            "sort --out /etc/hosts x",
-            "base64 -i x -o/etc/hosts",
-            "base64 -Do /etc/hosts x",
-            "/usr/bin/sort -uo/etc/hosts x",
-            "rg x; sort -uo/etc/hosts y",
-            "rg x\nLC_ALL=C sort -uo/etc/hosts y",
-            "echo $(sort -uo/etc/hosts y)",
-            "sort -uo$HOME/.zshrc x",
-            "cd ~ && sort -uo.zshrc x",
-            "sort -uo/etc/hosts x #'",
-            "echo a # don't\nsort -uo/etc/hosts y # can't",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2)
-                self.assertIn("write tool", result.stderr)
-
-    def test_allows_output_options_inside_allowed_paths(self) -> None:
-        for command in (
-            "sort -uo out.txt x",
-            "sort -uoout.txt x",
-            f"sort -uo{self.workspace}/out.txt x",
-            "sort --output=/tmp/out.txt x",
-            "base64 -i x -o out.b64",
-            "sort -k2o /etc/hosts",
-            "sort -t o -k 2 /etc/hosts",
-            "sort -- -o/etc/hosts",
-            "base64 -io/etc/hosts",
-            "base64 -D x.b64",
-            "rg sort -o /etc/hosts",
-            "echo sort -uo/etc/hosts",
-            "sort /etc/hosts > out.txt",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_blocks_output_options_of_other_auto_approved_commands(self) -> None:
-        # Each parser reads a fused short option differently: tree takes the
-        # value of every option in a cluster from the following words, while
-        # commander, pflag, and click take the rest of the word.
-        for command in (
-            "tree -noC /etc/hosts .",
-            f"tree -noC {self.home}/.zshrc .",
-            "tree -Lo 1 /etc/hosts .",
-            "tree -oL /etc/hosts 1 .",
-            "tree . -o /etc/hosts",
-            "tree -o 2>/dev/null /etc/hosts .",
-            "defuddle parse https://example.com -mo/etc/hosts",
-            "defuddle parse https://example.com -o /etc/hosts",
-            "defuddle parse https://example.com --output=/etc/hosts",
-            "docker compose config -qo/etc/hosts",
-            "docker compose config -o=/etc/hosts",
-            "docker-compose config --output /etc/hosts",
-            "npx -y @firecrawl/anydoc a.pdf -o/etc/hosts",
-            "npx @firecrawl/anydoc a.pdf --output=/etc/hosts",
-            "tvly extract https://example.com -o/etc/hosts",
-            "tvly crawl https://example.com --output-dir=/etc/x",
-            "tvly search q --output /etc/hosts",
-            "chezmoi --no-pager data -vo/etc/hosts",
-            "chezmoi --no-pager diff --output=/etc/hosts",
-            "sort -o >/dev/null /etc/hosts x",
-            "rg x | tree -noC /etc/hosts .",
-            "tree -noC /etc/hosts . #'",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2)
-                self.assertIn("write tool", result.stderr)
-
-    def test_allows_other_output_options_inside_allowed_paths(self) -> None:
-        for command in (
-            "tree -noC out.txt .",
-            "tree -L 2 /etc",
-            "tree -Lo 1 out.txt /etc",
-            "tree -- -o /etc/hosts",
-            "defuddle parse https://example.com -mo out.md",
-            "defuddle parse https://example.com -po /etc/hosts",
-            "docker compose config -q",
-            "tvly extract https://example.com -o /tmp/x.json",
-            "tvly search foo",
-            "npx -y @firecrawl/anydoc /etc/hosts -o out.md",
-            "chezmoi --no-pager diff ~/.zshrc",
-            "chezmoi --no-pager data -o out.json",
-            # Commands Kiro does not auto-approve already prompt.
-            "npx other-tool -o /etc/hosts",
-            "docker build -o /etc/x .",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_blocked(command)
 
     def test_tool_cwd_does_not_widen_allowed_paths(self) -> None:
         for command, tool_cwd in (
@@ -527,243 +510,112 @@ class RedirectGuardKiroTest(unittest.TestCase):
             ("echo hi > out.txt", str(self.home)),
         ):
             with self.subTest(command=command, tool_cwd=tool_cwd):
-                self.assertEqual(self.run_guard(command, tool_cwd).returncode, 2)
+                self.assert_blocked(command, tool_cwd)
 
     def test_tool_cwd_resolves_relative_targets(self) -> None:
         (self.workspace / "sub").mkdir()
-        self.assertEqual(
-            self.run_guard("echo hi > out.txt", str(self.workspace / "sub")).returncode,
-            0,
-        )
-        self.assertEqual(self.run_guard("echo hi > out.txt", "sub").returncode, 0)
-        self.assertEqual(self.run_guard("echo hi > ../out.txt", "sub").returncode, 0)
-        self.assertEqual(self.run_guard("echo hi > ../../out.txt", "sub").returncode, 2)
+        self.assert_silent("echo hi > out.txt", str(self.workspace / "sub"))
+        self.assert_silent("echo hi > out.txt", "sub")
+        self.assert_silent("echo hi > ../out.txt", "sub")
+        self.assert_blocked("echo hi > ../../out.txt", "sub")
 
-    def test_blocks_input_from_secret_locations(self) -> None:
-        # Kiro strips `<` before matching, so the shell excludes never see it.
+    def test_asks_for_glob_that_expands_to_a_secret_path(self) -> None:
         aws = self.home / ".aws"
         aws.mkdir()
         (aws / "credentials").write_text("")
-        (self.workspace / "creds").symlink_to(aws / "credentials")
+        self.assert_asks("git diff --no-index ~/.a?s/c* /dev/null")
+
+    def test_asks_for_home_variables_and_braces_that_reach_a_secret_path(
+        self,
+    ) -> None:
+        (self.home / ".aws").mkdir()
+        (self.home / ".aws" / "config").write_text("")
         for command in (
-            "cat < ~/.aws/credentials",
-            "cat <~/.ssh/id_rsa",
-            f"cat < {aws}/credentials",
-            "cat < creds",
-            "cat < ~/.a*/cred*",
-            "cat 0< ~/.netrc",
-            "rg x;<~/.aws/credentials cat",
-            "cat < $HOME/.aws/credentials",
-            "tr '\\0' '\\n' < /proc/self/environ",
+            "cat $HOME/.a?s/config",
+            "cat ${HOME}/.a?s/config",
+            "cat ~/.{a,}ws/config",
+            "cat ~/.{x,a}{w,y}s/config",
+            "cat ~/.{a,b}ws/config" + "{,}" * 10,
         ):
             with self.subTest(command=command):
-                result = self.run_guard(command)
+                self.assert_asks(command)
+
+    def test_allows_braces_and_home_variables_without_secret_paths(self) -> None:
+        for command in ("echo {a,b}", "echo x{1,2}y", "ls $HOME/project"):
+            with self.subTest(command=command):
+                self.assert_silent(command)
+
+    def test_runs_under_the_macos_system_python(self) -> None:
+        if not SYSTEM_PYTHON.exists():
+            self.skipTest("needs the macOS system Python")
+        (self.home / ".aws").mkdir()
+        (self.home / ".aws" / "config").write_text("")
+        for command, code, asks in (
+            ("echo x >! ~/.zshrc", 2, False),
+            ("git log > out.txt", 0, False),
+            ("cat ~/.{a,}ws/config", 0, True),
+        ):
+            payload = kiro_payload(command)
+            payload["cwd"] = str(self.workspace)
+            with self.subTest(command=command):
+                result = subprocess.run(
+                    [str(SYSTEM_PYTHON), str(REDIRECT_GUARD_KIRO)],
+                    input=json.dumps(payload),
+                    capture_output=True,
+                    text=True,
+                    env=dict(os.environ, HOME=str(self.home)),
+                    check=False,
+                )
+                self.assertEqual(result.returncode, code, result.stderr)
+                self.assertEqual('"ask"' in result.stdout, asks, result.stdout)
+
+    def test_asks_for_input_from_a_secret_path(self) -> None:
+        self.assert_asks("cat < ~/.ssh/id_ed25519")
+
+    def test_asks_for_symlink_to_a_secret_path(self) -> None:
+        # link/config matches no pattern as written, only once link resolves.
+        (self.home / ".ssh").mkdir()
+        (self.workspace / "link").symlink_to(self.home / ".ssh")
+        self.assert_asks("cat link/config")
+
+    def test_asks_for_relative_paths_that_leave_a_secret_cwd(self) -> None:
+        cwd = self.home / ".aws" / "x"
+        cwd.mkdir(parents=True)
+        result = self.run_guard("cat ../config", session_cwd=cwd)
+        output = json.loads(result.stdout)["hookSpecificOutput"]
+        self.assertEqual(output["permissionDecision"], "ask")
+
+    def test_allows_relative_words_under_a_secret_looking_cwd(self) -> None:
+        for cwd in (self.tmp / ".aws" / "x", self.tmp / "my-credentials-tool"):
+            cwd.mkdir(parents=True)
+            (cwd / "README.md").write_text("x")
+            for command in ("git status", "cat README.md", "cat *.md"):
+                with self.subTest(cwd=cwd, command=command):
+                    self.assert_silent(command, session_cwd=cwd)
+
+    def test_blocks_payloads_it_cannot_read(self) -> None:
+        for stdin in (
+            "not json",
+            "[]",
+            json.dumps({"cwd": "/tmp", "tool_input": "git log > ~/.zshrc"}),
+            json.dumps({"cwd": "/tmp", "tool_input": {"command": ["git", "log"]}}),
+            json.dumps({"cwd": 1, "tool_input": {"command": "git log"}}),
+        ):
+            with self.subTest(stdin=stdin):
+                result = self.run_raw(stdin)
                 self.assertEqual(result.returncode, 2)
-                self.assertIn("read tool", result.stderr)
+                self.assertIn("cannot read the hook input", result.stderr)
+                self.assertEqual(result.stdout, "")
 
-    def test_allows_input_from_other_files(self) -> None:
-        for command in (
-            "cat < input.txt",
-            "wc -l < ~/notes.txt",
-            "sort < /etc/hosts",
-            "cat <<< 'credentials'",
-            "cat <&3",
-            "diff <(echo a) <(echo b)",
-            'while read -r l; do echo "$l"; done < "$f"',
-        ):
-            with self.subTest(command=command):
-                self.assertEqual(self.run_guard(command).returncode, 0)
+    def test_blocks_before_asking(self) -> None:
+        self.assert_blocked("cat ~/.ssh/id_rsa > ~/.zshrc")
 
-    def make_secret_stores(self) -> None:
-        aws = self.home / ".aws"
-        aws.mkdir()
-        (aws / "credentials").write_text("")
-        (aws / "config").write_text("")
-        ssh = self.home / ".ssh"
-        ssh.mkdir()
-        (ssh / "id_rsa").write_text("")
-        gh = self.home / ".config" / "gh"
-        gh.mkdir(parents=True)
-        (gh / "hosts.yml").write_text("")
-        (self.home / ".config" / "gcloud").mkdir()
-        (self.home / ".config" / "gcloud" / "credentials.db").write_text("")
-        (self.home / ".npmrc").write_text("")
-        (self.home / ".codex").mkdir()
-        (self.home / ".codex" / "auth.json").write_text("")
-        (self.home / ".claude.json").write_text("")
-        state = self.home / ".local" / "state" / "zsh"
-        state.mkdir(parents=True)
-        (state / "history").write_text("")
-        (self.home / ".zsh_history").write_text("")
-
-    def test_blocks_readers_that_reach_secret_locations(self) -> None:
-        # The shell excludes match a command's literal text, so a recursive
-        # reader over an ancestor directory, or a glob that only expands to a
-        # credential path once bash runs it, slips past them.
-        self.make_secret_stores()
-        for command in (
-            f"grep -rn aws_secret_access_key {self.home}",
-            "rg -uuu secret ~",
-            "rg secret ~",
-            "grep -r token ~/.config",
-            "cat ~/.a?s/cred*",
-            "head ~/.a*/c*",
-            "cat ~/.aws/credentials",
-            "tree ~/.aws",
-            "du ~/.ssh",
-            "ls -R ~/.config/gh",
-            "cat ~/.npmrc",
-            "cat ~/.codex/auth.json",
-            "cat ~/.claude.json",
-            "tail ~/.local/state/zsh/history",
-            "cat ~/.zsh_history",
-            "head ~/.config/gcl*/*",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2, result.stderr)
-                self.assertIn("read tool", result.stderr)
-
-    def test_allows_readers_that_avoid_secret_locations(self) -> None:
-        self.make_secret_stores()
+    def test_allows_commands_without_secret_paths(self) -> None:
         (self.workspace / "src").mkdir()
         (self.workspace / "README.md").write_text("x")
-        (self.workspace / "src" / "a.py").write_text("secret = 1\n")
-        for command in (
-            "rg foo",
-            "rg -n foo src",
-            "rg -e credentials .",
-            "grep -r foo src",
-            "grep secret src/a.py",
-            "cat README.md",
-            "cat src/*",
-            "head README.md",
-            "tree -L 2 .",
-            "du -sh src",
-            "ls -R src",
-            "ls ~/.config",
-            "jq . ~/notes.json",
-            "wc -l src/a.py",
-        ):
+        for command in ("rg foo src", "cat README.md"):
             with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_blocks_mcporter_with_project_configs(self) -> None:
-        # mcporter merges ./config/mcporter.json over the user's config and
-        # imports editor configs from the working directory, so a file the
-        # agent can write there defines the server an allowed call starts.
-        for name, text in MCPORTER_PROJECT_FILES.items():
-            directory = self.workspace / "projects" / name.replace("/", "_")
-            path = directory / name
-            path.parent.mkdir(parents=True)
-            path.write_text(text)
-            for command in (
-                "mcporter call slack-mcp.get_channel channel=C1",
-                "mcporter list",
-                "rg x; /opt/homebrew/bin/mcporter list",
-            ):
-                with self.subTest(name=name, command=command):
-                    result = self.run_guard(command, str(directory))
-                    self.assertEqual(result.returncode, 2, result.stderr)
-                    self.assertIn(name, result.stderr)
-                    self.assertIn("mcporter", result.stderr)
-
-    def test_blocks_mcporter_with_a_project_config_in_the_session_cwd(self) -> None:
-        (self.workspace / "config").mkdir()
-        (self.workspace / "config" / "mcporter.json").write_text("{}")
-        result = self.run_guard("mcporter call slack-mcp.get_channel")
-        self.assertEqual(result.returncode, 2, result.stderr)
-
-    def test_blocks_mcporter_that_moves_or_redirects_its_config(self) -> None:
-        for command in (
-            "APPDATA=/tmp/x mcporter list",
-            "HOME=/tmp/x mcporter list",
-            "MCPORTER_CONFIG=/tmp/c.json mcporter call slack-mcp.get_channel",
-            "OPENAI_WORKDIR=/tmp/x mcporter list",
-            "OPENCODE_CONFIG=/tmp/x.json mcporter list",
-            "OPENCODE_CONFIG_DIR=/tmp/x mcporter list",
-            "XDG_CONFIG_HOME=/tmp/x mcporter list",
-            "cd /tmp/x && mcporter list",
-            "env MCPORTER_CONFIG=/tmp/c.json mcporter list",
-            "export MCPORTER_CONFIG=/tmp/c.json; mcporter list",
-            "pushd /tmp/x; mcporter list",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2, result.stderr)
-                self.assertIn("mcporter", result.stderr)
-
-    def test_allows_mcporter_without_project_configs(self) -> None:
-        # Files without server definitions add nothing, and the home
-        # directory's editor configs are the owner's, which mcporter reads from
-        # any working directory.
-        (self.workspace / ".claude").mkdir()
-        (self.workspace / ".claude" / "settings.json").write_text('{"env": {}}')
-        (self.workspace / ".codex").mkdir()
-        (self.workspace / ".codex" / "config.toml").write_text('model = "x"\n')
-        (self.workspace / ".vscode").mkdir()
-        (self.workspace / ".vscode" / "mcp.json").write_text("  \n")
-        (self.workspace / "opencode.json").write_text('{"theme": "x"}')
-        (self.home / ".codex").mkdir()
-        (self.home / ".codex" / "config.toml").write_text("[mcp_servers.a]\n")
-        (self.home / ".claude").mkdir()
-        (self.home / ".claude" / "settings.json").write_text(
-            '{"mcpServers": {"a": {"command": "x"}}}'
-        )
-        for command, tool_cwd in (
-            ("mcporter call slack-mcp.get_channel channel=C1", None),
-            ("mcporter list", None),
-            ("MCPORTER_CALL_TIMEOUT=5000 mcporter list", None),
-            ("mcporter list", str(self.home)),
-        ):
-            with self.subTest(command=command, tool_cwd=tool_cwd):
-                result = self.run_guard(command, tool_cwd)
-                self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_allows_other_commands_beside_project_configs(self) -> None:
-        (self.workspace / "config").mkdir()
-        (self.workspace / "config" / "mcporter.json").write_text("{}")
-        (self.workspace / "src").mkdir()
-        for command in ("ls config", "rg x src", "cd src && ls"):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_blocks_chezmoi_source_options_inside_flag_clusters(self) -> None:
-        # pflag lets a short option that takes a value follow boolean ones in
-        # one word, where the permission globs cannot see it.
-        for command in (
-            "chezmoi diff -vS /tmp/s",
-            "chezmoi diff -vS/tmp/s",
-            "chezmoi --no-pager status -rc /tmp/c.yaml",
-            "chezmoi verify -nD /tmp/d",
-            "chezmoi diff -PW /tmp/w",
-            "chezmoi diff ~/.zshrc -kvS /tmp/s",
-            "rg x; chezmoi status -vS /tmp/s",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 2, result.stderr)
-                self.assertIn("chezmoi", result.stderr)
-
-    def test_allows_chezmoi_read_only_flags(self) -> None:
-        for command in (
-            "chezmoi diff -r ~/Documents",
-            "chezmoi status -xscripts",
-            "chezmoi status -x scripts",
-            "chezmoi managed -p source-absolute",
-            "chezmoi --no-pager managed -ti files",
-            "chezmoi diff -- -vS",
-            # A plain -S prompts through the permission rules, so the owner can
-            # still approve it.
-            "chezmoi diff -S /tmp/s",
-            "chezmoi -vS /tmp/s apply",
-            "echo chezmoi diff -vS /tmp/s",
-        ):
-            with self.subTest(command=command):
-                result = self.run_guard(command)
-                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_silent(command)
 
 
 def hook_file(name: str) -> dict:
