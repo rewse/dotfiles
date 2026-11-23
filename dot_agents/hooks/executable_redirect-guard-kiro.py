@@ -50,6 +50,20 @@ auto-approved.
 The allowed working directory is the session's cwd from the harness. The
 model can set tool_input.cwd, so that value only resolves relative targets and
 never widens the allowed paths.
+
+It blocks any command that runs mcporter where mcporter could load servers
+from files other than the owner's config: config/mcporter.json or an editor
+config with server definitions in the effective working directory (the
+session's cwd joined with tool_input.cwd), a variable that moves its config, or
+a directory change before it runs (mcporter_problems). Kiro auto-approves read
+calls by server name, and mcporter starts whatever program the loaded config
+gives that name.
+
+It also blocks a read-only chezmoi command (CHEZMOI_READ_ONLY) that hides -c,
+-D, -S, or -W after other short flags in one word, such as -vS dir
+(chezmoi_hidden_options). permissions.yaml prompts for those options only at
+the start of a word, and diff, status, and verify render templates from the
+source they name.
 """
 
 import collections
@@ -806,6 +820,218 @@ def redirect_targets(tokens, is_blocked):
     return blocked
 
 
+MCPORTER_PROJECT_CONFIG = "config/mcporter.json"
+# Editor configs mcporter imports servers from, relative to its working
+# directory, each with the keys whose objects it reads server definitions from.
+# "" stands for the file's root object, and every JSON file also has
+# projects.<path>.mcpServers. TOML files have mcp_servers tables instead.
+MCPORTER_IMPORTS = {
+    ".claude/mcp.json": ("", "mcp", "mcpServers", "servers"),
+    ".claude/settings.json": ("mcp", "mcpServers", "servers"),
+    ".claude/settings.local.json": ("mcp", "mcpServers", "servers"),
+    ".codex/config.toml": (),
+    ".cursor/mcp.json": ("", "mcp", "mcpServers", "servers"),
+    ".openai/config.json": ("mcp",),
+    ".vscode/mcp.json": ("", "mcp", "mcpServers", "servers"),
+    "opencode.json": ("mcp",),
+    "opencode.jsonc": ("mcp",),
+}
+# Imports mcporter also reads from the home directory whatever its working
+# directory, so from the home directory they are the owner's own files.
+MCPORTER_HOME_IMPORTS = frozenset(
+    {
+        ".claude/mcp.json",
+        ".claude/settings.json",
+        ".claude/settings.local.json",
+        ".codex/config.toml",
+        ".cursor/mcp.json",
+    }
+)
+# Variables that move the config mcporter reads or the editor configs it
+# imports.
+MCPORTER_CONFIG_VARIABLES = re.compile(
+    r"(?:APPDATA|HOME|MCPORTER_CONFIG|OPENAI_WORKDIR|OPENCODE_CONFIG(?:_DIR)?"
+    r"|XDG_CONFIG_HOME)=.*",
+    re.DOTALL,
+)
+
+
+def defines_servers(path, keys):
+    """Returns whether an editor config may define servers mcporter imports.
+
+    A JSON file that does not parse as strict JSON, such as one with comments,
+    counts as defining them, because mcporter accepts JSON with comments.
+    """
+    try:
+        with open(path, encoding="utf-8") as config:
+            text = config.read()
+    except (OSError, UnicodeDecodeError):
+        return os.path.lexists(path)
+    if not text.strip():
+        return False
+    if path.endswith(".toml"):
+        return "mcp_servers" in text
+    try:
+        data = json.loads(text)
+    except ValueError:
+        return True
+    if not isinstance(data, dict):
+        return False
+    containers = [data.get(key) if key else data for key in keys]
+    projects = data.get("projects")
+    if isinstance(projects, dict):
+        containers += [
+            p.get("mcpServers") for p in projects.values() if isinstance(p, dict)
+        ]
+    return any(
+        isinstance(container, dict)
+        and any(isinstance(entry, dict) for entry in container.values())
+        for container in containers
+    )
+
+
+def mcporter_project_configs(directory):
+    """Returns the files in directory that would add servers to mcporter."""
+    found = []
+    if os.path.lexists(os.path.join(directory, MCPORTER_PROJECT_CONFIG)):
+        found.append(MCPORTER_PROJECT_CONFIG)
+    home = os.path.realpath(os.path.expanduser("~"))
+    for name, keys in sorted(MCPORTER_IMPORTS.items()):
+        if name in MCPORTER_HOME_IMPORTS and os.path.realpath(directory) == home:
+            continue
+        path = os.path.join(directory, name)
+        if os.path.lexists(path) and defines_servers(path, keys):
+            found.append(name)
+    return found
+
+
+def mcporter_problems(command, root_cwd, cwd=None):
+    """Returns why mcporter in this command could load servers the owner did not set.
+
+    mcporter merges config/mcporter.json from its working directory over the
+    owner's config and imports servers from editor configs there, so a file
+    the agent writes could define the server an auto-approved call starts.
+    MCPORTER_CONFIG and the variables that locate the owner's config or the
+    imports redirect it the same way. A directory change earlier in the
+    command moves the working directory to one this hook does not check.
+    """
+    cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
+    words = set()
+    for commenters in COMMENT_MODES:
+        try:
+            words |= set(split_lines(command, commenters))
+        except ValueError:
+            words |= set(re.findall(r"[^\s;&|()<>]+", command))
+    if not any(os.path.basename(word) == "mcporter" for word in words):
+        return []
+    problems = [
+        f"sets {word.split('=', 1)[0]}"
+        for word in sorted(words)
+        if MCPORTER_CONFIG_VARIABLES.fullmatch(word)
+    ]
+    if DIRECTORY_CHANGES & words:
+        problems.append("changes directory first")
+    problems += [
+        f"would load {name} from {cwd}" for name in mcporter_project_configs(cwd)
+    ]
+    return list(dict.fromkeys(problems))
+
+
+# chezmoi subcommands that permissions.yaml auto-approves, with or without
+# --no-pager before them.
+CHEZMOI_READ_ONLY = frozenset(
+    {
+        "cat-config",
+        "data",
+        "diff",
+        "doctor",
+        "help",
+        "ignored",
+        "managed",
+        "source-path",
+        "status",
+        "target-path",
+        "unmanaged",
+        "verify",
+    }
+)
+# Short options that pick another source, config, destination, or working
+# tree, and every short option of those subcommands that takes a value, which
+# ends a cluster of short flags.
+CHEZMOI_SOURCE_FLAGS = frozenset("DSWc")
+CHEZMOI_VALUE_FLAGS = frozenset("DSWcfiopx")
+
+
+def is_separator(token):
+    return set(token) <= PUNCTUATION | {"\n"}
+
+
+def is_read_only_chezmoi(words):
+    """Returns whether words, from the command word on, start a CHEZMOI_READ_ONLY form."""
+    if os.path.basename(words[0]) != "chezmoi":
+        return False
+    rest = words[2:3] if words[1:2] == ["--no-pager"] else words[1:2]
+    return bool(rest) and rest[0] in CHEZMOI_READ_ONLY
+
+
+def hidden_source_flags(word):
+    """Returns whether a short-flag word has a CHEZMOI_SOURCE_FLAGS flag after its first.
+
+    A plain -S dir matches the permission excludes and prompts, so only a flag
+    that follows another one in the word counts.
+    """
+    if not word.startswith("-") or word.startswith("--"):
+        return False
+    for position, flag in enumerate(word[1:]):
+        if position and flag in CHEZMOI_SOURCE_FLAGS:
+            return True
+        if flag in CHEZMOI_VALUE_FLAGS or flag == "=":
+            return False
+    return False
+
+
+def chezmoi_hidden_options(command):
+    """Returns the short-flag words that pass a source option to read-only chezmoi.
+
+    pflag reads -vS dir as -v -S dir. The permission excludes match "-S" only
+    at the start of a word, so a source, config, destination, or working-tree
+    option after other short flags in one word would run an auto-approved
+    diff, status, or verify against a source the agent chose.
+    """
+    found = []
+    for commenters in COMMENT_MODES:
+        try:
+            tokens = split_lines(command, commenters)
+        except ValueError:
+            if re.search(r"\bchezmoi\b[^\n]*\s-[^\s-]+[DSWc]", command):
+                found.append(command)
+            continue
+        index, at_command = 0, True
+        while index < len(tokens):
+            token = tokens[index]
+            if is_separator(token):
+                if REDIRECT_ONLY.fullmatch(token):
+                    index += 1
+                else:
+                    at_command = True
+                index += 1
+                continue
+            index += 1
+            if not at_command or ASSIGNMENT.fullmatch(token):
+                continue
+            at_command = False
+            if not is_read_only_chezmoi(tokens[index - 1 : index + 2]):
+                continue
+            while index < len(tokens) and not is_separator(tokens[index]):
+                word = tokens[index]
+                index += 1
+                if word == "--":
+                    break
+                if hidden_source_flags(word):
+                    found.append(word)
+    return list(dict.fromkeys(found))
+
+
 def main():
     data = json.load(sys.stdin)
     tool_input = data.get("tool_input") or {}
@@ -827,6 +1053,26 @@ def main():
             " hold credentials, after expanding a glob or walking a directory"
             " that the shell rules cannot see. Use the read tool for that file so"
             " Kiro can ask for approval.",
+            file=sys.stderr,
+        )
+        return 2
+    mcporter = mcporter_problems(command, root_cwd, tool_input.get("cwd"))
+    if mcporter:
+        print(
+            f"Blocked: this mcporter command {'; '.join(mcporter)}, so it could"
+            " start servers that the owner's mcporter config does not define."
+            " Run mcporter from a working directory without those files and"
+            " without changing its config location, or ask the owner to run it.",
+            file=sys.stderr,
+        )
+        return 2
+    hidden = chezmoi_hidden_options(command)
+    if hidden:
+        print(
+            f"Blocked: {', '.join(hidden)} passes a source, config, destination,"
+            " or working-tree option to chezmoi inside a cluster of short flags,"
+            " which the permission rules cannot see. Write each flag as a"
+            " separate word so Kiro can ask for approval.",
             file=sys.stderr,
         )
         return 2

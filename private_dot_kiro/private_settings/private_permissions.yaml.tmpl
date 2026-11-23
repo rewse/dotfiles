@@ -382,7 +382,15 @@ rules:
     # long option to them starting with c (sort) or o prompts too. A glob cannot
     # tell an attached output argument (sort -uo/f, tree -noC f) from a file
     # name, so the redirect guard hook checks the file each of these commands
-    # writes instead.
+    # writes instead. chezmoi diff, status, and verify render source templates,
+    # which can run commands, so the chezmoi options that pick another source,
+    # config, destination, cache, state, or data set, run a pager, or recreate
+    # the config prompt too. The excludes start with chezmoi so that sort -c
+    # and base64 -D stay allowed, and the hook catches -c, -D, -S, and -W after
+    # other short flags in one word (-vS dir), which "* -S*" cannot see. anydoc
+    # --ocr hosted uploads the document to Firecrawl, and --api-key and
+    # --api-url choose where it goes, so those prompt too; anydoc matches its
+    # options exactly and takes no clusters.
     match:
       - "base64 *"
       - "chezmoi --no-pager cat-config *"
@@ -428,6 +436,22 @@ rules:
       - "* -o*"
       - "*--output*"
       - "base64 *--o*"
+      - "chezmoi * -D*"
+      - "chezmoi * -S*"
+      - "chezmoi * -W*"
+      - "chezmoi * -c*"
+      - "chezmoi *--cache*"
+      - "chezmoi *--config*"
+      - "chezmoi *--destination*"
+      - "chezmoi *--init*"
+      - "chezmoi *--override-data*"
+      - "chezmoi *--pager*"
+      - "chezmoi *--persistent-state*"
+      - "chezmoi *--source *"
+      - "chezmoi *--source=*"
+      - "chezmoi *--working-tree*"
+      - "npx *@firecrawl/anydoc *--api-*"
+      - "npx *@firecrawl/anydoc *--ocr*"
       - "sort *--c*"
       - "sort *--o*"
 {{- range $secretPaths }}
@@ -522,7 +546,10 @@ rules:
     # (--header, --http-url), or write files (--persist, --save-images), so
     # those options prompt. The SharePoint read tools return a document inline,
     # or write it to any path named by their savePath argument, so that
-    # argument prompts too.
+    # argument prompts too. A server name here runs whatever program the loaded
+    # config gives it, so redirect-guard-kiro.py blocks mcporter when its
+    # working directory holds config/mcporter.json or an editor config with
+    # servers, or when the command moves mcporter's config.
     match:
       - "mcporter call amazon-quick-mcp.check_*"
       - "mcporter call amazon-quick-mcp.get_*"
