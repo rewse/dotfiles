@@ -418,6 +418,18 @@ class KiroPermissionsTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertFalse(self.shell_allows(command))
 
+    def test_mcporter_reads_that_save_to_a_path_are_not_allowed(self) -> None:
+        tool = "mcporter call amazon-sharepoint-mcp.sharepoint_read_file"
+        for command in (
+            f"{tool} url=https://example.com/a.docx savePath=/Users/u/.zshrc",
+            f"{tool} url=https://example.com/a.docx savePath:/Users/u/.zshrc",
+            f'{tool} --args \'{{"url": "x", "savePath": "/Users/u/.zshrc"}}\'',
+            f'mcporter call \'{tool.split()[-1]}(url: "x", savePath: "/u/.zshrc")\'',
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+        self.assertTrue(self.shell_allows(f"{tool} url=https://example.com/a.docx"))
+
     def test_environment_dumps_are_not_allowed(self) -> None:
         for command in ("env", "printenv", "printenv AWS_SECRET_ACCESS_KEY"):
             with self.subTest(command=command):

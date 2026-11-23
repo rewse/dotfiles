@@ -249,7 +249,6 @@ rules:
       - "mcporter call amazon-quick-mcp.query_*"
       - "mcporter call amazon-quick-mcp.search_*"
       - "mcporter call amazon-sharepoint-mcp.sharepoint_list_*"
-      - "mcporter call amazon-sharepoint-mcp.sharepoint_read_*"
       - "mcporter call amazon-sharepoint-mcp.sharepoint_search*"
       - "mcporter call analytics-mcp.get_*"
       - "mcporter call analytics-mcp.list_*"
@@ -595,6 +594,17 @@ rules:
       - "*--screenshot-dir*"
       - "*--session-name*"
       - "*--state*"
+{{- range $secretPaths }}
+      - {{ quote . }}
+{{- end }}
+  - capability: shell
+    effect: allow
+    # The SharePoint read tools return a document inline, or write it to any
+    # path named by their savePath argument, so that argument prompts.
+    match:
+      - "mcporter call amazon-sharepoint-mcp.sharepoint_read_*"
+    exclude:
+      - "*savePath*"
 {{- range $secretPaths }}
       - {{ quote . }}
 {{- end }}
