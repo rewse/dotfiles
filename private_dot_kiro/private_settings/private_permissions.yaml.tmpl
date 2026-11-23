@@ -38,7 +38,6 @@ rules:
   - capability: shell
     effect: allow
     match:
-      - "agent-browser *"
       - "arp *"
       - "basename *"
       - "cat *"
@@ -539,6 +538,63 @@ rules:
       - "tar -t*:*"
       - "tar -t*F*"
       - "tar -t*I*"
+{{- range $secretPaths }}
+      - {{ quote . }}
+{{- end }}
+{{- /* agent-browser subcommands that navigate, read the page, or interact
+       with it, including their aliases (goto, navigate, quit, exit, key,
+       scrollinto). */}}
+{{- $browserCommands := list
+      "a11y" "back" "check" "click" "close" "console" "dblclick" "drag"
+      "errors" "exit" "fill" "find" "focus" "forward" "get" "goto" "highlight"
+      "hover" "is" "key" "keyboard" "mouse" "navigate" "open" "press"
+      "profiles" "pushstate" "quit" "react" "read" "reload" "scroll"
+      "scrollinto" "scrollintoview" "select" "session" "skills" "snapshot"
+      "tab" "type" "uncheck" "vitals" "wait"
+}}
+  - capability: shell
+    effect: allow
+    # agent-browser can attach to the owner's logged-in Chrome, so only the
+    # subcommands listed here run without a prompt, either first or after the
+    # --engine lightpanda option the browser-automation skill passes. Options
+    # can follow the subcommand, so the excludes catch the ones that attach to
+    # a browser profile, load saved state or a config, read or write local
+    # files, or run a program or JavaScript anywhere on the line. The other
+    # subcommands, such as eval, screenshot, cookies, state, and connect,
+    # prompt because they match nothing here.
+    match:
+{{- range $browserCommands }}
+      - "agent-browser --engine lightpanda {{ . }}"
+      - "agent-browser --engine lightpanda {{ . }} *"
+{{- end }}
+{{- range $browserCommands }}
+      - "agent-browser {{ . }}"
+      - "agent-browser {{ . }} *"
+{{- end }}
+    exclude:
+      - "* -f*"
+      - "* -p*"
+      - "*--action-policy*"
+      - "*--allow-file-access*"
+      - "*--args*"
+      - "*--auto-connect*"
+      - "*--ca-cert*"
+      - "*--capture*"
+      - "*--cdp*"
+      - "*--config*"
+      - "*--download-path*"
+      - "*--executable-path*"
+      - "*--extension*"
+      - "*--fn*"
+      - "*--headers*"
+      - "*--init-script*"
+      - "*--profile*"
+      - "*--provider*"
+      - "*--proxy*"
+      - "*--restore*"
+      - "*--screenshot-dir*"
+      - "*--session-name*"
+      - "*--state*"
 {{- range $secretPaths }}
       - {{ quote . }}
 {{- end }}

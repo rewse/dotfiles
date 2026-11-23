@@ -149,6 +149,7 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_commands_that_run_or_write_arbitrary_things_are_not_allowed(self) -> None:
         shell = self.matches("shell")
         for pattern in (
+            "agent-browser *",
             "awk *",
             "chezmoi *",
             "chezmoi --no-pager cat *",
@@ -345,6 +346,77 @@ class KiroPermissionsTest(unittest.TestCase):
         ):
             with self.subTest(command=command):
                 self.assertTrue(self.shell_allows(command))
+
+    def test_agent_browser_navigation_and_page_reads_are_allowed(self) -> None:
+        for command in (
+            "agent-browser --engine lightpanda open https://example.com",
+            "agent-browser back",
+            "agent-browser click @e2",
+            "agent-browser close",
+            "agent-browser fill @e3 test@example.com",
+            "agent-browser find role button click --name Submit",
+            "agent-browser get text @e1",
+            "agent-browser goto https://example.com",
+            "agent-browser is visible @e1",
+            "agent-browser open https://example.com",
+            "agent-browser open https://example.com --json",
+            "agent-browser scroll down 500",
+            "agent-browser snapshot -i",
+            "agent-browser tab list",
+            "agent-browser tab new",
+            "agent-browser wait --load networkidle",
+            "agent-browser wait 2000",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
+
+    def test_agent_browser_prompts_for_profiles_files_and_scripts(self) -> None:
+        # Each of these reaches the owner's logged-in browser, reads or writes
+        # local files, or runs code, wherever the option sits on the line.
+        for command in (
+            "agent-browser --auto-connect snapshot",
+            "agent-browser --cdp 9222 snapshot",
+            "agent-browser --cdp ws://127.0.0.1:9222/devtools/browser tab new",
+            "agent-browser --config /tmp/c.json open https://example.com",
+            "agent-browser --download-path ~ open https://example.com",
+            "agent-browser --engine lightpanda --cdp 9222 open https://example.com",
+            "agent-browser --engine lightpanda eval document.cookie",
+            "agent-browser --executable-path /tmp/x open https://example.com",
+            "agent-browser --init-script /tmp/x.js open https://example.com",
+            "agent-browser --profile Default open https://mail.google.com",
+            "agent-browser --session s eval document.cookie",
+            "agent-browser --state ./auth.json open https://example.com",
+            "agent-browser -p ios open https://example.com",
+            "agent-browser auth login site",
+            "agent-browser batch 'eval document.cookie'",
+            "agent-browser chat hi",
+            "agent-browser clipboard read",
+            "agent-browser confirm c1",
+            "agent-browser connect 9222",
+            "agent-browser cookies get",
+            "agent-browser download @e1 ~/x",
+            "agent-browser eval document.cookie",
+            "agent-browser flow run task",
+            "agent-browser install",
+            "agent-browser network har start ~/x.har",
+            "agent-browser open https://example.com --allow-file-access",
+            "agent-browser open https://example.com --args --user-data-dir=x",
+            "agent-browser open https://example.com --profile ~/.p",
+            "agent-browser pdf ~/x.pdf",
+            "agent-browser plugin add x",
+            "agent-browser record start ~/x.webm",
+            "agent-browser screenshot ~/x.png",
+            "agent-browser set credentials user pass",
+            "agent-browser snapshot --cdp 9222",
+            "agent-browser state save ./auth.json",
+            "agent-browser storage local",
+            "agent-browser trace stop ~/t.json",
+            "agent-browser upload @e1 ~/.zshrc",
+            "agent-browser wait --fn window.x",
+            "agent-browser wait -f window.x",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
 
     def test_environment_dumps_are_not_allowed(self) -> None:
         for command in ("env", "printenv", "printenv AWS_SECRET_ACCESS_KEY"):
