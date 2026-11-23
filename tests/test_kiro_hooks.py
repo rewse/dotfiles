@@ -449,6 +449,61 @@ class RedirectGuardKiroTest(unittest.TestCase):
                 result = self.run_guard(command)
                 self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_blocks_output_options_of_other_auto_approved_commands(self) -> None:
+        # Each parser reads a fused short option differently: tree takes the
+        # value of every option in a cluster from the following words, while
+        # commander, pflag, and click take the rest of the word.
+        for command in (
+            "tree -noC /etc/hosts .",
+            f"tree -noC {self.home}/.zshrc .",
+            "tree -Lo 1 /etc/hosts .",
+            "tree -oL /etc/hosts 1 .",
+            "tree . -o /etc/hosts",
+            "tree -o 2>/dev/null /etc/hosts .",
+            "defuddle parse https://example.com -mo/etc/hosts",
+            "defuddle parse https://example.com -o /etc/hosts",
+            "defuddle parse https://example.com --output=/etc/hosts",
+            "docker compose config -qo/etc/hosts",
+            "docker compose config -o=/etc/hosts",
+            "docker-compose config --output /etc/hosts",
+            "npx -y @firecrawl/anydoc a.pdf -o/etc/hosts",
+            "npx @firecrawl/anydoc a.pdf --output=/etc/hosts",
+            "tvly extract https://example.com -o/etc/hosts",
+            "tvly crawl https://example.com --output-dir=/etc/x",
+            "tvly search q --output /etc/hosts",
+            "chezmoi --no-pager data -vo/etc/hosts",
+            "chezmoi --no-pager diff --output=/etc/hosts",
+            "sort -o >/dev/null /etc/hosts x",
+            "rg x | tree -noC /etc/hosts .",
+            "tree -noC /etc/hosts . #'",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("write tool", result.stderr)
+
+    def test_allows_other_output_options_inside_allowed_paths(self) -> None:
+        for command in (
+            "tree -noC out.txt .",
+            "tree -L 2 /etc",
+            "tree -Lo 1 out.txt /etc",
+            "tree -- -o /etc/hosts",
+            "defuddle parse https://example.com -mo out.md",
+            "defuddle parse https://example.com -po /etc/hosts",
+            "docker compose config -q",
+            "tvly extract https://example.com -o /tmp/x.json",
+            "tvly search foo",
+            "npx -y @firecrawl/anydoc /etc/hosts -o out.md",
+            "chezmoi --no-pager diff ~/.zshrc",
+            "chezmoi --no-pager data -o out.json",
+            # Commands Kiro does not auto-approve already prompt.
+            "npx other-tool -o /etc/hosts",
+            "docker build -o /etc/x .",
+        ):
+            with self.subTest(command=command):
+                result = self.run_guard(command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_tool_cwd_does_not_widen_allowed_paths(self) -> None:
         for command, tool_cwd in (
             ("echo hi > /etc/hosts", "/"),

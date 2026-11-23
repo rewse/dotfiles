@@ -149,6 +149,7 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_commands_that_run_or_write_arbitrary_things_are_not_allowed(self) -> None:
         shell = self.matches("shell")
         for pattern in (
+            "agent-browser *",
             "awk *",
             "chezmoi *",
             "chezmoi --no-pager cat *",
@@ -213,6 +214,10 @@ class KiroPermissionsTest(unittest.TestCase):
             "sort -S1 --compress-program=sh f",
             "sort --compress-prog=sh f",
             "base64 --o=~/.zshrc x",
+            "chezmoi --no-pager data -o ~/.zshrc",
+            "chezmoi --no-pager diff -o/etc/hosts",
+            "chezmoi data --output=/Users/u/.zshrc",
+            "chezmoi status -o ~/.zshrc",
             "tree -o ~/.zshrc .",
             "tvly crawl https://example.com --output-dir ~/x",
             "tvly extract https://example.com -o ~/.zshrc",
@@ -229,6 +234,8 @@ class KiroPermissionsTest(unittest.TestCase):
     def test_read_only_uses_of_narrowed_commands_are_allowed(self) -> None:
         for command in (
             "chezmoi --no-pager diff ~/.zshrc",
+            "chezmoi --no-pager managed --include files",
+            "chezmoi status ~/.zshrc",
             "git -P diff HEAD~1",
             "git -P log --oneline -5",
             "git -P show HEAD:README.md",
@@ -336,6 +343,121 @@ class KiroPermissionsTest(unittest.TestCase):
             "rg -n op src",
             "tail -n 20 /tmp/test.log",
             "tvly extract https://docs.aws.amazon.com/cli/latest/index.html",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
+
+    def test_agent_browser_navigation_and_page_reads_are_allowed(self) -> None:
+        for command in (
+            "agent-browser --engine lightpanda open https://example.com",
+            "agent-browser back",
+            "agent-browser click @e2",
+            "agent-browser close",
+            "agent-browser fill @e3 test@example.com",
+            "agent-browser find role button click --name Submit",
+            "agent-browser get text @e1",
+            "agent-browser goto https://example.com",
+            "agent-browser is visible @e1",
+            "agent-browser open https://example.com",
+            "agent-browser open https://example.com --json",
+            "agent-browser scroll down 500",
+            "agent-browser snapshot -i",
+            "agent-browser tab list",
+            "agent-browser tab new",
+            "agent-browser wait --load networkidle",
+            "agent-browser wait 2000",
+        ):
+            with self.subTest(command=command):
+                self.assertTrue(self.shell_allows(command))
+
+    def test_agent_browser_prompts_for_profiles_files_and_scripts(self) -> None:
+        # Each of these reaches the owner's logged-in browser, reads or writes
+        # local files, or runs code, wherever the option sits on the line.
+        for command in (
+            "agent-browser --auto-connect snapshot",
+            "agent-browser --cdp 9222 snapshot",
+            "agent-browser --cdp ws://127.0.0.1:9222/devtools/browser tab new",
+            "agent-browser --config /tmp/c.json open https://example.com",
+            "agent-browser --download-path ~ open https://example.com",
+            "agent-browser --engine lightpanda --cdp 9222 open https://example.com",
+            "agent-browser --engine lightpanda eval document.cookie",
+            "agent-browser --executable-path /tmp/x open https://example.com",
+            "agent-browser --init-script /tmp/x.js open https://example.com",
+            "agent-browser --profile Default open https://mail.google.com",
+            "agent-browser --session s eval document.cookie",
+            "agent-browser --state ./auth.json open https://example.com",
+            "agent-browser -p ios open https://example.com",
+            "agent-browser auth login site",
+            "agent-browser batch 'eval document.cookie'",
+            "agent-browser chat hi",
+            "agent-browser clipboard read",
+            "agent-browser confirm c1",
+            "agent-browser connect 9222",
+            "agent-browser cookies get",
+            "agent-browser download @e1 ~/x",
+            "agent-browser eval document.cookie",
+            "agent-browser flow run task",
+            "agent-browser install",
+            "agent-browser network har start ~/x.har",
+            "agent-browser open https://example.com --allow-file-access",
+            "agent-browser open https://example.com --args --user-data-dir=x",
+            "agent-browser open https://example.com --profile ~/.p",
+            "agent-browser pdf ~/x.pdf",
+            "agent-browser plugin add x",
+            "agent-browser record start ~/x.webm",
+            "agent-browser screenshot ~/x.png",
+            "agent-browser set credentials user pass",
+            "agent-browser snapshot --cdp 9222",
+            "agent-browser state save ./auth.json",
+            "agent-browser storage local",
+            "agent-browser trace stop ~/t.json",
+            "agent-browser upload @e1 ~/.zshrc",
+            "agent-browser wait --fn window.x",
+            "agent-browser wait -f window.x",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+
+    def test_mcporter_reads_that_save_to_a_path_are_not_allowed(self) -> None:
+        tool = "mcporter call amazon-sharepoint-mcp.sharepoint_read_file"
+        for command in (
+            f"{tool} url=https://example.com/a.docx savePath=/Users/u/.zshrc",
+            f"{tool} url=https://example.com/a.docx savePath:/Users/u/.zshrc",
+            f'{tool} --args \'{{"url": "x", "savePath": "/Users/u/.zshrc"}}\'',
+            f'mcporter call \'{tool.split()[-1]}(url: "x", savePath: "/u/.zshrc")\'',
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+        self.assertTrue(self.shell_allows(f"{tool} url=https://example.com/a.docx"))
+
+    def test_mcporter_options_that_run_or_redirect_servers_are_not_allowed(
+        self,
+    ) -> None:
+        # These options start a program, load another config, call a tool the
+        # selector does not name, send headers that expand environment
+        # variables, or write files.
+        get = "mcporter call slack-mcp.get_channel"
+        for command in (
+            f"{get} --config /tmp/c.json",
+            f"{get} --cwd /",
+            f"{get} --env A=1",
+            f"{get} --root /tmp",
+            f"{get} --server other",
+            f"{get} --stdio 'sh -c id'",
+            f"{get} --stdio-arg x",
+            f"{get} --tool post_message",
+            "mcporter call exa.web_search_exa query=x --save-images ~/x",
+            "mcporter list --http-url https://example.com --header A=$env:B",
+            "mcporter list --stdio 'touch /tmp/x'",
+            "mcporter list --stdio x --persist ~/.zshrc",
+            "mcporter resource docs --config /tmp/c.json",
+        ):
+            with self.subTest(command=command):
+                self.assertFalse(self.shell_allows(command))
+        for command in (
+            f"{get} channel=C1 --output json",
+            "mcporter list slack-mcp --schema",
+            "mcporter resource docs file:///repo/README.md",
         ):
             with self.subTest(command=command):
                 self.assertTrue(self.shell_allows(command))
