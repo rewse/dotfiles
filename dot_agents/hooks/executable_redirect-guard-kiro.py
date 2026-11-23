@@ -1,72 +1,56 @@
 #!/usr/bin/env python3
-"""Kiro CLI PreToolUse hook that blocks shell redirects outside allowed paths.
+"""Kiro CLI PreToolUse hook that checks shell redirects and secret paths.
 
-Kiro strips redirections before matching a shell command against its
-permission rules and never checks the redirect target as an fs_write, so
-`echo x > ~/.zshrc` runs without a prompt under an `echo *` allow. This hook
-blocks (exit 2) any redirect whose target is outside the paths that
-permissions.yaml lets Kiro write without asking, which sends the model to the
-write tool, where Kiro asks for approval.
+Kiro runs two checks here that its permission rules cannot make.
 
-It also blocks a `<` input redirect from a location that may hold credentials
-(SECRET_PATTERNS). The shell rules in permissions.yaml exclude the same
-patterns from auto-approval, but cannot see a redirect once Kiro strips it. A
-target matches as written, with `~` and globs expanded, and with symlinks
-resolved; a target built from a variable matches only as written.
+Redirect targets: Kiro strips redirections before matching a shell command
+against its rules and never checks the target as an fs_write, so
+`git log > ~/.zshrc` matches the allow for `git log`. This hook blocks (exit 2)
+any `>`, `>>`, `&>`, or `>|`, or zsh's `>!` forms, whose target is outside the
+paths Kiro may write without asking (the session's working directory, /tmp, ~/Desktop,
+~/Downloads, and device files), which sends the model to the write tool, where
+Kiro asks for approval. A target that a variable, command substitution, glob,
+or process substitution builds is blocked too, since it cannot be resolved
+here, and so is a relative target in a command that changes directory first.
 
-It blocks reader commands (cat, grep, rg, tree, and the rest of READERS) whose
-arguments reach a credential store in a way the shell excludes miss: a glob
-that only expands to a secret path once bash runs it (`cat ~/.a?s/cred*`), or a
-recursive reader aimed at a directory that holds one (`grep -r x ~`, `rg x ~`).
-The excludes match the command's literal text, so neither form trips them.
+Secret paths: the ask rule in permissions.yaml matches the command's text, so
+it misses a path that only reaches a credential store once bash expands `~`,
+$HOME, braces, or a glob, or follows a symlink
+(`git diff --no-index ~/.a?s/c* /dev/null`). This hook expands every word of
+the command, `<` sources included, resolves symlinks, and returns permissionDecision "ask" when any result matches
+SECRET_PATTERNS. It asks instead of blocking because ordinary commands such as
+`rg credentials src` match too, as they do under the ask rule. A blocked
+redirect takes precedence over the ask.
 
-Targets it cannot resolve statically (variables, command substitution, globs,
-process substitution) are blocked too, and so is a command that contains `>`
-but does not tokenize, such as one with an unbalanced quote: bash may still
-run it, because a quote inside a comment (`> ~/.zshrc #'`) does not start a
-string. An untokenizable command without `>`, such as a heredoc whose body has
-an apostrophe, cannot redirect output and passes. Bash also starts a comment
-only at a word boundary, so `x#y > f` still redirects. shlex can treat `#` as
-always or never starting a comment, so every check runs in both modes
-(COMMENT_MODES) and combines the results.
+Bash and shlex disagree on a few points, which the parsing handles:
 
-Some auto-approved commands, such as sort, tree, and tvly, write the file named
-by an output option. permissions.yaml sends those options to a prompt, but its
-globs cannot tell an output option attached to other short flags (sort -uo/f,
-tree -noC f) from a file name, so this hook checks that file like a redirect
-target (OUTPUT_OPTIONS).
+- A here-document body is data, so it is left out before tokenizing; an
+  apostrophe in prose would otherwise stop the command from tokenizing. A body
+  that expands $(...) or backticks, or that never ends, is kept.
+- `<<` inside $((...)) or ((...)) shifts bits and starts no here-document.
+- Bash starts a comment only at a word boundary and ignores quotes inside one,
+  while shlex treats `#` as always or never starting a comment. Each check runs
+  in both modes (COMMENT_MODES) and combines the results.
+- A command that contains `>` but does not tokenize, such as one with an
+  unbalanced quote, is blocked, because bash may still run the redirect.
+- shlex does not parse ANSI-C quoting ($'...'), nor the nested quotes and
+  redirects of $(...), ${...}, or backticks inside double quotes, so it may
+  misplace where a string ends (quoting_hazard). A $'...' command with `>` or
+  `<<` is blocked, as is a `>` inside a token of a command with such a
+  double-quoted expansion, and the secret path check adds rough words.
+- "$(cat <<'X' ... X)" with a quoted delimiter prints its body as data, the
+  usual way to pass a commit message, so the redirect checks replace it with
+  "" first (without_literal_substitutions).
 
-A target can also resolve elsewhere once earlier parts of the command run. A
-relative target is blocked when the command contains cd, pushd, or popd. In a
-compound command (one with ;, &&, ||, |, &, a subshell, a command
-substitution, or a second line outside a here-document body) that also runs
-a command able to create a symlink (LINK_COMMANDS), a target that does not
-exist yet, or that has a missing parent below its allowed root, is blocked
-too, because that part could create it as a symlink first. A path that
-exists but is replaced earlier in the same command, as with rm and then ln, is
-out of scope: Kiro prompts for such commands, since rm and ln are not
-auto-approved.
-
-The allowed working directory is the session's cwd from the harness. The
-model can set tool_input.cwd, so that value only resolves relative targets and
-never widens the allowed paths.
-
-It blocks any command that runs mcporter where mcporter could load servers
-from files other than the owner's config: config/mcporter.json or an editor
-config with server definitions in the effective working directory (the
-session's cwd joined with tool_input.cwd), a variable that moves its config, or
-a directory change before it runs (mcporter_problems). Kiro auto-approves read
-calls by server name, and mcporter starts whatever program the loaded config
-gives that name.
-
-It also blocks a read-only chezmoi command (CHEZMOI_READ_ONLY) that hides -c,
--D, -S, or -W after other short flags in one word, such as -vS dir
-(chezmoi_hidden_options). permissions.yaml prompts for those options only at
-the start of a word, and diff, status, and verify render templates from the
-source they name.
+The model can set tool_input.cwd, so that value only resolves relative paths
+and never widens the allowed paths. A payload that is not JSON of the expected
+shape is blocked.
 """
 
-import collections
+# Kiro's hook environment can resolve python3 to the macOS system Python 3.9,
+# which cannot evaluate `str | None` annotations at import time.
+from __future__ import annotations
+
 import fnmatch
 import glob
 import json
@@ -80,7 +64,7 @@ UNRESOLVABLE = set("$`*?[(")
 # shlex's default punctuation_chars; it fuses adjacent ones into one token.
 PUNCTUATION = set("();<>|&")
 # Locations that may hold credentials, as Kiro shell globs, which support only
-# `*`. Every shell rule in permissions.yaml excludes the same list.
+# `*`. The shell ask rule in permissions.yaml lists the same patterns.
 SECRET_PATTERNS = (
     "*.aws",
     "*.aws *",
@@ -129,9 +113,33 @@ SECRET_PATTERNS = (
 # apostrophe in each of two comments joins the lines between them into one
 # string; with them, `x#y` loses the rest of its line.
 COMMENT_MODES = ("", "#")
+DIRECTORY_CHANGES = {"cd", "popd", "pushd"}
+# A here-document operator and its delimiter, which may be quoted.
+HEREDOC = re.compile(r"(?<!<)<<(?!<)(-?)\s*(['\"]?)([^\s'\"();<>|&]+)\2")
+# Words of a command that does not tokenize.
+ROUGH_WORD = re.compile(r"[^\s;&|()<>'\"]+")
+# shlex does not parse bash's ANSI-C quoting: inside $'...' bash reads \' as an
+# escaped quote, while shlex ends the string there.
+ANSI_C_QUOTE = "$'"
+# Expansions that bash parses as nested code with quotes of their own, even
+# inside double quotes; shlex reads them as plain characters of the string.
+NESTED_EXPANSION = re.compile(r"\$[({]|`")
+# The start of "$(cat <<'X'" or "$(cat <<"X"", ending its line.
+LITERAL_SUBSTITUTION = re.compile(
+    r"\"\$\(cat[ \t]*<<[ \t]*(['\"])([A-Za-z_][A-Za-z0-9_]*)\1[ \t]*\n"
+)
+# A leading $HOME or ${HOME} that ends the word or a path component.
+HOME_VARIABLE = re.compile(r"\$(?:HOME|\{HOME\})(?=/|$)")
+# A brace expansion group without nested braces, such as {a,b}.
+BRACE_LIST = re.compile(r"\{([^{}]*,[^{}]*)\}")
+# More brace expansion words than this make the secret path check ask.
+MAX_BRACE_WORDS = 256
+# zsh reads `!` right after a redirect operator (`>!`, `>>!`, `&>!`, `>&!`)
+# as part of the operator, which overrides noclobber; shlex splits it off.
+CLOBBER = "!"
 
 
-def allowed_roots(cwd):
+def allowed_roots(cwd: str) -> list[str]:
     home = os.path.expanduser("~")
     roots = [
         cwd,
@@ -142,7 +150,7 @@ def allowed_roots(cwd):
     return [os.path.realpath(root) for root in roots]
 
 
-def resolve(target, cwd):
+def resolve(target: str, cwd: str) -> str | None:
     if UNRESOLVABLE & set(target):
         return None
     # ~user expands to another account's home, which this hook does not look up.
@@ -156,11 +164,11 @@ def resolve(target, cwd):
     return os.path.realpath(path)
 
 
-def is_device(path):
+def is_device(path: str) -> bool:
     return path in DEVICES or path.startswith("/dev/fd/")
 
 
-def is_allowed(path, root_cwd):
+def is_allowed(path: str, root_cwd: str) -> bool:
     if is_device(path):
         return True
     return any(
@@ -169,388 +177,100 @@ def is_allowed(path, root_cwd):
     )
 
 
-def is_secret(path):
+def is_secret(path: str) -> bool:
     return any(fnmatch.fnmatchcase(path, pattern) for pattern in SECRET_PATTERNS)
 
 
-# Credential stores as concrete paths below the home directory, plus the
-# process environment on Linux. Used to decide whether a directory a recursive
-# reader walks is an ancestor of a credential store; SECRET_PATTERNS covers the
-# per-file match. Keep this list in step with SECRET_PATTERNS.
-SECRET_SUFFIXES = (
-    ".aws",
-    ".claude.json",
-    ".claude/.credentials.json",
-    ".codex/auth.json",
-    ".config/environment",
-    ".config/gcloud",
-    ".config/gh",
-    ".config/mcporter",
-    ".config/op",
-    ".docker",
-    ".git-credentials",
-    ".gnupg",
-    ".kube",
-    ".local/state/zsh/history",
-    ".mcporter",
-    ".midway",
-    ".netrc",
-    ".npmrc",
-    ".op",
-    ".pypirc",
-    ".ssh",
-    ".tavily",
-    ".zsh_history",
-)
+def below(path: str, root: str) -> str:
+    """Returns the part of path below root, or path itself when it is outside."""
+    if path == root:
+        return ""
+    if path.startswith(root + os.sep):
+        return path[len(root) + 1 :]
+    return path
 
 
-def secret_roots():
-    home = os.path.realpath(os.path.expanduser("~"))
-    roots = [os.path.realpath(os.path.join(home, s)) for s in SECRET_SUFFIXES]
-    roots.append("/proc/self/environ")
-    return roots
+def brace_alternatives(word: str) -> list[str] | None:
+    """Returns the words that brace expansion makes of word, word first.
 
-
-def under_secret_root(path, roots):
-    return any(path == root or path.startswith(root + os.sep) for root in roots)
-
-
-def endangers_secrets(directory, roots):
-    """Returns whether a tree walk rooted at directory would reach a secret.
-
-    True when a credential store lies below the directory, or the directory
-    itself lies inside one.
+    Each {a,b,...} group without nested braces expands into its alternatives,
+    and the groups multiply. Returns None when they would make more than
+    MAX_BRACE_WORDS words.
     """
-    return any(
-        root == directory
-        or root.startswith(directory + os.sep)
-        or directory.startswith(root + os.sep)
-        for root in roots
-    )
+    words, count = [word], 1
+    for match in BRACE_LIST.finditer(word):
+        count *= match.group(1).count(",") + 1
+    if count > MAX_BRACE_WORDS:
+        return None
+    pending = [word]
+    while pending:
+        current = pending.pop()
+        match = BRACE_LIST.search(current)
+        if match is None:
+            words.append(current)
+            if len(words) > MAX_BRACE_WORDS:
+                return None
+            continue
+        head, tail = current[: match.start()], current[match.end() :]
+        pending += [head + part + tail for part in match.group(1).split(",")]
+    return list(dict.fromkeys(words))
 
 
-# Auto-approved commands that read the files named in their arguments. An
-# argument that resolves, after ~ and glob expansion, to a credential store is
-# blocked, because its literal form can slip past the shell excludes.
-FILE_READERS = frozenset(
-    {
-        "base64",
-        "bat",
-        "cat",
-        "cmp",
-        "column",
-        "comm",
-        "cut",
-        "diff",
-        "egrep",
-        "fgrep",
-        "file",
-        "grep",
-        "head",
-        "hexdump",
-        "jq",
-        "less",
-        "md5",
-        "md5sum",
-        "more",
-        "nl",
-        "od",
-        "readlink",
-        "realpath",
-        "rev",
-        "rg",
-        "sha1sum",
-        "sha256sum",
-        "shasum",
-        "sort",
-        "stat",
-        "tac",
-        "tail",
-        "uniq",
-        "wc",
-        "xxd",
-        "zcat",
-    }
-)
-# Commands whose first operand is a search pattern, not a path.
-GREP_LIKE = frozenset({"egrep", "fgrep", "grep", "rg"})
-# Commands that walk a directory tree. For these, a directory argument (or the
-# working directory, when none is given) that is an ancestor of a credential
-# store is blocked. ls only recurses with -R, so RECURSIVE_ALWAYS omits it.
-TREE_READERS = frozenset({"du", "ls", "tree"})
-# Readers that recurse into a directory without a flag asking them to.
-RECURSIVE_ALWAYS = frozenset({"du", "rg", "tree"})
+def input_paths(word: str, cwd: str) -> list[str]:
+    """Returns the word as written and the paths bash would read for it.
 
-
-def short_flags(word):
-    """Returns the letters of a combined short-option word such as -rn."""
-    if word.startswith("-") and len(word) > 1 and word[1] != "-":
-        return word[1:]
-    return ""
-
-
-def recursive_grep(words):
-    for word in words[1:]:
-        if word == "--":
-            break
-        if word.startswith("--"):
-            name, _, value = word.partition("=")
-            if name in ("--recursive", "--dereference-recursive"):
-                return True
-            if name == "--directories" and value == "recurse":
-                return True
-        elif "r" in short_flags(word) or "R" in short_flags(word):
-            return True
-    return False
-
-
-def ls_recursive(words):
-    for word in words[1:]:
-        if word == "--":
-            break
-        if word.startswith("--"):
-            if word.split("=", 1)[0] == "--recursive":
-                return True
-        elif "R" in short_flags(word):
-            return True
-    return False
-
-
-def file_operands(words):
-    """Returns the non-option arguments of a command's word list.
-
-    Options and their attached values are dropped. An option that takes its
-    value in the next word keeps that value in the list; a benign value such as
-    a search string resolves to a missing file that no secret check matches,
-    and a value that is itself a credential path is caught anyway.
+    A leading $HOME or ${HOME} expands like `~`; a word with any other `$` or
+    a backtick counts only as written. A relative word counts only with the
+    part of each path below cwd, so that a cwd inside a secret location does
+    not make every word match. A path that leaves cwd, through `..` or a
+    symlink, counts in full.
     """
-    operands, after_double_dash = [], False
-    for word in words[1:]:
-        if after_double_dash:
-            operands.append(word)
-        elif word == "--":
-            after_double_dash = True
-        elif word == "-" or word.startswith("-") or set(word) <= PUNCTUATION:
-            continue
-        else:
-            operands.append(word)
-    return operands
+    home_variable = HOME_VARIABLE.match(word)
+    if home_variable:
+        word = os.path.expanduser("~") + word[home_variable.end() :]
+    if "$" in word or "`" in word:
+        return [word]
+    expanded = os.path.expanduser(word)
+    path = os.path.join(cwd, expanded)
+    found = glob.glob(path) if set("*?[") & set(word) else [path]
+    if os.path.isabs(expanded):
+        return [word, *found, *(os.path.realpath(p) for p in found)]
+    root, real_root = os.path.normpath(cwd), os.path.realpath(cwd)
+    return [
+        word,
+        *(below(os.path.normpath(p), root) for p in found),
+        *(below(os.path.realpath(p), real_root) for p in found),
+    ]
 
 
-def command_segments(tokens):
-    """Splits tokens into per-command word lists, dropping redirect targets."""
-    segments, current, skip_next = [], [], False
-    for token in tokens:
-        if skip_next:
-            skip_next = False
-            continue
-        if set(token) <= PUNCTUATION:
-            if current:
-                segments.append(current)
-                current = []
-            if "<" in token or ">" in token:
-                skip_next = True
-            continue
-        current.append(token)
-    if current:
-        segments.append(current)
-    return segments
-
-
-def segment_reads(words, cwd, roots):
-    """Returns the arguments of one command that read a credential store."""
-    if not words:
-        return []
-    name = os.path.basename(words[0])
-    if name not in FILE_READERS and name not in TREE_READERS:
-        return []
-    operands = file_operands(words)
-    path_operands = operands[1:] if name in GREP_LIKE else operands
-    hits, directories = [], []
-    for operand in path_operands:
-        paths = input_paths(operand, cwd)
-        if any(is_secret(p) or under_secret_root(p, roots) for p in paths):
-            hits.append(operand)
-        directories += [p for p in paths if os.path.isdir(p)]
-    recursive = (
-        name in RECURSIVE_ALWAYS
-        or (name in ("grep", "egrep", "fgrep") and recursive_grep(words))
-        or (name == "ls" and ls_recursive(words))
-    )
-    if recursive:
-        walked = directories if path_operands else [resolve(".", cwd)]
-        for directory in walked:
-            if directory and endangers_secrets(directory, roots):
-                hits.append(directory if path_operands else ".")
-    return list(dict.fromkeys(hits))
-
-
-def secret_reads(command, root_cwd, cwd=None):
-    """Returns the arguments of the command that read a credential store.
-
-    Covers the gaps the shell excludes cannot: a glob that only expands to a
-    credential path once bash runs it, and a recursive reader aimed at a
-    directory that holds one. Both pass the excludes, which match the command's
-    literal text.
-    """
-    cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
-    roots = secret_roots()
-    found = []
-    for commenters in COMMENT_MODES:
-        try:
-            tokens = tokenize(command, commenters)
-        except ValueError:
-            continue
-        for words in command_segments(tokens):
-            found += segment_reads(words, cwd, roots)
-    return list(dict.fromkeys(found))
-
-
-def input_paths(target, cwd):
-    """Returns the target as written and the paths bash would read for it."""
-    if "$" in target or "`" in target:
-        return [target]
-    path = os.path.join(cwd, os.path.expanduser(target))
-    # Bash expands a glob in a redirect target when it matches one file.
-    found = glob.glob(path) if set("*?[") & set(target) else [path]
-    return [target, *found, *(os.path.realpath(p) for p in found)]
-
-
-def tokenize(command, commenters):
+def tokenize(command: str, commenters: str) -> list[str]:
     lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
     lexer.whitespace_split = True
     lexer.commenters = commenters
     return list(lexer)
 
 
-def secret_inputs(command, root_cwd, cwd=None):
-    """Returns the `<` targets of the command that may hold credentials.
-
-    Here-documents, here-strings, `<&` duplication, and process substitution
-    read no named file; `<>` also writes, so blocked_targets checks it.
-    """
-    cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
-    found = []
-    for commenters in COMMENT_MODES:
-        try:
-            tokens = tokenize(command, commenters)
-        except ValueError:
-            if "<" in command and is_secret(command):
-                found.append(command)
-            continue
-        # Python 3.9, which Kiro may run hooks with, lacks itertools.pairwise.
-        found += [
-            tokens[index + 1]
-            for index, token in enumerate(tokens[:-1])
-            if set(token) <= PUNCTUATION
-            and token.lstrip(";)|&") == "<"
-            and any(is_secret(path) for path in input_paths(tokens[index + 1], cwd))
-        ]
-    return list(dict.fromkeys(found))
-
-
-def redirect_operator(token):
-    """Returns the redirect part of a punctuation token, or None if it has none.
-
-    shlex fuses adjacent punctuation, so `;>` or `)>` arrive as one token; the
-    operator is whatever follows the last command separator.
-    """
-    if ">" not in token or not set(token) <= PUNCTUATION:
-        return None
-    if "(" in token:
-        return token
-    operator = re.split(r"[;)]", token)[-1]
-    return operator if ">" in operator else None
-
-
-# A punctuation token that only redirects, as opposed to one that separates
-# commands or opens a subshell.
-REDIRECT_ONLY = re.compile(r"&>>?|>>?|>\||>&|<<<|<<|<>|<&|<")
-# A here-document operator and its delimiter, which may be quoted.
-HEREDOC = re.compile(r"(?<!<)<<(?!<)(-?)\s*(['\"]?)([^\s'\"();<>|&]+)\2")
-DIRECTORY_CHANGES = {"cd", "popd", "pushd"}
-
-
-class OutputOptions(
-    collections.namedtuple("OutputOptions", "with_arguments long separate")
-):
-    """How a command names the file it writes through -o.
-
-    with_arguments holds its short options that take an argument, o included.
-    long holds the long options that name an output file or directory. When
-    separate is false (getopt, commander, pflag, click), an option takes the
-    rest of its word as its argument, or the next word if nothing is left.
-    When it is true (tree), every option in a cluster takes the next unused
-    word, so `-Lo 1 f` writes f.
-    """
-
-    __slots__ = ()
-
-
-GETOPT_OUTPUT = ("--output",)
-# Auto-approved commands that write a file through -o, keyed by the words that
-# start them in permissions.yaml. A short option missing from with_arguments
-# only makes the hook stricter, except for tree, whose list must be complete.
-OUTPUT_OPTIONS = {
-    # macOS and GNU base64.
-    ("base64",): OutputOptions("biow", GETOPT_OUTPUT, False),
-    # Global options only; subcommand options are left out.
-    ("chezmoi",): OutputOptions("DSWco", GETOPT_OUTPUT, False),
-    ("defuddle",): OutputOptions("loup", GETOPT_OUTPUT, False),
-    ("docker", "compose", "config"): OutputOptions("fop", GETOPT_OUTPUT, False),
-    ("docker-compose", "config"): OutputOptions("fop", GETOPT_OUTPUT, False),
-    ("npx", "-y", "@firecrawl/anydoc"): OutputOptions("fo", GETOPT_OUTPUT, False),
-    ("npx", "@firecrawl/anydoc"): OutputOptions("fo", GETOPT_OUTPUT, False),
-    # BSD and GNU sort.
-    ("sort",): OutputOptions("STkot", GETOPT_OUTPUT, False),
-    ("tree",): OutputOptions("HILPTo", (), True),
-    ("tvly",): OutputOptions("o", ("--output", "--output-dir"), False),
-}
-# A word that sets a variable for the command after it.
-ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*", re.DOTALL)
-# An output option after an OUTPUT_OPTIONS command, for text that does not split.
-HIDDEN_OUTPUT_OPTION = re.compile(
-    r"\b(?:"
-    + "|".join(sorted({re.escape(p[-1].rsplit("/", 1)[-1]) for p in OUTPUT_OPTIONS}))
-    + r")\b[^\n]*\s(?:--o|-[^\s-]*o)"
-)
-# Commands that can create a symlink from their arguments, or run code or
-# other commands that can. Kiro asks before running any command it does not
-# auto-approve, so the list is defense in depth for those and matters most for
-# the auto-approved ones (git, tar, unzip, docker, npx, chezmoi). A command
-# missing from it, such as rg or mkdir, cannot turn a missing redirect target
-# into a link before bash opens it.
-LINK_COMMANDS = re.compile(
-    r"(?:ln|cp|mv|install|rsync|ditto|g?tar|bsdtar|unzip|cpio|pax|git|docker"
-    r"|docker-compose|chezmoi|npx|npm|pnpm|yarn|uvx?|pip[0-9.]*|python[0-9.]*"
-    r"|node|deno|bun|perl|ruby|php|osascript|g?awk|find|xargs|env|exec|eval"
-    r"|sudo|command|builtin|source|\.|(?:ba|z|da|fi|k)?sh|make|tvly|mcporter"
-    r"|agent-browser)"
-)
-
-
-def split_lines(text, commenters=""):
-    """Splits text like blocked_targets does, but keeps newlines as tokens."""
-    if commenters:
-        # shlex drops the newline that ends a comment; doubling every newline
-        # keeps one as a separator.
-        text = text.replace("\n", "\n\n")
-    lexer = shlex.shlex(text, posix=True, punctuation_chars="();<>|&\n")
-    lexer.whitespace_split = True
-    lexer.whitespace = " \t\r"
-    lexer.commenters = commenters
-    return list(lexer)
-
-
-def heredoc_operators(line, commenters):
+def tokenizes(text: str, commenters: str) -> bool:
     try:
-        tokens = split_lines(line, commenters)
+        tokenize(text, commenters)
+    except ValueError:
+        return False
+    return True
+
+
+def is_punctuation(token: str) -> bool:
+    return set(token) <= PUNCTUATION
+
+
+def heredoc_operators(line: str, commenters: str) -> list[str] | None:
+    try:
+        tokens = tokenize(line, commenters)
     except ValueError:
         return None
-    return [t for t in tokens if set(t) <= PUNCTUATION and t.lstrip(";)|&") == "<<"]
+    return [t for t in tokens if is_punctuation(t) and t.lstrip(";)|&") == "<<"]
 
 
-def without_arithmetic(line, depth):
+def without_arithmetic(line: str, depth: int) -> tuple[str, int]:
     """Returns (text, depth): the line without $((...)) and ((...)) contents.
 
     `<<` inside arithmetic shifts bits and starts no here-document. depth is
@@ -569,13 +289,68 @@ def without_arithmetic(line, depth):
     return "".join(kept), depth
 
 
-def without_heredoc_bodies(command, commenters):
+def may_misplace_quotes(text: str) -> bool:
+    """Returns whether shlex may end a string where bash does not.
+
+    A double-quoted string that contains $(...), ${...}, or backticks may hold
+    quotes that bash reads as nested and shlex as the end of the string.
+    """
+    return ANSI_C_QUOTE in text or (
+        '"' in text and NESTED_EXPANSION.search(text) is not None
+    )
+
+
+def without_literal_substitutions(command: str) -> str:
+    """Returns the command with each "$(cat <<'X' ... X)" replaced by "".
+
+    With a quoted delimiter, bash reads the here-document body as literal data
+    and cat prints it, so a `>` or quote in the body (a commit message's `->`
+    or Markdown quote) is neither a redirect nor the end of a string. The body
+    ends at its first line equal to the delimiter, and only `)"` may follow.
+    No earlier body line may start with the delimiter after leading
+    whitespace, because bash 5 may end the body there inside $(...).
+    A span is replaced only when bash and shlex agree that it starts outside
+    any string or comment: the text before it tokenizes the same with and
+    without comments, has no here-document of its own, and has nothing
+    may_misplace_quotes flags.
+    """
+    while True:
+        match = LITERAL_SUBSTITUTION.search(command)
+        if match is None:
+            return command
+        prefix = command[: match.start()]
+        try:
+            agree = tokenize(prefix, "") == tokenize(prefix, "#")
+        except ValueError:
+            agree = False
+        if not agree or "<<" in prefix or may_misplace_quotes(prefix):
+            return command
+        delimiter = match.group(2)
+        lines = command[match.end() :].split("\n")
+        if delimiter not in lines:
+            return command
+        end = lines.index(delimiter)
+        # Inside $(...), bash 5 also ends the body at a line that starts with
+        # the delimiter followed by `)` and runs the rest of that line as code.
+        # A body line that starts with the delimiter, such as "EOF)", "EOF ",
+        # or "\tEOF", leaves the span to the checks on the whole command.
+        if any(line.lstrip().startswith(delimiter) for line in lines[:end]):
+            return command
+        rest = "\n".join(lines[end + 1 :])
+        if not rest.lstrip().startswith(')"'):
+            return command
+        command = prefix + '""' + rest.lstrip()[2:]
+
+
+def without_heredoc_bodies(command: str, commenters: str) -> tuple[str, bool]:
     """Returns (text, certain): the command without here-document bodies.
 
     certain is False when a body expands $(...) or backticks, which run before
     the command's redirects, or when a body has no closing delimiter. A `<<`
     that the lexer does not see as an operator, such as one inside quotes or
-    arithmetic, starts no body.
+    arithmetic, starts no body. That includes a line that begins inside a
+    quote opened on an earlier line, which shows as the kept text so far not
+    tokenizing, and a `<<` after text whose quotes shlex may misplace.
     """
     kept, pending, certain, depth = [], [], True, 0
     for line in command.split("\n"):
@@ -586,508 +361,247 @@ def without_heredoc_bodies(command, commenters):
             elif not quoted and ("$(" in line or "`" in line):
                 certain = False
             continue
+        match = HEREDOC.search(line)
+        in_quote = match is not None and (
+            not tokenizes("\n".join(kept), commenters)
+            or may_misplace_quotes("\n".join([*kept, line[: match.start()]]))
+        )
         kept.append(line)
         line, depth = without_arithmetic(line, depth)
-        found = HEREDOC.findall(line)
+        found = [] if in_quote else HEREDOC.findall(line)
         operators = heredoc_operators(line, commenters) if found else []
         if found and operators is not None and len(operators) == len(found):
             pending = [(dash == "-", bool(quote), word) for dash, quote, word in found]
     return "\n".join(kept), certain and not pending
 
 
-def command_shape(command):
-    """Returns (may_link, changes_directory) for the command.
+def command_tokens(command: str, commenters: str) -> list[str]:
+    """Tokenizes the command, leaving out here-document bodies that are data.
 
-    may_link is whether another part of the command could create a symlink
-    before a redirect opens its target: the command is compound and some word
-    in it names one of LINK_COMMANDS, or it runs text this hook cannot read
-    (backticks, or a here-document body that expands commands or never ends).
-    Separators and words inside a here-document body are data, so they do not
-    count for may_link. changes_directory counts every word, bodies included,
-    so that a misread here-document operator cannot hide a directory change. A
-    command it cannot split counts as both. Each value is true if it is true in
-    either of COMMENT_MODES.
+    Raises ValueError when the command does not tokenize.
     """
-    shapes = [split_shape(command, commenters) for commenters in COMMENT_MODES]
-    return any(link for link, _ in shapes), any(cd for _, cd in shapes)
-
-
-def split_shape(command, commenters):
     text, certain = without_heredoc_bodies(command, commenters)
-    # Bash joins a line that ends with a backslash to the next one.
-    text = text.replace("\\\n", "").rstrip()
-    try:
-        tokens = split_lines(text, commenters)
-    except ValueError:
-        return True, True
-    changes_directory = bool(DIRECTORY_CHANGES & command_words(command, commenters))
-    if not certain or "`" in text:
-        return True, changes_directory
-    compound = any(
-        set(t) <= PUNCTUATION | {"\n"} and not REDIRECT_ONLY.fullmatch(t)
-        for t in tokens
-    )
-    may_link = compound and any(
-        LINK_COMMANDS.fullmatch(os.path.basename(t)) for t in tokens
-    )
-    return may_link, changes_directory
+    return tokenize(text if certain else command, commenters)
 
 
-def command_words(command, commenters):
+def command_words(command: str, commenters: str) -> set[str]:
     """Returns the words of the whole command, here-document bodies included.
 
     A body need not tokenize, as with an apostrophe in prose, so a command that
-    does not split falls back to every run of word characters.
+    does not split falls back to rough words.
     """
     try:
-        return set(split_lines(command, commenters))
+        return set(tokenize(command, commenters))
     except ValueError:
-        return set(re.findall(r"[\w.-]+", command))
+        return set(ROUGH_WORD.findall(command))
 
 
-def output_targets(command, commenters):
-    """Returns the files that OUTPUT_OPTIONS commands write through -o.
+def redirect_operator(token: str) -> str | None:
+    """Returns the redirect part of a punctuation token, or None if it has none.
 
-    The option may share a word with other short flags, and these tools accept
-    it after operands. GNU tools also accept any abbreviation of a long output
-    option, which this treats as true for all of them. A command that does not
-    split counts as writing the whole command if it looks like one.
+    shlex fuses adjacent punctuation, so `;>` or `)>` arrive as one token; the
+    operator is whatever follows the last command separator.
     """
-    try:
-        tokens = split_lines(command, commenters)
-    except ValueError:
-        return [command] if HIDDEN_OUTPUT_OPTION.search(command) else []
-    targets, index, at_command = [], 0, True
-    while index < len(tokens):
-        token = tokens[index]
-        if set(token) <= PUNCTUATION | {"\n"}:
-            index += 1
-            if REDIRECT_ONLY.fullmatch(token):
-                index += 1
-            else:
-                at_command = True
-        elif at_command and not ASSIGNMENT.fullmatch(token):
-            at_command = False
-            prefix = command_prefix(tokens, index)
-            if prefix is None:
-                index += 1
-                continue
-            found, index = option_targets(
-                tokens, index + len(prefix), OUTPUT_OPTIONS[prefix]
-            )
-            targets += found
-        else:
-            index += 1
-    return targets
+    if ">" not in token or not is_punctuation(token):
+        return None
+    if "(" in token:
+        return token
+    operator = re.split(r"[;)]", token)[-1]
+    return operator if ">" in operator else None
 
 
-def command_prefix(tokens, index):
-    """Returns the longest OUTPUT_OPTIONS key that starts tokens[index:]."""
-    words = (os.path.basename(tokens[index]), *tokens[index + 1 :])
-    found = [key for key in OUTPUT_OPTIONS if words[: len(key)] == key]
-    return max(found, key=len) if found else None
+def blocked_targets(command: str, root_cwd: str, cwd: str | None = None) -> list[str]:
+    """Returns the redirect targets of the command outside the allowed paths.
 
-
-def argument(tokens, index):
-    """Returns (word, index): the next argument the command sees, and the index after it.
-
-    Bash removes redirections before the command runs. shlex splits `2>f`
-    into `2` and `>`, so a number right before a redirect operator counts as
-    its file descriptor; when it is an argument instead, the guard checks a
-    later word, which only makes it stricter. A missing argument is "".
+    A directory change counts even inside a here-document body, so that a
+    misread here-document operator cannot hide it.
     """
-    while index < len(tokens):
-        token = tokens[index]
-        if REDIRECT_ONLY.fullmatch(token):
-            index += 2
-        elif (
-            token.isdigit()
-            and index + 1 < len(tokens)
-            and REDIRECT_ONLY.fullmatch(tokens[index + 1])
-        ):
-            index += 3
-        elif set(token) <= PUNCTUATION | {"\n"}:
-            break
-        else:
-            return token, index + 1
-    return "", index
-
-
-def option_targets(tokens, index, options):
-    """Returns (targets, index): the output arguments from tokens[index] on.
-
-    options is the command's OutputOptions. index ends at the first word that
-    is not an option or operand.
-    """
-    targets = []
-    while index < len(tokens):
-        token = tokens[index]
-        if set(token) <= PUNCTUATION | {"\n"}:
-            if not REDIRECT_ONLY.fullmatch(token):
-                break
-            index += 2
-            continue
-        index += 1
-        if token == "--":
-            break
-        if token.startswith("--"):
-            name, equals, value = token.partition("=")
-            if len(name) > 2 and any(long.startswith(name) for long in options.long):
-                if not equals:
-                    value, index = argument(tokens, index)
-                targets.append(value)
-        elif token.startswith("-") and options.separate:
-            flags = token[1:]
-            values = []
-            for _ in range(sum(flag in options.with_arguments for flag in flags)):
-                value, index = argument(tokens, index)
-                values.append(value)
-            if "o" in flags:
-                targets += values
-        elif token.startswith("-"):
-            for position, flag in enumerate(token[1:], start=2):
-                if flag not in options.with_arguments:
-                    continue
-                value = token[position:]
-                if not value:
-                    value, index = argument(tokens, index)
-                if flag == "o":
-                    targets.append(value)
-                    # pflag drops an = between a short option and its value.
-                    if value.startswith("="):
-                        targets.append(value[1:])
-                break
-    return targets, index
-
-
-def missing_below_root(path, root_cwd):
-    """Returns whether the path, or a parent below its allowed root, is missing."""
-    roots = [r for r in allowed_roots(root_cwd) if path.startswith(r + os.sep)]
-    if is_device(path) or not roots:
-        return False
-    root = max(roots, key=len)
-    while path != root:
-        if not os.path.lexists(path):
-            return True
-        path = os.path.dirname(path)
-    return False
-
-
-def blocked_targets(command, root_cwd, cwd=None):
     cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
-    may_link, changes_directory = command_shape(command)
+    changes_directory = any(
+        DIRECTORY_CHANGES & command_words(command, commenters)
+        for commenters in COMMENT_MODES
+    )
 
-    def is_blocked(target):
+    def is_blocked(target: str) -> bool:
         path = resolve(target, cwd)
         return (
             path is None
             or not is_allowed(path, root_cwd)
             or (changes_directory and not os.path.isabs(os.path.expanduser(target)))
-            or (may_link and missing_below_root(path, root_cwd))
         )
 
     blocked = []
     for commenters in COMMENT_MODES:
-        outputs = output_targets(command, commenters)
         try:
-            tokens = tokenize(command, commenters)
+            tokens = command_tokens(command, commenters)
         except ValueError:
-            if ">" in command or outputs:
+            if ">" in command:
                 blocked.append(command)
             continue
-        blocked += redirect_targets(tokens, is_blocked)
-        blocked += [t for t in outputs if is_blocked(t)]
+        for index, token in enumerate(tokens):
+            operator = redirect_operator(token)
+            if operator is None:
+                continue
+            if "(" in operator:
+                blocked.append(token)
+                continue
+            if index + 1 == len(tokens):
+                continue
+            target = tokens[index + 1]
+            # Bash writes to a file named after the `!` word itself, and zsh
+            # to the rest of the word or, for a bare `!`, the next word, so
+            # every one of them must be allowed.
+            targets = [target]
+            if target == CLOBBER and index + 2 < len(tokens):
+                targets.append(tokens[index + 2])
+            elif target.startswith(CLOBBER) and target != CLOBBER:
+                targets.append(target[len(CLOBBER) :])
+            if operator.endswith("&") and (target.isdigit() or target == "-"):
+                continue
+            blocked += [path for path in targets if is_blocked(path)]
     return list(dict.fromkeys(blocked))
 
 
-def redirect_targets(tokens, is_blocked):
-    """Returns the redirect targets in the tokens that the guard blocks."""
-    blocked = []
-    for index, token in enumerate(tokens):
-        operator = redirect_operator(token)
-        if operator is None:
-            continue
-        if "(" in operator:
-            blocked.append(token)
-            continue
-        if index + 1 == len(tokens):
-            continue
-        target = tokens[index + 1]
-        if operator.endswith("&") and (target.isdigit() or target == "-"):
-            continue
-        if is_blocked(target):
-            blocked.append(target)
-    return blocked
+def secret_paths(command: str, root_cwd: str, cwd: str | None = None) -> list[str]:
+    """Returns the words of the command that reach a location in SECRET_PATTERNS.
 
-
-MCPORTER_PROJECT_CONFIG = "config/mcporter.json"
-# Editor configs mcporter imports servers from, relative to its working
-# directory, each with the keys whose objects it reads server definitions from.
-# "" stands for the file's root object, and every JSON file also has
-# projects.<path>.mcpServers. TOML files have mcp_servers tables instead.
-MCPORTER_IMPORTS = {
-    ".claude/mcp.json": ("", "mcp", "mcpServers", "servers"),
-    ".claude/settings.json": ("mcp", "mcpServers", "servers"),
-    ".claude/settings.local.json": ("mcp", "mcpServers", "servers"),
-    ".codex/config.toml": (),
-    ".cursor/mcp.json": ("", "mcp", "mcpServers", "servers"),
-    ".openai/config.json": ("mcp",),
-    ".vscode/mcp.json": ("", "mcp", "mcpServers", "servers"),
-    "opencode.json": ("mcp",),
-    "opencode.jsonc": ("mcp",),
-}
-# Imports mcporter also reads from the home directory whatever its working
-# directory, so from the home directory they are the owner's own files.
-MCPORTER_HOME_IMPORTS = frozenset(
-    {
-        ".claude/mcp.json",
-        ".claude/settings.json",
-        ".claude/settings.local.json",
-        ".codex/config.toml",
-        ".cursor/mcp.json",
-    }
-)
-# Variables that move the config mcporter reads or the editor configs it
-# imports.
-MCPORTER_CONFIG_VARIABLES = re.compile(
-    r"(?:APPDATA|HOME|MCPORTER_CONFIG|OPENAI_WORKDIR|OPENCODE_CONFIG(?:_DIR)?"
-    r"|XDG_CONFIG_HOME)=.*",
-    re.DOTALL,
-)
-
-
-def defines_servers(path, keys):
-    """Returns whether an editor config may define servers mcporter imports.
-
-    A JSON file that does not parse as strict JSON, such as one with comments,
-    counts as defining them, because mcporter accepts JSON with comments.
-    """
-    try:
-        with open(path, encoding="utf-8") as config:
-            text = config.read()
-    except (OSError, UnicodeDecodeError):
-        return os.path.lexists(path)
-    if not text.strip():
-        return False
-    if path.endswith(".toml"):
-        return "mcp_servers" in text
-    try:
-        data = json.loads(text)
-    except ValueError:
-        return True
-    if not isinstance(data, dict):
-        return False
-    containers = [data.get(key) if key else data for key in keys]
-    projects = data.get("projects")
-    if isinstance(projects, dict):
-        containers += [
-            p.get("mcpServers") for p in projects.values() if isinstance(p, dict)
-        ]
-    return any(
-        isinstance(container, dict)
-        and any(isinstance(entry, dict) for entry in container.values())
-        for container in containers
-    )
-
-
-def mcporter_project_configs(directory):
-    """Returns the files in directory that would add servers to mcporter."""
-    found = []
-    if os.path.lexists(os.path.join(directory, MCPORTER_PROJECT_CONFIG)):
-        found.append(MCPORTER_PROJECT_CONFIG)
-    home = os.path.realpath(os.path.expanduser("~"))
-    for name, keys in sorted(MCPORTER_IMPORTS.items()):
-        if name in MCPORTER_HOME_IMPORTS and os.path.realpath(directory) == home:
-            continue
-        path = os.path.join(directory, name)
-        if os.path.lexists(path) and defines_servers(path, keys):
-            found.append(name)
-    return found
-
-
-def mcporter_problems(command, root_cwd, cwd=None):
-    """Returns why mcporter in this command could load servers the owner did not set.
-
-    mcporter merges config/mcporter.json from its working directory over the
-    owner's config and imports servers from editor configs there, so a file
-    the agent writes could define the server an auto-approved call starts.
-    MCPORTER_CONFIG and the variables that locate the owner's config or the
-    imports redirect it the same way. A directory change earlier in the
-    command moves the working directory to one this hook does not check.
+    Every word counts, `<` sources included, after expanding `~`, $HOME,
+    braces, and globs and resolving symlinks. A command that does not tokenize falls back to rough
+    words, and so, in addition to its tokens, does one whose quotes shlex may
+    misplace (may_misplace_quotes), since a path bash reads as a word may sit
+    inside one of shlex's strings.
     """
     cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
-    words = set()
-    for commenters in COMMENT_MODES:
-        try:
-            words |= set(split_lines(command, commenters))
-        except ValueError:
-            words |= set(re.findall(r"[^\s;&|()<>]+", command))
-    if not any(os.path.basename(word) == "mcporter" for word in words):
-        return []
-    problems = [
-        f"sets {word.split('=', 1)[0]}"
-        for word in sorted(words)
-        if MCPORTER_CONFIG_VARIABLES.fullmatch(word)
-    ]
-    if DIRECTORY_CHANGES & words:
-        problems.append("changes directory first")
-    problems += [
-        f"would load {name} from {cwd}" for name in mcporter_project_configs(cwd)
-    ]
-    return list(dict.fromkeys(problems))
-
-
-# chezmoi subcommands that permissions.yaml auto-approves, with or without
-# --no-pager before them.
-CHEZMOI_READ_ONLY = frozenset(
-    {
-        "cat-config",
-        "data",
-        "diff",
-        "doctor",
-        "help",
-        "ignored",
-        "managed",
-        "source-path",
-        "status",
-        "target-path",
-        "unmanaged",
-        "verify",
-    }
-)
-# Short options that pick another source, config, destination, or working
-# tree, and every short option of those subcommands that takes a value, which
-# ends a cluster of short flags.
-CHEZMOI_SOURCE_FLAGS = frozenset("DSWc")
-CHEZMOI_VALUE_FLAGS = frozenset("DSWcfiopx")
-
-
-def is_separator(token):
-    return set(token) <= PUNCTUATION | {"\n"}
-
-
-def is_read_only_chezmoi(words):
-    """Returns whether words, from the command word on, start a CHEZMOI_READ_ONLY form."""
-    if os.path.basename(words[0]) != "chezmoi":
-        return False
-    rest = words[2:3] if words[1:2] == ["--no-pager"] else words[1:2]
-    return bool(rest) and rest[0] in CHEZMOI_READ_ONLY
-
-
-def hidden_source_flags(word):
-    """Returns whether a short-flag word has a CHEZMOI_SOURCE_FLAGS flag after its first.
-
-    A plain -S dir matches the permission excludes and prompts, so only a flag
-    that follows another one in the word counts.
-    """
-    if not word.startswith("-") or word.startswith("--"):
-        return False
-    for position, flag in enumerate(word[1:]):
-        if position and flag in CHEZMOI_SOURCE_FLAGS:
-            return True
-        if flag in CHEZMOI_VALUE_FLAGS or flag == "=":
-            return False
-    return False
-
-
-def chezmoi_hidden_options(command):
-    """Returns the short-flag words that pass a source option to read-only chezmoi.
-
-    pflag reads -vS dir as -v -S dir. The permission excludes match "-S" only
-    at the start of a word, so a source, config, destination, or working-tree
-    option after other short flags in one word would run an auto-approved
-    diff, status, or verify against a source the agent chose.
-    """
     found = []
     for commenters in COMMENT_MODES:
         try:
-            tokens = split_lines(command, commenters)
+            words = command_tokens(command, commenters)
         except ValueError:
-            if re.search(r"\bchezmoi\b[^\n]*\s-[^\s-]+[DSWc]", command):
-                found.append(command)
-            continue
-        index, at_command = 0, True
-        while index < len(tokens):
-            token = tokens[index]
-            if is_separator(token):
-                if REDIRECT_ONLY.fullmatch(token):
-                    index += 1
-                else:
-                    at_command = True
-                index += 1
-                continue
-            index += 1
-            if not at_command or ASSIGNMENT.fullmatch(token):
-                continue
-            at_command = False
-            if not is_read_only_chezmoi(tokens[index - 1 : index + 2]):
-                continue
-            while index < len(tokens) and not is_separator(tokens[index]):
-                word = tokens[index]
-                index += 1
-                if word == "--":
-                    break
-                if hidden_source_flags(word):
-                    found.append(word)
+            words = ROUGH_WORD.findall(command)
+        else:
+            if may_misplace_quotes(command):
+                words += ROUGH_WORD.findall(command)
+        found += [
+            word
+            for word in words
+            if not is_punctuation(word) and reaches_secret(word, cwd)
+        ]
     return list(dict.fromkeys(found))
 
 
-def main():
+def reaches_secret(word: str, cwd: str) -> bool:
+    """Returns whether any brace expansion of word reaches a secret location.
+
+    A word with too many brace expansions to check counts as reaching one.
+    """
+    alternatives = brace_alternatives(word)
+    if alternatives is None:
+        return True
+    return any(
+        is_secret(path)
+        for alternative in alternatives
+        for path in input_paths(alternative, cwd)
+    )
+
+
+def quoting_hazard(command: str) -> str | None:
+    """Returns why the command's redirects cannot be checked, or None.
+
+    shlex does not parse bash's ANSI-C quoting, so with $'...' it may see a
+    redirect or here-document boundary inside a string, or a string where bash
+    sees a redirect. With $(...), ${...}, or backticks inside double quotes,
+    bash parses a nested command whose redirects shlex reads as part of the
+    string, so a `>` inside a token counts as a redirect.
+    """
+    if ANSI_C_QUOTE in command and (">" in command or "<<" in command):
+        return (
+            "this command combines ANSI-C quoting ($'...') with a redirect or a"
+            " here-document, and bash ends $'...' strings where this hook cannot"
+            " tell. Rewrite the command without $'...', for example with printf"
+            " and a single-quoted format, or use the write tool for the file."
+        )
+    if not may_misplace_quotes(command):
+        return None
+    for commenters in COMMENT_MODES:
+        try:
+            tokens = command_tokens(command, commenters)
+        except ValueError:
+            continue
+        if any(">" in token and not is_punctuation(token) for token in tokens):
+            return (
+                "this command has `>` inside a double-quoted string that also"
+                " holds $(...), ${...}, or backticks, which bash parses as"
+                " nested code with redirects of its own. Run the substitution"
+                " or the redirect as a command of its own, or use the write"
+                " tool for the file."
+            )
+    return None
+
+
+def read_input() -> tuple[str, str, str | None]:
+    """Returns (command, root_cwd, tool cwd) from the PreToolUse payload.
+
+    Raises ValueError when stdin is not JSON and TypeError when the payload
+    does not have the expected shape.
+    """
     data = json.load(sys.stdin)
+    if not isinstance(data, dict):
+        raise TypeError("the payload is not a JSON object")
     tool_input = data.get("tool_input") or {}
+    if not isinstance(tool_input, dict):
+        raise TypeError("tool_input is not an object")
     command = tool_input.get("command") or ""
     root_cwd = data.get("cwd") or os.getcwd()
-    secrets = secret_inputs(command, root_cwd, tool_input.get("cwd"))
+    cwd = tool_input.get("cwd")
+    if not isinstance(command, str):
+        raise TypeError("tool_input.command is not a string")
+    if not isinstance(root_cwd, str) or not isinstance(cwd, (str, type(None))):
+        raise TypeError("cwd is not a string")
+    return command, root_cwd, cwd
+
+
+def main() -> int:
+    try:
+        command, root_cwd, cwd = read_input()
+    except (TypeError, ValueError) as error:
+        # A payload the hook cannot read may hide a redirect, so it blocks.
+        print(f"Blocked: cannot read the hook input: {error}.", file=sys.stderr)
+        return 2
+    # Redirects are checked without literal here-document bodies; the secret
+    # path check still reads them.
+    code = without_literal_substitutions(command)
+    hazard = quoting_hazard(code)
+    if hazard:
+        print(f"Blocked: {hazard}", file=sys.stderr)
+        return 2
+    blocked = blocked_targets(code, root_cwd, cwd)
+    if blocked:
+        print(
+            f"Blocked: this command writes output to {', '.join(blocked)}, which is"
+            " outside the paths Kiro may write without asking (the working"
+            " directory, /tmp, ~/Desktop, ~/Downloads) or cannot be resolved"
+            " before the command runs. Use the write tool for that file so Kiro"
+            " can ask for approval, or run the redirect as a command of its own.",
+            file=sys.stderr,
+        )
+        return 2
+    secrets = secret_paths(command, root_cwd, cwd)
     if secrets:
-        print(
-            f"Blocked: this command reads {', '.join(secrets)} through an input"
-            " redirect, a location that may hold credentials. Use the read tool"
-            " for that file so Kiro can ask for approval.",
-            file=sys.stderr,
+        reason = (
+            f"This command reaches {', '.join(secrets)}, a location that may hold"
+            " credentials, once ~, $HOME, braces, globs, and symlinks are expanded."
         )
-        return 2
-    reads = secret_reads(command, root_cwd, tool_input.get("cwd"))
-    if reads:
         print(
-            f"Blocked: this command reads {', '.join(reads)}, a location that may"
-            " hold credentials, after expanding a glob or walking a directory"
-            " that the shell rules cannot see. Use the read tool for that file so"
-            " Kiro can ask for approval.",
-            file=sys.stderr,
+            json.dumps(
+                {
+                    "hookSpecificOutput": {
+                        "permissionDecision": "ask",
+                        "permissionDecisionReason": reason,
+                    }
+                }
+            )
         )
-        return 2
-    mcporter = mcporter_problems(command, root_cwd, tool_input.get("cwd"))
-    if mcporter:
-        print(
-            f"Blocked: this mcporter command {'; '.join(mcporter)}, so it could"
-            " start servers that the owner's mcporter config does not define."
-            " Run mcporter from a working directory without those files and"
-            " without changing its config location, or ask the owner to run it.",
-            file=sys.stderr,
-        )
-        return 2
-    hidden = chezmoi_hidden_options(command)
-    if hidden:
-        print(
-            f"Blocked: {', '.join(hidden)} passes a source, config, destination,"
-            " or working-tree option to chezmoi inside a cluster of short flags,"
-            " which the permission rules cannot see. Write each flag as a"
-            " separate word so Kiro can ask for approval.",
-            file=sys.stderr,
-        )
-        return 2
-    blocked = blocked_targets(command, root_cwd, tool_input.get("cwd"))
-    if not blocked:
-        return 0
-    print(
-        f"Blocked: this command writes output to {', '.join(blocked)}, which is"
-        " outside the paths Kiro may write without asking (the working"
-        " directory, /tmp, ~/Desktop, ~/Downloads) or may resolve there once"
-        " earlier parts of the command run. Use the write tool for that file so"
-        " Kiro can ask for approval, or run the redirect as a command of its own.",
-        file=sys.stderr,
-    )
-    return 2
+    return 0
 
 
 if __name__ == "__main__":
