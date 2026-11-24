@@ -35,4 +35,7 @@ jobs:
         env:
           # zizmor runs its online audits, such as impostor-commit, with a token.
           GH_TOKEN: ${{ github.token }}
+          # uvx otherwise resolves the newest releases, which Safe Chain blocks
+          # while they are younger than its 96-hour minimum package age.
+          UV_EXCLUDE_NEWER: 4 days
         run: uvx --with pre-commit-uv==4.3.0 pre-commit@4.6.2 run --all-files --show-diff-on-failure
