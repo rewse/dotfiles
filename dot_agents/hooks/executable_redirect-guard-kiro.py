@@ -3,13 +3,13 @@
 
 Kiro strips redirections before matching a shell command against its rules and
 never checks the target as an fs_write, so `git log > ~/.zshrc` matches the
-allow for `git log`. This hook blocks (exit 2)
-any `>`, `>>`, `&>`, or `>|`, or zsh's `>!` forms, whose target is outside the
-paths Kiro may write without asking (the session's working directory, /tmp, ~/Desktop,
-~/Downloads, and device files), which sends the model to the write tool, where
-Kiro asks for approval. A target that a variable, command substitution, glob,
-or process substitution builds is blocked too, since it cannot be resolved
-here, and so is a relative target in a command that changes directory first.
+allow for `git log`. This hook blocks (exit 2) any `>`, `>>`, `&>`, or `>|`, or
+zsh's `>!` forms, whose target is outside the paths Kiro may write without
+asking (the session's working directory, /tmp, ~/Desktop, ~/Downloads, and
+device files), which sends the model to the write tool, where Kiro asks for
+approval. A target that a variable, command substitution, glob, or process
+substitution builds is blocked too, since it cannot be resolved here, and so is
+a relative target in a command that changes directory first.
 
 Bash and shlex disagree on a few points, which the parsing handles:
 
