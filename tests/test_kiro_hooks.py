@@ -500,10 +500,10 @@ class RedirectGuardKiroTest(unittest.TestCase):
             self.skipTest("needs the macOS system Python")
         (self.home / ".aws").mkdir()
         (self.home / ".aws" / "config").write_text("")
-        for command, code, asks in (
-            ("echo x >! ~/.zshrc", 2, False),
-            ("git log > out.txt", 0, False),
-            ("cat ~/.{a,}ws/config", 0, False),
+        for command, code in (
+            ("echo x >! ~/.zshrc", 2),
+            ("git log > out.txt", 0),
+            ("cat ~/.{a,}ws/config", 0),
         ):
             payload = kiro_payload(command)
             payload["cwd"] = str(self.workspace)
@@ -517,7 +517,7 @@ class RedirectGuardKiroTest(unittest.TestCase):
                     check=False,
                 )
                 self.assertEqual(result.returncode, code, result.stderr)
-                self.assertEqual('"ask"' in result.stdout, asks, result.stdout)
+                self.assertEqual(result.stdout, "")
 
     def test_blocks_payloads_it_cannot_read(self) -> None:
         for stdin in (
