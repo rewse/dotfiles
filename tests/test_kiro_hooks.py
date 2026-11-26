@@ -209,12 +209,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.stderr, "")
 
-    def assert_asks(self, command: str) -> None:
-        result = self.run_guard(command)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        output = json.loads(result.stdout)["hookSpecificOutput"]
-        self.assertEqual(output["permissionDecision"], "ask")
-        self.assertTrue(output["permissionDecisionReason"])
 
     def test_blocks_redirects_outside_allowed_paths(self) -> None:
         for command in (
@@ -343,10 +337,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assert_blocked(command)
 
-    def test_asks_for_secret_paths_hidden_by_here_document_operators_in_quotes(
-        self,
-    ) -> None:
-        self.assert_asks('echo "\n<<EOF\n"\ncat ~/.ssh/id_rsa\necho "\nEOF\n"')
 
     def test_blocks_ansi_c_quoting_with_redirects(self) -> None:
         # Bash reads \' inside $'...' as an escaped quote and shlex does not,
@@ -363,12 +353,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
     def test_allows_ansi_c_quoting_without_redirects(self) -> None:
         self.assert_silent("printf $'a\\\\n'")
 
-    def test_asks_for_secret_paths_hidden_by_ansi_c_quoting(self) -> None:
-        # Bash reads ~/.a?s/config as a word between two $'\'' strings, while
-        # shlex reads it inside a single-quoted string.
-        (self.home / ".aws").mkdir()
-        (self.home / ".aws" / "config").write_text("")
-        self.assert_asks("cat $'\\'' ~/.a?s/config $'\\''")
 
     def test_blocks_redirects_inside_quoted_expansions(self) -> None:
         # Bash parses $(...), ${...}, and backticks inside double quotes as
@@ -443,10 +427,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
         # with zsh and bash 5, which read the line as body text, so it passes.
         self.assert_silent('echo "$(cat <<\'EOF\'\n)" > ~/.zshrc\nEOF\n)"')
 
-    def test_asks_for_secret_paths_hidden_by_quoted_expansions(self) -> None:
-        (self.home / ".aws").mkdir()
-        (self.home / ".aws" / "config").write_text("")
-        self.assert_asks('echo "$(cat " x " ~/.a?s/config)"')
 
     def test_allows_comments_around_allowed_redirects(self) -> None:
         for command in (
@@ -519,31 +499,8 @@ class RedirectGuardKiroTest(unittest.TestCase):
         self.assert_silent("echo hi > ../out.txt", "sub")
         self.assert_blocked("echo hi > ../../out.txt", "sub")
 
-    def test_asks_for_glob_that_expands_to_a_secret_path(self) -> None:
-        aws = self.home / ".aws"
-        aws.mkdir()
-        (aws / "credentials").write_text("")
-        self.assert_asks("git diff --no-index ~/.a?s/c* /dev/null")
 
-    def test_asks_for_home_variables_and_braces_that_reach_a_secret_path(
-        self,
-    ) -> None:
-        (self.home / ".aws").mkdir()
-        (self.home / ".aws" / "config").write_text("")
-        for command in (
-            "cat $HOME/.a?s/config",
-            "cat ${HOME}/.a?s/config",
-            "cat ~/.{a,}ws/config",
-            "cat ~/.{x,a}{w,y}s/config",
-            "cat ~/.{a,b}ws/config" + "{,}" * 10,
-        ):
-            with self.subTest(command=command):
-                self.assert_asks(command)
 
-    def test_allows_braces_and_home_variables_without_secret_paths(self) -> None:
-        for command in ("echo {a,b}", "echo x{1,2}y", "ls $HOME/project"):
-            with self.subTest(command=command):
-                self.assert_silent(command)
 
     def test_runs_under_the_macos_system_python(self) -> None:
         if not SYSTEM_PYTHON.exists():
@@ -553,7 +510,7 @@ class RedirectGuardKiroTest(unittest.TestCase):
         for command, code, asks in (
             ("echo x >! ~/.zshrc", 2, False),
             ("git log > out.txt", 0, False),
-            ("cat ~/.{a,}ws/config", 0, True),
+            ("cat ~/.{a,}ws/config", 0, False),
         ):
             payload = kiro_payload(command)
             payload["cwd"] = str(self.workspace)
@@ -569,29 +526,9 @@ class RedirectGuardKiroTest(unittest.TestCase):
                 self.assertEqual(result.returncode, code, result.stderr)
                 self.assertEqual('"ask"' in result.stdout, asks, result.stdout)
 
-    def test_asks_for_input_from_a_secret_path(self) -> None:
-        self.assert_asks("cat < ~/.ssh/id_ed25519")
 
-    def test_asks_for_symlink_to_a_secret_path(self) -> None:
-        # link/config matches no pattern as written, only once link resolves.
-        (self.home / ".ssh").mkdir()
-        (self.workspace / "link").symlink_to(self.home / ".ssh")
-        self.assert_asks("cat link/config")
 
-    def test_asks_for_relative_paths_that_leave_a_secret_cwd(self) -> None:
-        cwd = self.home / ".aws" / "x"
-        cwd.mkdir(parents=True)
-        result = self.run_guard("cat ../config", session_cwd=cwd)
-        output = json.loads(result.stdout)["hookSpecificOutput"]
-        self.assertEqual(output["permissionDecision"], "ask")
 
-    def test_allows_relative_words_under_a_secret_looking_cwd(self) -> None:
-        for cwd in (self.tmp / ".aws" / "x", self.tmp / "my-credentials-tool"):
-            cwd.mkdir(parents=True)
-            (cwd / "README.md").write_text("x")
-            for command in ("git status", "cat README.md", "cat *.md"):
-                with self.subTest(cwd=cwd, command=command):
-                    self.assert_silent(command, session_cwd=cwd)
 
     def test_blocks_payloads_it_cannot_read(self) -> None:
         for stdin in (
@@ -607,15 +544,25 @@ class RedirectGuardKiroTest(unittest.TestCase):
                 self.assertIn("cannot read the hook input", result.stderr)
                 self.assertEqual(result.stdout, "")
 
-    def test_blocks_before_asking(self) -> None:
+    def test_blocks_redirect_with_secret_path(self) -> None:
         self.assert_blocked("cat ~/.ssh/id_rsa > ~/.zshrc")
 
-    def test_allows_commands_without_secret_paths(self) -> None:
-        (self.workspace / "src").mkdir()
-        (self.workspace / "README.md").write_text("x")
-        for command in ("rg foo src", "cat README.md"):
+    def test_ignores_secret_paths(self) -> None:
+        (self.home / ".aws").mkdir()
+        (self.home / ".aws" / "config").write_text("")
+        (self.workspace / "link").symlink_to(self.home / ".aws")
+        for command in (
+            "cat ~/.aws/config",
+            "cat $HOME/.a?s/config",
+            "cat ~/.{a,}ws/config",
+            "cat < ~/.ssh/id_ed25519",
+            "cat link/config",
+            "cat dot_config/mcporter/private_mcporter.json.tmpl",
+        ):
             with self.subTest(command=command):
                 self.assert_silent(command)
+
+
 
 
 def hook_file(name: str) -> dict:

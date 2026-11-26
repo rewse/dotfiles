@@ -1,26 +1,15 @@
 #!/usr/bin/env python3
-"""Kiro CLI PreToolUse hook that checks shell redirects and secret paths.
+"""Kiro CLI PreToolUse hook that blocks shell redirects outside allowed paths.
 
-Kiro runs two checks here that its permission rules cannot make.
-
-Redirect targets: Kiro strips redirections before matching a shell command
-against its rules and never checks the target as an fs_write, so
-`git log > ~/.zshrc` matches the allow for `git log`. This hook blocks (exit 2)
+Kiro strips redirections before matching a shell command against its rules and
+never checks the target as an fs_write, so `git log > ~/.zshrc` matches the
+allow for `git log`. This hook blocks (exit 2)
 any `>`, `>>`, `&>`, or `>|`, or zsh's `>!` forms, whose target is outside the
 paths Kiro may write without asking (the session's working directory, /tmp, ~/Desktop,
 ~/Downloads, and device files), which sends the model to the write tool, where
 Kiro asks for approval. A target that a variable, command substitution, glob,
 or process substitution builds is blocked too, since it cannot be resolved
 here, and so is a relative target in a command that changes directory first.
-
-Secret paths: the ask rule in permissions.yaml matches the command's text, so
-it misses a path that only reaches a credential store once bash expands `~`,
-$HOME, braces, or a glob, or follows a symlink
-(`git diff --no-index ~/.a?s/c* /dev/null`). This hook expands every word of
-the command, `<` sources included, resolves symlinks, and returns permissionDecision "ask" when any result matches
-SECRET_PATTERNS. It asks instead of blocking because ordinary commands such as
-`rg credentials src` match too, as they do under the ask rule. A blocked
-redirect takes precedence over the ask.
 
 Bash and shlex disagree on a few points, which the parsing handles:
 
@@ -37,7 +26,7 @@ Bash and shlex disagree on a few points, which the parsing handles:
   redirects of $(...), ${...}, or backticks inside double quotes, so it may
   misplace where a string ends (quoting_hazard). A $'...' command with `>` or
   `<<` is blocked, as is a `>` inside a token of a command with such a
-  double-quoted expansion, and the secret path check adds rough words.
+  double-quoted expansion.
 - "$(cat <<'X' ... X)" with a quoted delimiter prints its body as data, the
   usual way to pass a commit message, so the redirect checks replace it with
   "" first (without_literal_substitutions).
@@ -51,8 +40,6 @@ shape is blocked.
 # which cannot evaluate `str | None` annotations at import time.
 from __future__ import annotations
 
-import fnmatch
-import glob
 import json
 import os
 import re
@@ -63,52 +50,6 @@ DEVICES = {"/dev/null", "/dev/stderr", "/dev/stdin", "/dev/stdout"}
 UNRESOLVABLE = set("$`*?[(")
 # shlex's default punctuation_chars; it fuses adjacent ones into one token.
 PUNCTUATION = set("();<>|&")
-# Locations that may hold credentials, as Kiro shell globs, which support only
-# `*`. The shell ask rule in permissions.yaml lists the same patterns.
-SECRET_PATTERNS = (
-    "*.aws",
-    "*.aws *",
-    "*.aws/*",
-    "*.claude.json*",
-    "*.codex/auth.json*",
-    "*.config/environment*",
-    "*.config/gcloud",
-    "*.config/gcloud *",
-    "*.config/gcloud/*",
-    "*.config/gh",
-    "*.config/gh *",
-    "*.config/gh/*",
-    "*.config/op",
-    "*.config/op *",
-    "*.config/op/*",
-    "*.docker",
-    "*.docker *",
-    "*.docker/*",
-    "*.gnupg*",
-    "*.kube",
-    "*.kube *",
-    "*.kube/*",
-    "*.mcporter*",
-    "*.midway*",
-    "*.netrc*",
-    "*.npmrc*",
-    "*.op",
-    "*.op *",
-    "*.op/*",
-    "*.pypirc*",
-    "*.ssh*",
-    "*.tavily*",
-    "*.zsh_history*",
-    "*/environ*",
-    "*/mcporter",
-    "*/mcporter *",
-    "*/mcporter/*",
-    "*credentials*",
-    "*id_ed25519*",
-    "*id_rsa*",
-    "*mcporter.json*",
-    "*zsh/history*",
-)
 # shlex comment characters for each tokenizing pass. Without comments, an
 # apostrophe in each of two comments joins the lines between them into one
 # string; with them, `x#y` loses the rest of its line.
@@ -128,12 +69,6 @@ NESTED_EXPANSION = re.compile(r"\$[({]|`")
 LITERAL_SUBSTITUTION = re.compile(
     r"\"\$\(cat[ \t]*<<[ \t]*(['\"])([A-Za-z_][A-Za-z0-9_]*)\1[ \t]*\n"
 )
-# A leading $HOME or ${HOME} that ends the word or a path component.
-HOME_VARIABLE = re.compile(r"\$(?:HOME|\{HOME\})(?=/|$)")
-# A brace expansion group without nested braces, such as {a,b}.
-BRACE_LIST = re.compile(r"\{([^{}]*,[^{}]*)\}")
-# More brace expansion words than this make the secret path check ask.
-MAX_BRACE_WORDS = 256
 # zsh reads `!` right after a redirect operator (`>!`, `>>!`, `&>!`, `>&!`)
 # as part of the operator, which overrides noclobber; shlex splits it off.
 CLOBBER = "!"
@@ -175,72 +110,6 @@ def is_allowed(path: str, root_cwd: str) -> bool:
         path == root or path.startswith(root + os.sep)
         for root in allowed_roots(root_cwd)
     )
-
-
-def is_secret(path: str) -> bool:
-    return any(fnmatch.fnmatchcase(path, pattern) for pattern in SECRET_PATTERNS)
-
-
-def below(path: str, root: str) -> str:
-    """Returns the part of path below root, or path itself when it is outside."""
-    if path == root:
-        return ""
-    if path.startswith(root + os.sep):
-        return path[len(root) + 1 :]
-    return path
-
-
-def brace_alternatives(word: str) -> list[str] | None:
-    """Returns the words that brace expansion makes of word, word first.
-
-    Each {a,b,...} group without nested braces expands into its alternatives,
-    and the groups multiply. Returns None when they would make more than
-    MAX_BRACE_WORDS words.
-    """
-    words, count = [word], 1
-    for match in BRACE_LIST.finditer(word):
-        count *= match.group(1).count(",") + 1
-    if count > MAX_BRACE_WORDS:
-        return None
-    pending = [word]
-    while pending:
-        current = pending.pop()
-        match = BRACE_LIST.search(current)
-        if match is None:
-            words.append(current)
-            if len(words) > MAX_BRACE_WORDS:
-                return None
-            continue
-        head, tail = current[: match.start()], current[match.end() :]
-        pending += [head + part + tail for part in match.group(1).split(",")]
-    return list(dict.fromkeys(words))
-
-
-def input_paths(word: str, cwd: str) -> list[str]:
-    """Returns the word as written and the paths bash would read for it.
-
-    A leading $HOME or ${HOME} expands like `~`; a word with any other `$` or
-    a backtick counts only as written. A relative word counts only with the
-    part of each path below cwd, so that a cwd inside a secret location does
-    not make every word match. A path that leaves cwd, through `..` or a
-    symlink, counts in full.
-    """
-    home_variable = HOME_VARIABLE.match(word)
-    if home_variable:
-        word = os.path.expanduser("~") + word[home_variable.end() :]
-    if "$" in word or "`" in word:
-        return [word]
-    expanded = os.path.expanduser(word)
-    path = os.path.join(cwd, expanded)
-    found = glob.glob(path) if set("*?[") & set(word) else [path]
-    if os.path.isabs(expanded):
-        return [word, *found, *(os.path.realpath(p) for p in found)]
-    root, real_root = os.path.normpath(cwd), os.path.realpath(cwd)
-    return [
-        word,
-        *(below(os.path.normpath(p), root) for p in found),
-        *(below(os.path.realpath(p), real_root) for p in found),
-    ]
 
 
 def tokenize(command: str, commenters: str) -> list[str]:
@@ -462,48 +331,6 @@ def blocked_targets(command: str, root_cwd: str, cwd: str | None = None) -> list
     return list(dict.fromkeys(blocked))
 
 
-def secret_paths(command: str, root_cwd: str, cwd: str | None = None) -> list[str]:
-    """Returns the words of the command that reach a location in SECRET_PATTERNS.
-
-    Every word counts, `<` sources included, after expanding `~`, $HOME,
-    braces, and globs and resolving symlinks. A command that does not tokenize falls back to rough
-    words, and so, in addition to its tokens, does one whose quotes shlex may
-    misplace (may_misplace_quotes), since a path bash reads as a word may sit
-    inside one of shlex's strings.
-    """
-    cwd = os.path.join(root_cwd, cwd) if cwd else root_cwd
-    found = []
-    for commenters in COMMENT_MODES:
-        try:
-            words = command_tokens(command, commenters)
-        except ValueError:
-            words = ROUGH_WORD.findall(command)
-        else:
-            if may_misplace_quotes(command):
-                words += ROUGH_WORD.findall(command)
-        found += [
-            word
-            for word in words
-            if not is_punctuation(word) and reaches_secret(word, cwd)
-        ]
-    return list(dict.fromkeys(found))
-
-
-def reaches_secret(word: str, cwd: str) -> bool:
-    """Returns whether any brace expansion of word reaches a secret location.
-
-    A word with too many brace expansions to check counts as reaching one.
-    """
-    alternatives = brace_alternatives(word)
-    if alternatives is None:
-        return True
-    return any(
-        is_secret(path)
-        for alternative in alternatives
-        for path in input_paths(alternative, cwd)
-    )
-
-
 def quoting_hazard(command: str) -> str | None:
     """Returns why the command's redirects cannot be checked, or None.
 
@@ -567,8 +394,7 @@ def main() -> int:
         # A payload the hook cannot read may hide a redirect, so it blocks.
         print(f"Blocked: cannot read the hook input: {error}.", file=sys.stderr)
         return 2
-    # Redirects are checked without literal here-document bodies; the secret
-    # path check still reads them.
+    # Redirects are checked without literal here-document bodies.
     code = without_literal_substitutions(command)
     hazard = quoting_hazard(code)
     if hazard:
@@ -585,22 +411,6 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    secrets = secret_paths(command, root_cwd, cwd)
-    if secrets:
-        reason = (
-            f"This command reaches {', '.join(secrets)}, a location that may hold"
-            " credentials, once ~, $HOME, braces, globs, and symlinks are expanded."
-        )
-        print(
-            json.dumps(
-                {
-                    "hookSpecificOutput": {
-                        "permissionDecision": "ask",
-                        "permissionDecisionReason": reason,
-                    }
-                }
-            )
-        )
     return 0
 
 
