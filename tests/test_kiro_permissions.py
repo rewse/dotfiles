@@ -14,7 +14,6 @@ PERMISSIONS = (
 HOST_GATE = '{{- if eq .chezmoi.hostname "7cf34ded5d65" }}'
 
 
-
 def render(raw: str, hostname: str) -> dict[str, Any]:
     """Renders the template for hostname and parses the YAML it produces."""
     result = execute_template(raw, {"hostname": hostname})
@@ -54,7 +53,6 @@ class KiroPermissionsTest(unittest.TestCase):
 
     def test_policies_enable_approve_for_me(self) -> None:
         self.assertEqual(self.rendered["policies"], ["approve-for-me"])
-
 
     def test_shell_has_no_rule(self) -> None:
         # approve-for-me judges every shell command.
@@ -97,15 +95,11 @@ class KiroPermissionsTest(unittest.TestCase):
             ["./**", "/private/tmp/**", "/tmp/**", "~/Desktop/**", "~/Downloads/**"],
         )
 
-
-
-
     def test_rules_have_no_deny(self) -> None:
         for rendered in (self.rendered, self.business):
             for rule in rendered["rules"]:
                 with self.subTest(rule=rule["capability"]):
                     self.assertNotEqual(rule["effect"], "deny")
-
 
     def test_builder_mcp_rule_is_host_gated(self) -> None:
         gate = self.raw.index(HOST_GATE)

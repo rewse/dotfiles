@@ -209,7 +209,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.stderr, "")
 
-
     def test_blocks_redirects_outside_allowed_paths(self) -> None:
         for command in (
             "git log > ~/.zshrc",
@@ -337,7 +336,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assert_blocked(command)
 
-
     def test_blocks_ansi_c_quoting_with_redirects(self) -> None:
         # Bash reads \' inside $'...' as an escaped quote and shlex does not,
         # so a $'...' command with > or << is blocked whatever its target.
@@ -352,7 +350,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
 
     def test_allows_ansi_c_quoting_without_redirects(self) -> None:
         self.assert_silent("printf $'a\\\\n'")
-
 
     def test_blocks_redirects_inside_quoted_expansions(self) -> None:
         # Bash parses $(...), ${...}, and backticks inside double quotes as
@@ -427,7 +424,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
         # with zsh and bash 5, which read the line as body text, so it passes.
         self.assert_silent('echo "$(cat <<\'EOF\'\n)" > ~/.zshrc\nEOF\n)"')
 
-
     def test_allows_comments_around_allowed_redirects(self) -> None:
         for command in (
             "echo hi > out.txt # note",
@@ -499,9 +495,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
         self.assert_silent("echo hi > ../out.txt", "sub")
         self.assert_blocked("echo hi > ../../out.txt", "sub")
 
-
-
-
     def test_runs_under_the_macos_system_python(self) -> None:
         if not SYSTEM_PYTHON.exists():
             self.skipTest("needs the macOS system Python")
@@ -525,10 +518,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
                 )
                 self.assertEqual(result.returncode, code, result.stderr)
                 self.assertEqual('"ask"' in result.stdout, asks, result.stdout)
-
-
-
-
 
     def test_blocks_payloads_it_cannot_read(self) -> None:
         for stdin in (
@@ -561,8 +550,6 @@ class RedirectGuardKiroTest(unittest.TestCase):
         ):
             with self.subTest(command=command):
                 self.assert_silent(command)
-
-
 
 
 def hook_file(name: str) -> dict:
