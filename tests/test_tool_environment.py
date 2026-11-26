@@ -11,6 +11,7 @@ import unittest
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CHEZMOIIGNORE = REPO_ROOT / ".chezmoiignore"
 GITLAB_WRAPPER = REPO_ROOT / "dot_local/bin/executable_aws-gitlab-mcp-with-token"
+GITLAB_CLI_WRAPPER = REPO_ROOT / "dot_local/bin/executable_gitlab-aws-with-token"
 MCPORTER = REPO_ROOT / "dot_config/mcporter/private_mcporter.json.tmpl"
 TESLAMATE_SCRIPTS = REPO_ROOT / "dot_agents/skills/teslamate/scripts"
 
@@ -37,6 +38,12 @@ fi
 FAKE_GITLAB_MCP = """\
 #!/bin/sh
 printf 'token=%s args=%s\\n' "${GITLAB_TOKEN:-unset}" "$*"
+"""
+
+FAKE_PNPM = """\
+#!/bin/sh
+printf 'token=%s cwd=%s\\n' "${GITLAB_TOKEN:-unset}" "$PWD"
+printf '%s\\n' "$@"
 """
 
 
@@ -118,6 +125,35 @@ class ToolEnvironmentTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "token=test-token args=--flag a b\n")
 
+    def test_gitlab_cli_wrapper_passes_the_token_to_the_skill_cli_only(self) -> None:
+        write_executable(self.bin / "pnpm", FAKE_PNPM)
+        self.write_environment("gitlab.sh", 'export GITLAB_TOKEN="test-token"\n')
+        work = self.root / "work"
+        work.mkdir()
+        result = subprocess.run(
+            [str(GITLAB_CLI_WRAPPER), "mr", "view", "a b"],
+            capture_output=True,
+            text=True,
+            env=self.env,
+            cwd=work,
+            stdin=subprocess.DEVNULL,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        cli = self.root / "home/.agents/skills/gitlab-aws/scripts/gitlab-aws/cli.ts"
+        self.assertEqual(
+            result.stdout.splitlines(),
+            [
+                f"token=test-token cwd={work.resolve()}",
+                "dlx",
+                "tsx",
+                str(cli),
+                "mr",
+                "view",
+                "a b",
+            ],
+        )
+
     def test_mcporter_starts_gitlab_through_the_wrapper(self) -> None:
         text = MCPORTER.read_text().replace("{{ .chezmoi.homeDir }}", "/home/u")
         match = re.search(r'"aws-gitlab-mcp" ?: ?(\{[^}]*\})', text)
@@ -133,6 +169,7 @@ class ToolEnvironmentTest(unittest.TestCase):
         start = text.index('{{- if ne .chezmoi.hostname "7cf34ded5d65" }}')
         block = text[start : text.index("{{- end }}", start)].splitlines()
         self.assertIn(".local/bin/aws-gitlab-mcp-with-token", block)
+        self.assertIn(".local/bin/gitlab-aws-with-token", block)
 
 
 if __name__ == "__main__":

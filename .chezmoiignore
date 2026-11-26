@@ -34,6 +34,7 @@ Library
 .config/git/ignore
 .local/bin/aws-gitlab-mcp-with-token
 .local/bin/check-midway-key
+.local/bin/gitlab-aws-with-token
 .agents/skills/github-push-via-fox
 .agents/skills/outlook-todo
 .kiro/settings/amazon-internal.json
