@@ -8,7 +8,7 @@
 
 **Tech Stack:** pre-commit 4.6.2、pre-commit-uv 4.3.0、actionlint、zizmor、check-jsonschema、shellcheck、ruff、basedpyright、ansible-lint、textlint、GitHub Actions
 
-**Spec:** `docs/superpowers/specs/2026-09-27-lint-test-ci-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-09-27-lint-test-ci-design.md`
 
 ## Global Constraints
 

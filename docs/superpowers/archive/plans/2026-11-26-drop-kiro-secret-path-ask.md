@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3（macOS システム Python 3.9 でも動くこと）、unittest、chezmoi テンプレート、Kiro CLI v3 permissions
 
-**Spec:** `docs/superpowers/specs/2026-11-26-drop-kiro-secret-path-ask-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-11-26-drop-kiro-secret-path-ask-design.md`
 
 ## Global Constraints
 

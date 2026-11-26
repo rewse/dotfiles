@@ -22,7 +22,7 @@
 
 **Files:**
 - Modify: `run_install-skills.sh`
-- Reference: `docs/superpowers/specs/2026-09-12-update-installed-skills-design.md`
+- Reference: `docs/superpowers/archive/specs/2026-09-12-update-installed-skills-design.md`
 
 **Interfaces:**
 - Consumes: `install_skills <owner/repo> <skill>...` と `install_skills_claude_only <owner/repo> <skill>...`

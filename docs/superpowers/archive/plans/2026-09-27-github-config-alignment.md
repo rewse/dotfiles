@@ -8,7 +8,7 @@
 
 **Tech Stack:** GitHub Actions、Dependabot、chezmoi、actionlint（`uvx --from actionlint-py actionlint`）、zizmor（`uvx zizmor`）、check-jsonschema（`uvx check-jsonschema`）
 
-**Spec:** `docs/superpowers/specs/2026-09-27-github-config-alignment-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-09-27-github-config-alignment-design.md`
 
 ## Global Constraints
 

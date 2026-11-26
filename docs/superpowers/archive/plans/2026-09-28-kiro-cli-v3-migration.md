@@ -8,7 +8,7 @@
 
 **Tech Stack:** chezmoi テンプレート（Go template）、Kiro CLI v3、bash、Python 3 標準ライブラリ（`unittest`）、jq
 
-**Spec:** `docs/superpowers/specs/2026-09-28-kiro-cli-v3-migration-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-09-28-kiro-cli-v3-migration-design.md`
 
 ## Global Constraints
 

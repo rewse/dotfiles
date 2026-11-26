@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3 標準ライブラリ、zsh、chezmoi テンプレート、`unittest`、Kiro CLI v3 hooks、Otty 1.6.2
 
-**Spec:** `docs/superpowers/specs/2026-10-24-kiro-otty-notify-resume-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-10-24-kiro-otty-notify-resume-design.md`
 
 ## Global Constraints
 

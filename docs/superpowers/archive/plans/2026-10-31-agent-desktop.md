@@ -8,7 +8,7 @@
 
 **Tech Stack:** Ansible、npm、chezmoi、bash、jq
 
-**Spec:** `docs/superpowers/specs/2026-10-31-agent-desktop-design.md`（chezmoi リポジトリ）
+**Spec:** `docs/superpowers/archive/specs/2026-10-31-agent-desktop-design.md`（chezmoi リポジトリ）
 
 ## Global Constraints
 

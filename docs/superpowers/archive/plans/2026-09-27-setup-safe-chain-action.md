@@ -2,7 +2,7 @@
 
 **Goal:** `rewse/actions/setup-safe-chain` を作り、7 つのワークフローの `curl | sh` を置き換える。
 
-**Spec:** `docs/superpowers/specs/2026-09-27-setup-safe-chain-action-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-09-27-setup-safe-chain-action-design.md`
 
 ## Global Constraints
 
