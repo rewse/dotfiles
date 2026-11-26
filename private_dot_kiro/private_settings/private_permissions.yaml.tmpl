@@ -2,56 +2,6 @@
 # below settles, except file operations outside the workspace, which prompt.
 policies: ["approve-for-me"]
 rules:
-  # Locations that may hold credentials. ask beats allow and evaluate, so a
-  # command naming one prompts even when a preset, approve-for-me, or a session
-  # "always allow" would approve it. These globs see only the command as
-  # written, so redirect-guard-kiro.py checks redirections and paths written
-  # with globs against the same list, kept in SECRET_PATTERNS.
-  - capability: shell
-    effect: ask
-    match:
-      - "*.aws"
-      - "*.aws *"
-      - "*.aws/*"
-      - "*.claude.json*"
-      - "*.codex/auth.json*"
-      - "*.config/environment*"
-      - "*.config/gcloud"
-      - "*.config/gcloud *"
-      - "*.config/gcloud/*"
-      - "*.config/gh"
-      - "*.config/gh *"
-      - "*.config/gh/*"
-      - "*.config/op"
-      - "*.config/op *"
-      - "*.config/op/*"
-      - "*.docker"
-      - "*.docker *"
-      - "*.docker/*"
-      - "*.gnupg*"
-      - "*.kube"
-      - "*.kube *"
-      - "*.kube/*"
-      - "*.mcporter*"
-      - "*.midway*"
-      - "*.netrc*"
-      - "*.npmrc*"
-      - "*.op"
-      - "*.op *"
-      - "*.op/*"
-      - "*.pypirc*"
-      - "*.ssh*"
-      - "*.tavily*"
-      - "*.zsh_history*"
-      - "*/environ*"
-      - "*/mcporter"
-      - "*/mcporter *"
-      - "*/mcporter/*"
-      - "*credentials*"
-      - "*id_ed25519*"
-      - "*id_rsa*"
-      - "*mcporter.json*"
-      - "*zsh/history*"
   # /tmp, ~/Desktop, and ~/Downloads are outside the workspace, so without
   # these allows every read and write there would prompt.
   - capability: fs_read
