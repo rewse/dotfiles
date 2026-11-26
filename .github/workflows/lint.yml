@@ -24,6 +24,12 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
+        with:
+          # The job runs only the tools pinned in these files, so they key the
+          # cache; the default globs match no file or only project dependencies.
+          cache-dependency-glob: |
+            .github/workflows/lint.yml
+            .pre-commit-config.yaml
 
       - name: Setup Aikido Safe Chain
         uses: rewse/actions/setup-safe-chain@b06697c94c0963f81fe1d00c0414548c76f93330  # v1.1.13
