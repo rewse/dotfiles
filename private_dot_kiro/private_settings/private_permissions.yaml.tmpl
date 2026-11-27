@@ -25,9 +25,8 @@ rules:
     effect: allow
   - capability: subagent
     effect: allow
-{{- if eq .chezmoi.hostname "7cf34ded5d65" }}
-  - capability: mcp
-    effect: allow
-    match:
-      - "builder-mcp/ReadInternalWebsites"
+{{- /* ~/git/dotfiles-internal adds the rules for Amazon-internal systems. */}}
+{{- $internalRules := joinPath .chezmoi.homeDir "git" "dotfiles-internal" ".chezmoitemplates" "kiro" "permission-rules.yaml" }}
+{{- if stat $internalRules }}
+{{ include $internalRules | trim | indent 2 }}
 {{- end }}

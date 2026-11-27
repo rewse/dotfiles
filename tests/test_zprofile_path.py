@@ -51,9 +51,10 @@ class ZshStartupTest(unittest.TestCase):
             with self.subTest(template=template.name):
                 self.assertNotIn("onepasswordRead", template.read_text())
 
-        for name in ("gitlab", "teslamate"):
-            with self.subTest(name=name):
-                source = ENVIRONMENT / f"private_{name}.sh.tmpl"
+        sources = sorted(ENVIRONMENT.glob("private_*.sh.tmpl"))
+        self.assertTrue(sources)
+        for source in sources:
+            with self.subTest(source=source.name):
                 self.assertIn("onepasswordRead", source.read_text())
 
     def test_no_kiro_api_key_is_deployed(self) -> None:

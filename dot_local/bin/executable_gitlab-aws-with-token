@@ -1,8 +1,0 @@
-#!/bin/sh
-# Run the gitlab-aws skill's CLI with GITLAB_TOKEN. Shells do not export the
-# token, so other commands never inherit it; the skill runs its CLI through this.
-set -eu
-
-# shellcheck source=/dev/null  # rendered from a template by chezmoi apply
-. "${XDG_CONFIG_HOME:-${HOME}/.config}/environment/gitlab.sh"
-exec pnpm dlx tsx "${HOME}/.agents/skills/gitlab-aws/scripts/gitlab-aws/cli.ts" "$@"

@@ -27,3 +27,7 @@
 .agents/skills/zabbix-ai-skills
 .claude/skills/zabbix-ai-skills
 .kiro/skills/zabbix-ai-skills
+# ~/git/dotfiles-internal deploys the GitLab token to the business Mac, the only host that reads it.
+{{- if ne .chezmoi.hostname "7cf34ded5d65" }}
+.config/environment/gitlab.sh
+{{- end }}

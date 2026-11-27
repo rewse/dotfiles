@@ -20,7 +20,6 @@ Keep this file limited to repository-specific constraints that cannot be inferre
 | External skills | Add `install_skills <owner/repo> <skill>...` to `run_install-skills.sh`, or pass `'*'` when the repository's skills reference each other. Put any idempotent post-install patch immediately after its install call. |
 
 Prefer a skill to an always-loaded rule for task-specific reference material. When changing servers in `dot_config/mcporter/private_mcporter.json.tmpl`, update both the frontmatter description and server list in `dot_agents/skills/mcporter/SKILL.md.tmpl`.
-
 ## AWS
 
 - Keep dependent AWS resource definitions outside this repository. The CloudFormation stacks live in account `070392599442`; recover a template with `aws cloudformation get-template --stack-name <stack> --region <region> | cat` and inspect parameters and outputs with `describe-stacks`.
@@ -34,6 +33,7 @@ Prefer a skill to an always-loaded rule for task-specific reference material. Wh
 ## Managed files
 
 - Keep `AGENTS.md` and `docs` listed in `.chezmoiignore` so chezmoi does not deploy them to the home directory.
+- Keep files that only Amazon-internal systems use in `~/git/dotfiles-internal`. The mcporter config and skill, the Kiro agent, and the Kiro permissions append their Amazon-internal parts from `~/git/dotfiles-internal/.chezmoitemplates/` when that checkout exists, so put such parts there rather than behind a hostname check here.
 - When deleting or renaming a managed file, add its old target path to `.chezmoiremove` with a comment giving the reason, so `chezmoi apply` removes the deployed copy. Skip a path that `~/git/dotfiles-internal` still deploys, because the two applies would keep removing and recreating it.
 - Do not manage the whole of `~/.claude/settings.json` or `~/.codex/config.toml` with chezmoi because corporate tools rewrite them. `dot_claude/modify_settings.json.tmpl` only adds this repository's hooks and passes the file through unchanged once they are present; add Claude Code hooks there. `dot_local/bin/executable_track-config-drift` records the history of both files in `~/.local/share/config-drift.git`; add any new path to its `FILES` list.
 - Treat the live `~/.config/otty/config.toml` as canonical even though chezmoi tracks it, and port tool changes into `dot_config/otty/config.toml.tmpl` without dropping its `7cf34ded5d65` branch or adding top-level `foreground`, `background`, or `palette-*` keys, which would pin one palette in both appearances. `~/.kiro/agents/main.json` renders from a template, so port Kiro's rewrites into `private_dot_kiro/private_agents/private_main.json.tmpl` instead. Name the `.kiro` directory, its `agents` and `settings` subdirectories, and their files `private_`, because Kiro and corporate tooling reset files under `~/.kiro` to mode 0600 and a 0644 source shows as modified after every apply.

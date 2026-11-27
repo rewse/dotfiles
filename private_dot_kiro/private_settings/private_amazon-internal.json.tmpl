@@ -1,8 +1,0 @@
-{{- /*
-Keep the Kiro sandbox off. The sandbox hides ~/.aws and its creds-agent
-backend does not start on this Mac, so AWS CLI, aws-mcp, and
-agentcore-websearch find no credentials (NoCredentials). With the sandbox
-off, approve-for-me and the rules in private_permissions.yaml.tmpl are the
-only guard.
-*/ -}}
-{"sandbox": false}

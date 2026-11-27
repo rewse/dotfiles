@@ -2,6 +2,7 @@
 
 import json
 import pathlib
+import tempfile
 import unittest
 
 from chezmoi_template import execute_template
@@ -9,7 +10,6 @@ from chezmoi_template import execute_template
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 AGENT = REPO_ROOT / "private_dot_kiro/private_agents/private_main.json.tmpl"
 CLI = REPO_ROOT / "private_dot_kiro/private_settings/private_cli.json.tmpl"
-MCP = REPO_ROOT / "private_dot_kiro/private_settings/private_mcp.json.tmpl"
 
 
 class KiroAgentTest(unittest.TestCase):
@@ -62,25 +62,30 @@ class KiroAgentTest(unittest.TestCase):
         self.assertNotIn("read-only-shell", agent)
 
 
-class KiroMcpSettingsTest(unittest.TestCase):
-    def render(self) -> dict:
-        result = execute_template(
-            MCP.read_text(), {"homeDir": "/home/user", "hostname": "7cf34ded5d65"}
-        )
+class KiroAgentInternalServersTest(unittest.TestCase):
+    """The dotfiles-internal checkout supplies the agent's MCP servers."""
+
+    def render(self, home: pathlib.Path) -> dict:
+        result = execute_template(AGENT.read_text(), {"homeDir": str(home)})
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
 
-    def test_mcp_json_keeps_the_aim_arcc_server(self) -> None:
-        # AIM adds arcc-mcp in this form; any other form would drift from it.
-        self.assertEqual(
-            self.render()["mcpServers"]["arcc-mcp"],
-            {"command": "arcc-mcp", "args": []},
-        )
+    def test_agent_has_no_servers_without_the_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as home:
+            self.assertEqual(self.render(pathlib.Path(home))["mcpServers"], {})
 
-    def test_mcp_json_is_only_deployed_to_the_business_mac(self) -> None:
-        ignore = (REPO_ROOT / ".chezmoiignore").read_text()
-        block = ignore.split('{{- if ne .chezmoi.hostname "7cf34ded5d65" }}', 1)[1]
-        self.assertIn(".kiro/settings/mcp.json", block.split("{{- end }}", 1)[0])
+    def test_agent_takes_servers_from_the_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = pathlib.Path(directory)
+            fragments = home / "git/dotfiles-internal/.chezmoitemplates/kiro"
+            fragments.mkdir(parents=True)
+            (fragments / "agent-mcp-servers.json").write_text(
+                '{\n  "internal": {\n    "command": "{{ .chezmoi.homeDir }}/a"\n  }\n}\n'
+            )
+            self.assertEqual(
+                self.render(home)["mcpServers"],
+                {"internal": {"command": f"{home}/a"}},
+            )
 
 
 class KiroCliSettingsTest(unittest.TestCase):

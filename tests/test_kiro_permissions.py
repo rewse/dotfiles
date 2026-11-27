@@ -2,6 +2,7 @@
 
 import json
 import pathlib
+import tempfile
 import unittest
 from typing import Any
 
@@ -11,12 +12,17 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 PERMISSIONS = (
     REPO_ROOT / "private_dot_kiro/private_settings/private_permissions.yaml.tmpl"
 )
-HOST_GATE = '{{- if eq .chezmoi.hostname "7cf34ded5d65" }}'
+INTERNAL_RULES = """\
+- capability: mcp
+  effect: allow
+  match:
+    - "internal-mcp/Read"
+"""
 
 
-def render(raw: str, hostname: str) -> dict[str, Any]:
-    """Renders the template for hostname and parses the YAML it produces."""
-    result = execute_template(raw, {"hostname": hostname})
+def render(raw: str, home: pathlib.Path) -> dict[str, Any]:
+    """Renders the template for home and parses the YAML it produces."""
+    result = execute_template(raw, {"homeDir": str(home)})
     assert result.returncode == 0, result.stderr
     # chezmoi parses the YAML, so the tests need no YAML library.
     parsed = execute_template(
@@ -29,13 +35,18 @@ def render(raw: str, hostname: str) -> dict[str, Any]:
 class KiroPermissionsTest(unittest.TestCase):
     raw: str
     rendered: dict[str, Any]
-    business: dict[str, Any]
+    extended: dict[str, Any]
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.raw = PERMISSIONS.read_text()
-        cls.rendered = render(cls.raw, "other")
-        cls.business = render(cls.raw, "7cf34ded5d65")
+        with tempfile.TemporaryDirectory() as directory:
+            home = pathlib.Path(directory)
+            cls.rendered = render(cls.raw, home)
+            fragments = home / "git/dotfiles-internal/.chezmoitemplates/kiro"
+            fragments.mkdir(parents=True)
+            (fragments / "permission-rules.yaml").write_text(INTERNAL_RULES)
+            cls.extended = render(cls.raw, home)
 
     def setUp(self) -> None:
         self.rules: list[dict[str, Any]] = self.rendered["rules"]
@@ -56,7 +67,7 @@ class KiroPermissionsTest(unittest.TestCase):
 
     def test_shell_has_no_rule(self) -> None:
         # approve-for-me judges every shell command.
-        for rendered in (self.rendered, self.business):
+        for rendered in (self.rendered, self.extended):
             caps = {r["capability"] for r in rendered["rules"]}
             self.assertNotIn("shell", caps)
 
@@ -96,28 +107,19 @@ class KiroPermissionsTest(unittest.TestCase):
         )
 
     def test_rules_have_no_deny(self) -> None:
-        for rendered in (self.rendered, self.business):
+        for rendered in (self.rendered, self.extended):
             for rule in rendered["rules"]:
                 with self.subTest(rule=rule["capability"]):
                     self.assertNotEqual(rule["effect"], "deny")
 
-    def test_builder_mcp_rule_is_host_gated(self) -> None:
-        gate = self.raw.index(HOST_GATE)
-        end = self.raw.index("{{- end }}", gate)
-        # User scope applies to every agent, so only the read tool main uses.
-        self.assertIn('"builder-mcp/ReadInternalWebsites"', self.raw[gate:end])
-        self.assertNotIn("builder-mcp/*", self.raw)
-        self.assertNotIn("builder-mcp/", self.raw[:gate] + self.raw[end:])
+    def test_internal_rules_follow_the_public_rules(self) -> None:
+        self.assertNotIn("builder-mcp", self.raw)
         self.assertEqual(
-            self.business["rules"][-1],
-            {
-                "capability": "mcp",
-                "effect": "allow",
-                "match": ["builder-mcp/ReadInternalWebsites"],
-            },
+            self.extended["rules"][-1],
+            {"capability": "mcp", "effect": "allow", "match": ["internal-mcp/Read"]},
         )
-        self.assertEqual(self.business["rules"][:-1], self.rules)
-        self.assertEqual(self.business["policies"], ["approve-for-me"])
+        self.assertEqual(self.extended["rules"][:-1], self.rules)
+        self.assertEqual(self.extended["policies"], self.rendered["policies"])
 
 
 if __name__ == "__main__":
