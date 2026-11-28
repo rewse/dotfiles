@@ -166,10 +166,6 @@ install_skills firecrawl/anydoc convert-documents-to-markdown
 # HumanLayer Show Me
 install_skills humanlayer/skills show-me
 
-# Kepano Obsidian Skills
-install_skills kepano/obsidian-skills \
-  json-canvas obsidian-bases obsidian-markdown
-
 # nanaism Yomiyasu
 install_skills nanaism/yomiyasu yomiyasu
 
@@ -181,6 +177,11 @@ install_skills nicobailon/visual-explainer visual-explainer
 # dangling references. diagnosing-superpowers only debugs the plugin itself.
 install_skills obra/superpowers '*'
 remove_skills diagnosing-superpowers
+
+# Obsidian Skills
+install_skills obsidianmd/obsidian-skills \
+  defuddle json-canvas knap obsidian-bases obsidian-cli obsidian-headless \
+  obsidian-markdown
 
 # oharu121 Commands Skills Gems
 install_skills oharu121/oharu-commands-skills-gems aws-architecture-diagram
