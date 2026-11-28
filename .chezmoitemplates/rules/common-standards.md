@@ -158,7 +158,11 @@ Choose the type by the intent of the change, not by the mechanism. Deleting a fi
 
 ## Pull Request Standards
 
-Merge pull requests by squash unless the repository's `AGENTS.md` sets a different merge method. Write the title of a pull request you merge as a Conventional Commits subject, because the squash commit takes it as its subject.
+Follow the repository's `AGENTS.md` where it sets a different rule for branches or merges.
+
+Do work that takes more than one commit on a branch or worktree and bring it in through a pull request; push only a one-commit change straight to the default branch. Create the branch before writing the spec for work that has a spec or plan, and move the work to a branch before pushing when a change that started as one commit needs a second.
+
+Merge pull requests by squash. Write the title of a pull request you merge as a Conventional Commits subject, because the squash commit takes it as its subject.
 
 ## Project Instruction File Standards
 
