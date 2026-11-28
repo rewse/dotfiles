@@ -156,6 +156,10 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 
 Choose the type by the intent of the change, not by the mechanism. Deleting a file or updating a dependency is not `chore:` by default: use `fix:` for a bug or vulnerability, `refactor:` for restructuring working code, `docs:` when the file is documentation, `feat:` when a user-facing capability is removed, and `chore:` only for maintenance that fits none of these.
 
+## Pull Request Standards
+
+Merge pull requests by squash unless the repository's `AGENTS.md` sets a different merge method. Write the pull request title as a Conventional Commits subject, because the squash commit takes it as its subject.
+
 ## Project Instruction File Standards
 
 Do not create `CLAUDE.md` unless the user asks for one. Claude Code reads `AGENTS.md` directly, so put project instructions in `AGENTS.md` and do not add a `CLAUDE.md` that only imports it.
