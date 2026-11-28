@@ -8,7 +8,7 @@
 
 **Tech Stack:** Markdown のルールファイル、chezmoi、`gh api`
 
-**Spec:** `docs/superpowers/specs/2026-11-28-pr-squash-merge-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-11-28-pr-squash-merge-design.md`
 
 ## Global Constraints
 

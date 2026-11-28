@@ -8,7 +8,7 @@
 
 **Tech Stack:** Markdown のルールファイル、chezmoi、`gh`
 
-**Spec:** `docs/superpowers/specs/2026-11-28-multi-commit-branches-design.md`
+**Spec:** `docs/superpowers/archive/specs/2026-11-28-multi-commit-branches-design.md`
 
 ## Global Constraints
 
